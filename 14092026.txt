@@ -1,0 +1,1327 @@
+
+❯ โปรแกรมวางแผนเมื่อวานจำได้ไหม
+
+  Listed 1 directory, recalled 1 memory
+
+ยังไม่มีความจำเกี่ยวกับโปรเจกต์นี้เลยครับ (ไฟล์ memory ยังไม่ถูกสร้าง) และโฟลเดอร์ D:\WORK\PROGRAMPLANNER ตอนนี้ก็ว่างเปล่า ไม่มีไฟล์อะไรอยู่เลย
+
+เป็นไปได้ว่า:
+- งานเมื่อวานอาจทำในโฟลเดอร์อื่น หรือ
+- ไฟล์อาจถูกลบ/ย้ายไปแล้ว หรือ
+- นี่เป็นเซสชันใหม่ที่ยังไม่เคยคุยเรื่องนี้มาก่อน
+
+ช่วยเล่าให้ฟังหน่อยได้ไหมครับว่า "โปรแกรมวางแผน" นี้คืออะไร (เช่น วางแผนโปรเจกต์, ตารางเวลา, การผลิต ฯลฯ) จะได้เริ่มทำต่อให้ถูกทาง
+
+✻ Worked for 13s · done 6:20 PM · 2 shells still running
+
+❯ โปรแกรม ออกแบบ การวางแผน ออกกำลังกาย งาน พัฒนาตนเอง อาหาร งานประจำ งานขายประกัน หาลูกค้า ศึกษาและพัฒนาความรู้ วางแผนชีวิต วางแผนการเงิน ออม การหาเงิน เรียนรู้เพิ่ม ภาษา สกิลลงทุน คณิต พัฒนาสมอง  จัดตารางเวลาวัดผล ใช้เป็น  android และ  ios ให้ออกแบบ ดีไซน์ ให้ด้วย
+
+● User answered Claude's questions:
+· อยากให้เริ่มจากส่วนไหนก่อนสำหรับแอปวางแผนชีวิตนี้ (ครอบคลุมออกกำลังกาย งาน ขายประกัน การเงิน การเรียนรู้ ฯลฯ)? → ออกแบบ UI/UX ก่อน (Design mockup)
+· ถ้าจะพัฒนาเป็นแอปจริงสำหรับ Android และ iOS อยากใช้เทคโนโลยีแบบไหน? → Flutter (Recommended)
+
+● Skill(design)
+Successfully loaded skill
+
+Now I'll draft the 8 mobile screens. Let me build the design system and all screens.
+
+● Write(D:\WORK\PROGRAMPLANNER\Main.dc.html)
+Wrote 203 lines to ..\..\..\Main.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +235 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\Schedule.dc.html)
+Wrote 141 lines to ..\..\..\Schedule.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +173 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\Progress.dc.html)
+Wrote 162 lines to ..\..\..\Progress.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +195 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\Exercise.dc.html)
+Wrote 121 lines to ..\..\..\Exercise.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +144 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\Work.dc.html)
+Wrote 143 lines to ..\..\..\Work.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +155 lines
+
+Now the remaining three detail screens (CRM, Finance, Learning) plus canvas.json.
+
+● Write(D:\WORK\PROGRAMPLANNER\CRM.dc.html)
+Wrote 125 lines to ..\..\..\CRM.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +138 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\Finance.dc.html)
+Wrote 134 lines to ..\..\..\Finance.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +158 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\Learning.dc.html)
+Wrote 158 lines to ..\..\..\Learning.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +180 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\canvas.json)
+Wrote 23 lines to ..\..\..\canvas.json
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 844 },
+    { "file": "Schedule.dc.html", "x": 470, "y": 0, "w": 390, "h": 844 },
+    { "file": "Progress.dc.html", "x": 940, "y": 0, "w": 390, "h": 844 },
+    { "file": "Exercise.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844 },
+    { "file": "Work.dc.html", "x": 0, "y": 964, "w": 390, "h": 844 },
+    { "file": "CRM.dc.html", "x": 470, "y": 964, "w": 390, "h": 844 },
+    { "file": "Finance.dc.html", "x": 940, "y": 964, "w": 390, "h": 844 },
+    { "file": "Learning.dc.html", "x": 1410, "y": 964, "w": 390, "h": 844 }
+… +13 lines
+
+All 8 screens are written. Now seeding the canvas payload and checking it before publishing.
+
+  Searched for 1 pattern, listed 1 directory
+
+Good, found it directly. Now seeding the canvas.
+
+  Ran 2 shell commands
+
+It checks out. Now let me load the capabilities roster and publish.
+
+● Skill(artifact-capabilities)
+Successfully loaded skill
+
+● Artifact(D:\WORK\PROGRAMPLANNER\lifeplan-app-design.html)
+Published ⧉ https://claude.ai/code/artifact/c58583c1-3ff8-4b8f-8907-45dc918aa714
+
+ออกแบบเสร็จแล้ว — แคนวาส "LifePlan App Design" 8 หน้าจอมือถือ: ⧉ https://claude.ai/code/artifact/c58583c1-3ff8-4b8f-8907-45dc918aa714
+
+สิ่งที่ร่างไว้:
+- หน้าหลัก — วงกลมสรุปความสำเร็จวันนี้ + การ์ดภาพรวมทุกด้าน (สีต่างกันตามหมวด)
+- ตารางเวลา — ไทม์ไลน์รายวัน + แถบสัปดาห์
+- ความคืบหน้า — กราฟคะแนนรายสัปดาห์ + heatmap ความสม่ำเสมอ + badge ความสำเร็จ
+- ออกกำลังกาย, งานประจำ, ลูกค้า/ขายประกัน (CRM), การเงิน, เรียนรู้&พัฒนาตนเอง — แต่ละด้านมีหน้ารายละเอียดของตัวเอง
+
+สมมติฐานที่ใช้: โทนโมเดิร์น สะอาด อบอุ่นเล็กน้อย (off-white + ตัวอักษร Plus Jakarta Sans) แต่ละหมวดชีวิตมีสีประจำตัวของตัวเอง (เขียว=ออกกำลังกาย, น้ำเงิน=งาน, ส้ม=ขายประกัน, ฟ้าอมเขียว=การเงิน, ม่วง=เรียนรู้) เพื่อให้จำง่ายเวลาใช้จริง ตัวเลขในดีไซน์เป็นข้อมูลตัวอย่างทั้งหมด
+
+ในแคนวาสสามารถคลิกเลือก แก้ข้อความ/สี ได้โดยตรง แล้วกด Save เพื่อบันทึก เมื่อพอใจกับดีไซน์แล้ว บอกได้เลยว่าจะให้เริ่มพัฒนาเป็นแอป Flutter จริงต่อ
+
+✻ Baked for 9m 27s · done 6:35 PM · 2 shells still running
+
+❯ ทำ md ก่อน
+
+● Write(D:\WORK\PROGRAMPLANNER\README.md)
+Wrote 109 lines to ..\..\..\README.md
+# LifePlan
+
+แอปวางแผนชีวิตแบบครบวงจร สำหรับ Android และ iOS — รวมการวางแผนและวัดผลทุกด้านของชีวิตไว้ในที่เดียว
+
+**ดีไซน์ UI/UX:** https://claude.ai/code/artifact/c58583c1-3ff8-4b8f-8907-45dc918aa714
+
+---
+
+## 1. ภาพรวมโปรเจกต์
+… +102 lines
+
+สร้าง README.md เรียบร้อยแล้วที่ D:\WORK\PROGRAMPLANNER\README.md สรุปสเปกโปรเจกต์ LifePlan ครบทุกโมดูล (Dashboard, ออกกำลังกาย, งานประจำ, CRM ขายประกัน, การเงิน, เรียนรู้, ตารางเวลา, ความคืบหน้า), ระบบดีไซน์, โครงสร้างการนำทาง, รายการหน้าจอที่ออกแบบแล้ว พร้อมลิงก์ไปยังดีไซน์ และแผนขั้นตอนถัดไป
+
+ต้องการให้แก้ไข/เพิ่มเติมส่วนไหนในเอกสารนี้ไหม หรือพร้อมไปขั้นต่อไป (ออกแบบโครงสร้างข้อมูล/เริ่มโปรเจกต์ Flutter)?
+
+✻ Brewed for 43s · done 6:38 PM · 2 shells still running
+
+❯ บันทึกรูปเก็บไว้ด้วย
+
+● Skill(claude-in-chrome)
+Successfully loaded skill
+
+  Ran 2 shell commands
+
+Chromium is installed. Now I'll write a script to extract each screen's markup and render it to a PNG.
+
+  Made 1 scratchpad edit +43, ran 3 shell commands
+
+All 8 rendered. Let me verify one looks correct and clean up the temp HTML files.
+
+  Read 1 file
+
+Renders correctly. Cleaning up temp files now.
+
+  Ran 1 shell command
+
+บันทึกรูปภาพหน้าจอทั้ง 8 หน้าไว้แล้วที่ D:\WORK\PROGRAMPLANNER\screenshots\:
+
+- dashboard.png — หน้าหลัก
+- schedule.png — ตารางเวลา
+- progress.png — ความคืบหน้า
+- exercise.png — ออกกำลังกาย
+- work.png — งานประจำ
+- crm.png — ลูกค้า & ขายประกัน
+- finance.png — การเงิน
+- learning.png — เรียนรู้ & พัฒนาตนเอง
+
+ไฟล์เป็น PNG ความละเอียดสูง เปิดดูได้โดยตรงจากโฟลเดอร์โปรเจกต์ ไม่ต้องพึ่งลิงก์ออนไลน์
+
+✻ Crunched for 4m 53s · done 6:44 PM · 2 shells still running
+
+❯ หน้า login register มีไหม ผ่าน google
+
+● Write(D:\WORK\PROGRAMPLANNER\Login.dc.html)
+Wrote 95 lines to ..\..\..\Login.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +104 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\Register.dc.html)
+Wrote 108 lines to ..\..\..\Register.dc.html
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700
+;800&display=swap">
+… +120 lines
+
+Now updating canvas.json to add these two screens, then re-seeding and republishing.
+
+  Read 1 file
+
+● Update(D:\WORK\PROGRAMPLANNER\canvas.json)
+Added 3 lines, removed 1 line
+    { "file": "Work.dc.html", "x": 0, "y": 964, "w": 390, "h": 844 },
+    { "file": "CRM.dc.html", "x": 470, "y": 964, "w": 390, "h": 844 },
+    { "file": "Finance.dc.html", "x": 940, "y": 964, "w": 390, "h": 844 },
+    { "file": "Learning.dc.html", "x": 1410, "y": 964, "w": 390, "h": 844 }
+    { "file": "Learning.dc.html", "x": 1410, "y": 964, "w": 390, "h": 844 },
+    { "file": "Login.dc.html", "x": 0, "y": 1928, "w": 390, "h": 844 },
+    { "file": "Register.dc.html", "x": 470, "y": 1928, "w": 390, "h": 844 }
+  ],
+  "annotations": [
+    { "id": "note-home", "x": 0, "y": -80, "w": 390, "text": "หน้าหลัก — ภาพรวมทุกด้าน" },
+
+● Update(D:\WORK\PROGRAMPLANNER\canvas.json)
+Added 3 lines, removed 1 line
+    { "id": "note-work", "x": 0, "y": 884, "w": 390, "text": "งานประจำ" },
+    { "id": "note-crm", "x": 470, "y": 884, "w": 390, "text": "ลูกค้า & ขายประกัน" },
+    { "id": "note-finance", "x": 940, "y": 884, "w": 390, "text": "การเงิน" },
+    { "id": "note-learning", "x": 1410, "y": 884, "w": 390, "text": "เรียนรู้ & พัฒนาตนเอง" }
+    { "id": "note-learning", "x": 1410, "y": 884, "w": 390, "text": "เรียนรู้ & พัฒนาตนเอง" },
+    { "id": "note-login", "x": 0, "y": 1848, "w": 390, "text": "เข้าสู่ระบบ (รวม Google Sign-in)" },
+    { "id": "note-register", "x": 470, "y": 1848, "w": 390, "text": "สมัครสมาชิก (รวม Google Sign-in)" }
+  ],
+  "launch": { "view": "canvas" }
+}
+
+  Ran 1 shell command
+
+● Artifact(D:\WORK\PROGRAMPLANNER\lifeplan-app-design.html)
+Updated ⧉ https://claude.ai/code/artifact/c58583c1-3ff8-4b8f-8907-45dc918aa714
+
+Republished. Now rendering the two new screens to PNG and updating the README.
+
+  Made 1 scratchpad edit +37, read 1 file, ran 1 shell command
+
+Renders correctly with the Google button. Now updating the README to reflect these two new screens.
+
+● Update(D:\WORK\PROGRAMPLANNER\README.md)
+Added 6 lines
+
+## 3. โมดูลหลัก (Feature Modules)
+
+### 3.0 เข้าสู่ระบบ / สมัครสมาชิก (Login / Register)
+- เข้าสู่ระบบด้วยอีเมล + รหัสผ่าน หรือ **เข้าสู่ระบบด้วย Google (Google Sign-In)**
+- สมัครสมาชิกด้วยชื่อ, อีเมล, รหัสผ่าน + ยอมรับข้อกำหนดการใช้งาน หรือสมัครด้วย Google เช่นกัน
+- ลิงก์สลับไปมาระหว่างหน้าเข้าสู่ระบบ/สมัครสมาชิก และลิงก์ "ลืมรหัสผ่าน?"
+- หมายเหตุ: เมื่อพัฒนาจริงบน iOS, App Store กำหนดให้ต้องมี **Sign in with Apple** เป็นอีกทางเลือกด้วยหากมีการเข้าสู่ระบ
+บผ่านบุคคลที่สาม (เช่น Google) — ควรเพิ่มปุ่มนี้ก่อนส่งขึ้น App Store
+
+### 3.1 Dashboard (หน้าหลัก)
+- สรุปความสำเร็จวันนี้ในรูปวงกลม % รวมทุกด้าน
+- สถิติด่วน: วันต่อเนื่อง (streak), งานวันนี้, ความคืบหน้าการออมเดือนนี้
+
+● Update(D:\WORK\PROGRAMPLANNER\README.md)
+Added 14 lines, removed 10 lines
+| เรียนรู้ | ม่วง |
+| ทรงมุม | การ์ด 20px / องค์ประกอบย่อย 14px / ปุ่มวงกลมเต็ม |
+
+## 6. หน้าจอที่ออกแบบแล้ว (8 หน้าจอ)
+## 6. หน้าจอที่ออกแบบแล้ว (10 หน้าจอ)
+
+1. Dashboard (หน้าหลัก)
+2. Schedule (ตารางเวลา)
+3. Progress (ความคืบหน้า)
+4. Exercise (ออกกำลังกาย)
+5. Work (งานประจำ)
+6. CRM (ลูกค้า & ขายประกัน)
+7. Finance (การเงิน)
+8. Learning (เรียนรู้ & พัฒนาตนเอง)
+1. Login (เข้าสู่ระบบ — รวม Google Sign-in)
+2. Register (สมัครสมาชิก — รวม Google Sign-in)
+3. Dashboard (หน้าหลัก)
+4. Schedule (ตารางเวลา)
+5. Progress (ความคืบหน้า)
+6. Exercise (ออกกำลังกาย)
+7. Work (งานประจำ)
+8. CRM (ลูกค้า & ขายประกัน)
+9. Finance (การเงิน)
+10. Learning (เรียนรู้ & พัฒนาตนเอง)
+
+ไฟล์ต้นฉบับของดีไซน์: `Main.dc.html`, `Schedule.dc.html`, `Progress.dc.html`, `Exercise.dc.html`, `Work.dc.
+html`, `CRM.dc.html`, `Finance.dc.html`, `Learning.dc.html`, `canvas.json`
+ไฟล์ต้นฉบับของดีไซน์: `Login.dc.html`, `Register.dc.html`, `Main.dc.html`, `Schedule.dc.html`, `Progress.dc
+.html`, `Exercise.dc.html`, `Work.dc.html`, `CRM.dc.html`, `Finance.dc.html`, `Learning.dc.html`, `can
+vas.json`
+
+ภาพหน้าจอ (PNG) เก็บไว้ที่โฟลเดอร์ `screenshots/`
+
+## 7. แผนขั้นตอนถัดไป
+
+- [x] ออกแบบ UI/UX (mockup) ครบ 8 หน้าจอ
+
+มีแล้วครับ — เพิ่มหน้า เข้าสู่ระบบ (Login) และ สมัครสมาชิก (Register) เข้าไปในดีไซน์ ทั้งสองหน้ามีปุ่ม "ดำเนินการต่อด้วย Google" / "สมัครด้วย Google" พร้อมไอคอน Google มาตรฐาน นอกเหนือจากช่องกรอกอีเมล/รหัสผ่านปกติ
+
+- ดีไซน์อัปเดตแล้วที่ลิงก์เดิม: ⧉ https://claude.ai/code/artifact/c58583c1-3ff8-4b8f-8907-45dc918aa714 (เวอร์ชัน 2)
+- บันทึกรูปเพิ่มไว้ที่ screenshots\login.png และ screenshots\register.png
+- อัปเดต README.md ให้ครอบคลุมหน้านี้แล้ว
+
+ข้อสังเกต: ถ้าจะลงจริงบน iOS App Store — Apple บังคับว่าถ้ามีปุ่ม "Sign in with Google" ต้องมีปุ่ม "Sign in with Apple" ด้วย ผมจดไว้เป็นหมายเหตุใน README แล้ว ต้องการให้ออกแบบปุ่ม Apple Sign-In เพิ่มเข้าไปเลยไหม
+
+✻ Worked for 2m 18s · done 6:48 PM · 2 shells still running
+
+❯ เพิ่มปุ่ม Apple Sign-In ด้วย
+
+  Read 2 files
+
+● Update(D:\WORK\PROGRAMPLANNER\Login.dc.html)
+Added 1 line
+.field{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;background:var
+(--surface);display:flex;flex-direction:row;align-items:center;justify-content:space-between;min-height
+:52px;}
+.btn-primary{background:var(--primary);color:#fff;border-radius:999px;padding:16px;text-align:center;fo
+nt-size:15px;font-weight:700;}
+.btn-google{border:1.5px solid var(--border);background:var(--surface);border-radius:999px;padding:14px
+;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;font-size:14.5px;fo
+nt-weight:700;}
+.btn-apple{background:#000;color:#fff;border-radius:999px;padding:14px;display:flex;flex-direction:row;
+align-items:center;justify-content:center;gap:9px;font-size:14.5px;font-weight:700;}
+.divider-line{flex:1;height:1px;background:var(--border);}
+</style>
+</helmet>
+
+● Update(D:\WORK\PROGRAMPLANNER\Login.dc.html)
+Added 5 lines
+        <p>ดำเนินการต่อด้วย Google</p>
+      </div>
+
+      <div class="btn-apple">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M16.125 12.469c-.02-2.061
+1.687-3.05 1.764-3.098-.964-1.409-2.464-1.602-2.996-1.624-1.275-.13-2.49.75-3.138.75-.649 0-1.65-.732-2
+.713-.712-1.396.02-2.684.812-3.404 2.063-1.452 2.516-.371 6.24 1.043 8.281.692 1.001 1.516 2.123 2.598
+2.083 1.043-.041 1.437-.675 2.698-.675 1.26 0 1.615.675 2.716.653 1.123-.02 1.834-1.019 2.52-2.026.795-
+1.161 1.122-2.286 1.14-2.344-.025-.011-2.185-.839-2.207-3.328zM14.03 5.905c.574-.697.962-1.665.856-2.63
+-.827.033-1.827.55-2.42 1.246-.532.618-.998 1.606-.873 2.552.923.072 1.864-.469 2.437-1.168z"/></svg>
+        <p>ดำเนินการต่อด้วย Apple</p>
+      </div>
+
+    </div>
+
+    <div class="row" style="justify-content:center;gap:6px;padding:28px 0 36px;margin-top:auto">
+
+● Update(D:\WORK\PROGRAMPLANNER\Register.dc.html)
+Added 1 line
+.field{border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;background:var
+(--surface);display:flex;flex-direction:row;align-items:center;justify-content:space-between;min-height
+:52px;}
+.btn-primary{background:var(--primary);color:#fff;border-radius:999px;padding:16px;text-align:center;fo
+nt-size:15px;font-weight:700;}
+.btn-google{border:1.5px solid var(--border);background:var(--surface);border-radius:999px;padding:14px
+;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;font-size:14.5px;fo
+nt-weight:700;}
+.btn-apple{background:#000;color:#fff;border-radius:999px;padding:14px;display:flex;flex-direction:row;
+align-items:center;justify-content:center;gap:9px;font-size:14.5px;font-weight:700;}
+.divider-line{flex:1;height:1px;background:var(--border);}
+.checkbox{width:19px;height:19px;border-radius:6px;border:1.8px solid var(--border);flex-shrink:0;margi
+n-top:1px;}
+</style>
+
+● Update(D:\WORK\PROGRAMPLANNER\Register.dc.html)
+Added 5 lines
+        <p>สมัครด้วย Google</p>
+      </div>
+
+      <div class="btn-apple">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M16.125 12.469c-.02-2.061
+ 1.687-3.05 1.764-3.098-.964-1.409-2.464-1.602-2.996-1.624-1.275-.13-2.49.75-3.138.75-.649 0-1.65-.732
+-2.713-.712-1.396.02-2.684.812-3.404 2.063-1.452 2.516-.371 6.24 1.043 8.281.692 1.001 1.516 2.123 2.5
+98 2.083 1.043-.041 1.437-.675 2.698-.675 1.26 0 1.615.675 2.716.653 1.123-.02 1.834-1.019 2.52-2.026.
+795-1.161 1.122-2.286 1.14-2.344-.025-.011-2.185-.839-2.207-3.328zM14.03 5.905c.574-.697.962-1.665.856
+-2.63-.827.033-1.827.55-2.42 1.246-.532.618-.998 1.606-.873 2.552.923.072 1.864-.469 2.437-1.168z"/></
+svg>
+        <p>สมัครด้วย Apple</p>
+      </div>
+
+    </div>
+
+    <div class="row" style="justify-content:center;gap:6px;padding:24px 0 30px;margin-top:auto">
+
+Now re-seeding, verifying, republishing, and re-rendering screenshots.
+
+  Ran 1 shell command
+
+● Artifact(D:\WORK\PROGRAMPLANNER\lifeplan-app-design.html)
+Updated ⧉ https://claude.ai/code/artifact/c58583c1-3ff8-4b8f-8907-45dc918aa714
+
+  Read 1 file, ran 1 shell command
+
+Fits nicely. Now updating the README to note both providers are done.
+
+● Update(D:\WORK\PROGRAMPLANNER\README.md)
+Added 3 lines, removed 3 lines
+## 3. โมดูลหลัก (Feature Modules)
+
+### 3.0 เข้าสู่ระบบ / สมัครสมาชิก (Login / Register)
+- เข้าสู่ระบบด้วยอีเมล + รหัสผ่าน หรือ **เข้าสู่ระบบด้วย Google (Google Sign-In)**
+- สมัครสมาชิกด้วยชื่อ, อีเมล, รหัสผ่าน + ยอมรับข้อกำหนดการใช้งาน หรือสมัครด้วย Google เช่นกัน
+- เข้าสู่ระบบด้วยอีเมล + รหัสผ่าน หรือเข้าสู่ระบบด้วย **Google Sign-In** / **Sign in with Apple**
+- สมัครสมาชิกด้วยชื่อ, อีเมล, รหัสผ่าน + ยอมรับข้อกำหนดการใช้งาน หรือสมัครผ่าน Google/Apple เช่นกัน
+- ลิงก์สลับไปมาระหว่างหน้าเข้าสู่ระบบ/สมัครสมาชิก และลิงก์ "ลืมรหัสผ่าน?"
+- หมายเหตุ: เมื่อพัฒนาจริงบน iOS, App Store กำหนดให้ต้องมี **Sign in with Apple** เป็นอีกทางเลือกด้วยหากมีการเข้าสู่ระบ
+บผ่านบุคคลที่สาม (เช่น Google) — ควรเพิ่มปุ่มนี้ก่อนส่งขึ้น App Store
+- ปุ่ม Sign in with Apple ใช้สไตล์ปุ่มดำมาตรฐานตาม Apple Human Interface Guidelines — จำเป็นสำหรับการส่งขึ้น App S
+tore เพราะมีการเข้าสู่ระบบผ่านบุคคลที่สาม (Google) อยู่แล้ว
+
+### 3.1 Dashboard (หน้าหลัก)
+- สรุปความสำเร็จวันนี้ในรูปวงกลม % รวมทุกด้าน
+
+Done. เพิ่มปุ่ม Sign in with Apple (สไตล์ปุ่มดำมาตรฐานของ Apple) ในทั้งหน้า Login และ Register เรียบร้อยแล้ว ต่อจากปุ่ม Google
+
+- ดีไซน์อัปเดตแล้วที่ลิงก์เดิม (เวอร์ชัน 3): ⧉ https://claude.ai/code/artifact/c58583c1-3ff8-4b8f-8907-45dc918aa714
+- อัปเดตรูป screenshots\login.png และ screenshots\register.png แล้ว
+- อัปเดต README ให้ตรงกับดีไซน์ล่าสุดแล้ว
+
+ตอนนี้หน้า Auth มีครบ 3 ทาง: อีเมล/รหัสผ่าน, Google, Apple — พร้อมไปขั้นตอนถัดไป (ออกแบบโครงสร้างข้อมูล/เริ่มโปรเจกต์ Flutter) เมื่อพร้อมครับ
+
+✻ Crunched for 1m 38s · done 6:52 PM · 2 shells still running
+
+❯ เริ่มออกแบบโครงสร้างข้อมูลและเริ่มโปรเจกต์ Flutter
+
+  Ran 2 shell commands
+
+● User answered Claude's questions:
+· เครื่องนี้ยังไม่ได้ติดตั้ง Flutter SDK ไว้ ต้องการให้ทำอย่างไร? → ติดตั้ง Flutter SDK ให้เลย (Recommended)
+
+  Ran 2 shell commands
+
+Plenty of space on D:. Cloning the Flutter SDK there now.
+
+  Ran 1 shell command
+
+Cloned successfully. Now adding Flutter to PATH and running flutter doctor to finish setup.
+
+  Ran 1 shell command
+
+While Flutter finishes its first-run setup in the background, I'll design the data model.
+
+● Write(D:\WORK\PROGRAMPLANNER\DATA_MODEL.md)
+Wrote 211 lines to ..\..\..\DATA_MODEL.md
+# LifePlan — โครงสร้างข้อมูล (Data Model)
+
+เอกสารนี้กำหนดโครงสร้างข้อมูล (entities, fields, ความสัมพันธ์) สำหรับแอป LifePlan ใช้เป็นแม่แบบสำหรับ Dart model class
+es ฝั่ง Flutter และสคีมาฐานข้อมูล/บริการหลังบ้านในอนาคต
+
+อื่น
+
+---
+
+## 1. User (ผู้ใช้)
+… +207 lines
+
+Now let's check on the Flutter setup progress.
+
+  Read 1 file
+
+Still finishing the flutter tool build. I'll wait for it to complete.
+
+  Read 1 file, ran 1 shell command
+
+Setup is still building the Flutter tool snapshot (a one-time step). I'll wait for it to finish before scaffolding the project.
+
+  Read 1 file
+
+● Background command "Verify flutter binary runs and check version" completed (exit code 0)
+
+The original flutter --version task finished successfully. Let me check its result.
+
+  Read 1 file
+
+Flutter 3.47.4 is installed. Now creating the project.
+
+  Read 1 file, ran 1 shell command
+
+● Update(D:\WORK\PROGRAMPLANNER\lifeplan_app\pubspec.yaml)
+Added 7 lines
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+
+  # Plus Jakarta Sans (matches the LifePlan UI design)
+  google_fonts: ^6.2.1
+  # Brand icons for Google / Apple sign-in buttons
+  font_awesome_flutter: ^10.7.0
+  # Date formatting for schedule / progress screens
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  Ran 1 shell command
+
+Now let's build out the app. Starting with theme, models, and mock data.
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\theme\app_colors.dart)
+Wrote 35 lines to ..\..\lib\theme\app_colors.dart
+import 'package:flutter/material.dart';
+
+/// Design tokens shared across the app. Mirrors the color system used in the
+/// UI mockups (see the design canvas / DATA_MODEL.md at the project root).
+class AppColors {
+  AppColors._();
+
+  static const bg = Color(0xFFFAF9F6);
+  static const surface = Color(0xFFFFFFFF);
+  static const surface2 = Color(0xFFF4F3F0);
+… +25 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\theme\app_theme.dart)
+Wrote 36 lines to ..\..\lib\theme\app_theme.dart
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'app_colors.dart';
+
+class AppTheme {
+  AppTheme._();
+
+  static ThemeData get light {
+    final base = ThemeData(
+… +26 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\life_category.dart)
+Wrote 42 lines to ..\..\lib\models\life_category.dart
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+import '../theme/app_colors.dart';
+
+/// The life domains LifePlan tracks. Shared across dashboard, schedule and
+/// progress so every module keeps one consistent color + icon.
+enum LifeCategory { exercise, work, crm, finance, learning }
+
+extension LifeCategoryX on LifeCategory {
+… +32 lines
+
+Now the remaining model classes.
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\user_profile.dart)
+Wrote 17 lines to ..\..\lib\models\user_profile.dart
+enum AuthProvider { email, google, apple }
+
+class UserProfile {
+  final String id;
+  final String name;
+  final String email;
+  final AuthProvider authProvider;
+  final int dailyGoalMinutes;
+
+  const UserProfile({
+… +7 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\exercise_item.dart)
+Wrote 21 lines to ..\..\lib\models\exercise_item.dart
+enum ExerciseType { run, strength, swim, cycle, hike, stretch, other }
+
+class ExercisePlanItem {
+  final String id;
+  final String title;
+  final ExerciseType type;
+  final String dayLabel;
+  final int durationMinutes;
+  final bool isDone;
+  final bool isToday;
+… +11 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\work_task.dart)
+Wrote 21 lines to ..\..\lib\models\work_task.dart
+enum TaskStatus { todo, inProgress, done }
+
+enum TaskPriority { urgent, normal, low }
+
+class WorkTask {
+  final String id;
+  final String title;
+  final TaskStatus status;
+  final TaskPriority priority;
+  final String? dueLabel;
+… +11 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\client.dart)
+Wrote 19 lines to ..\..\lib\models\client.dart
+enum ClientStage { newLead, contacted, proposalSent, followUp, closedWon }
+
+class Client {
+  final String id;
+  final String name;
+  final String initials;
+  final String policyLabel;
+  final ClientStage stage;
+  final String statusLabel;
+… +9 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\finance_transaction.dart)
+Wrote 29 lines to ..\..\lib\models\finance_transaction.dart
+enum TransactionType { income, expense }
+
+class FinanceTransaction {
+  final String id;
+  final String title;
+  final String dateLabel;
+  final double amount;
+  final TransactionType type;
+
+  const FinanceTransaction({
+… +19 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\skill_track.dart)
+Wrote 15 lines to ..\..\lib\models\skill_track.dart
+class SkillTrack {
+  final String id;
+  final String name;
+  final String subtitle;
+  final int progressPercent;
+  final bool isPrimary;
+
+  const SkillTrack({
+    required this.id,
+    required this.name,
+… +5 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\schedule_event.dart)
+Wrote 17 lines to ..\..\lib\models\schedule_event.dart
+import '../models/life_category.dart';
+
+class ScheduleEvent {
+  final String id;
+  final String time;
+  final String title;
+  final String? subtitle;
+  final LifeCategory category;
+
+  const ScheduleEvent({
+… +7 lines
+
+Now the mock data file that feeds all screens.
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\data\mock_data.dart)
+Wrote 258 lines to ..\..\lib\data\mock_data.dart
+import '../models/client.dart';
+import '../models/exercise_item.dart';
+import '../models/finance_transaction.dart';
+import '../models/life_category.dart';
+import '../models/schedule_event.dart';
+import '../models/skill_track.dart';
+import '../models/user_profile.dart';
+import '../models/work_task.dart';
+
+/// Static sample data so every screen has something real to render before a
+… +248 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\widgets\progress_track.dart)
+Wrote 32 lines to ..\..\lib\widgets\progress_track.dart
+import 'package:flutter/material.dart';
+
+import '../theme/app_colors.dart';
+
+/// A thin rounded progress bar matching the design system.
+class ProgressTrack extends StatelessWidget {
+  final double value; // 0.0 - 1.0
+  final Color color;
+  final Color? trackColor;
+  final double height;
+… +22 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\widgets\section_heading.dart)
+Wrote 32 lines to ..\..\lib\widgets\section_heading.dart
+import 'package:flutter/material.dart';
+
+import '../theme/app_colors.dart';
+
+class SectionHeading extends StatelessWidget {
+  final String title;
+  final String? action;
+  final VoidCallback? onAction;
+
+  const SectionHeading({super.key, required this.title, this.action, this.onAction});
+… +22 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\widgets\app_card.dart)
+Wrote 33 lines to ..\..\lib\widgets\app_card.dart
+import 'package:flutter/material.dart';
+
+import '../theme/app_colors.dart';
+
+/// Standard white/soft card container reused across every screen.
+class AppCard extends StatelessWidget {
+  final Widget child;
+  final Color? color;
+  final EdgeInsetsGeometry padding;
+  final Color? borderColor;
+… +23 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\widgets\icon_tile.dart)
+Wrote 30 lines to ..\..\lib\widgets\icon_tile.dart
+import 'package:flutter/material.dart';
+
+/// A rounded-square icon badge, used for module cards and list rows.
+class IconTile extends StatelessWidget {
+  final IconData icon;
+  final Color background;
+  final Color foreground;
+  final double size;
+  final double iconSize;
+… +20 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\widgets\back_button_circle.dart)
+Wrote 21 lines to ..\..\lib\widgets\back_button_circle.dart
+import 'package:flutter/material.dart';
+
+import '../theme/app_colors.dart';
+
+class BackButtonCircle extends StatelessWidget {
+  const BackButtonCircle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+… +11 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\widgets\auth_widgets.dart)
+Wrote 152 lines to ..\..\lib\widgets\auth_widgets.dart
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+import '../theme/app_colors.dart';
+
+/// Text field styled to match the Login / Register mockups.
+class AuthField extends StatelessWidget {
+  final String label;
+  final String hint;
+  final bool obscureText;
+… +146 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\auth\login_screen.dart)
+Wrote 86 lines to ..\..\lib\screens\auth\login_screen.dart
+import 'package:flutter/material.dart';
+
+import '../../theme/app_colors.dart';
+import '../../widgets/auth_widgets.dart';
+import '../root_shell.dart';
+import 'register_screen.dart';
+
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
+… +82 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\auth\register_screen.dart)
+Wrote 115 lines to ..\..\lib\screens\auth\register_screen.dart
+import 'package:flutter/material.dart';
+
+import '../../theme/app_colors.dart';
+import '../../widgets/auth_widgets.dart';
+import '../../widgets/back_button_circle.dart';
+import '../root_shell.dart';
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+… +111 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\root_shell.dart)
+Wrote 82 lines to ..\..\lib\screens\root_shell.dart
+import 'package:flutter/material.dart';
+
+import '../theme/app_colors.dart';
+import 'dashboard_screen.dart';
+import 'profile_screen.dart';
+import 'progress_screen.dart';
+import 'schedule_screen.dart';
+
+/// Bottom-nav shell: หน้าหลัก / ตารางเวลา / ความคืบหน้า / โปรไฟล์.
+class RootShell extends StatefulWidget {
+… +72 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\dashboard_screen.dart)
+Wrote 273 lines to ..\..\lib\screens\dashboard_screen.dart
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../models/life_category.dart';
+import '../theme/app_colors.dart';
+import '../widgets/app_card.dart';
+import '../widgets/icon_tile.dart';
+import '../widgets/progress_track.dart';
+import '../widgets/section_heading.dart';
+import 'crm_screen.dart';
+… +281 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\schedule_screen.dart)
+Wrote 133 lines to ..\..\lib\screens\schedule_screen.dart
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../theme/app_colors.dart';
+
+class ScheduleScreen extends StatelessWidget {
+  const ScheduleScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+… +136 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\progress_screen.dart)
+Wrote 218 lines to ..\..\lib\screens\progress_screen.dart
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../models/life_category.dart';
+import '../theme/app_colors.dart';
+import '../widgets/app_card.dart';
+import '../widgets/progress_track.dart';
+import '../widgets/section_heading.dart';
+
+class ProgressScreen extends StatelessWidget {
+… +223 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\profile_screen.dart)
+Wrote 105 lines to ..\..\lib\screens\profile_screen.dart
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../theme/app_colors.dart';
+import '../widgets/app_card.dart';
+import 'auth/login_screen.dart';
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+… +96 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\exercise_screen.dart)
+Wrote 165 lines to ..\..\lib\screens\exercise_screen.dart
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../models/life_category.dart';
+import '../theme/app_colors.dart';
+import '../widgets/back_button_circle.dart';
+
+class ExerciseScreen extends StatelessWidget {
+  const ExerciseScreen({super.key});
+… +166 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\work_screen.dart)
+Wrote 170 lines to ..\..\lib\screens\work_screen.dart
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../models/work_task.dart';
+import '../theme/app_colors.dart';
+import '../widgets/back_button_circle.dart';
+import '../widgets/progress_track.dart';
+
+class WorkScreen extends StatelessWidget {
+  const WorkScreen({super.key});
+… +172 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\crm_screen.dart)
+Wrote 173 lines to ..\..\lib\screens\crm_screen.dart
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../models/client.dart';
+import '../theme/app_colors.dart';
+import '../widgets/back_button_circle.dart';
+import '../widgets/progress_track.dart';
+
+class CrmScreen extends StatelessWidget {
+  const CrmScreen({super.key});
+… +171 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\finance_screen.dart)
+Wrote 193 lines to ..\..\lib\screens\finance_screen.dart
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../models/finance_transaction.dart';
+import '../theme/app_colors.dart';
+import '../widgets/app_card.dart';
+import '../widgets/back_button_circle.dart';
+import '../widgets/progress_track.dart';
+import '../widgets/section_heading.dart';
+… +196 lines
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\learning_screen.dart)
+Wrote 164 lines to ..\..\lib\screens\learning_screen.dart
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../models/skill_track.dart';
+import '../theme/app_colors.dart';
+import '../widgets/app_card.dart';
+import '../widgets/back_button_circle.dart';
+import '../widgets/icon_tile.dart';
+import '../widgets/progress_track.dart';
+import '../widgets/section_heading.dart';
+… +165 lines
+
+Now let's update main.dart to wire everything together.
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\main.dart)
+Added 10 lines, removed 110 lines
+import 'package:flutter/material.dart';
+
+import 'screens/auth/login_screen.dart';
+import 'theme/app_theme.dart';
+
+void main() {
+  runApp(const MyApp());
+  runApp(const LifePlanApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+class LifePlanApp extends StatelessWidget {
+  const LifePlanApp({super.key});
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        // This is the theme of your application.
+        //
+        // TRY THIS: Try running your application with "flutter run". You'll see
+        // the application has a purple toolbar. Then, without quitting the app,
+        // try changing the seedColor in the colorScheme below to Colors.green
+        // and then invoke "hot reload" (save your changes or press the "hot
+        // reload" button in a Flutter-supported IDE, or press "r" if you used
+        // the command line to start the app).
+        //
+        // Notice that the counter didn't reset back to zero; the application
+        // state is not lost during the reload. To reset the state, use hot
+        // restart instead.
+        //
+        // This works for code too, not just values: Most code changes can be
+        // tested with just a hot reload.
+        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+      ),
+      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'LifePlan',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      home: const LoginScreen(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+  // This widget is the home page of your application. It is stateful, meaning
+  // that it has a State object (defined below) that contains fields that affect
+  // how it looks.
+
+  // This class is the configuration for the state. It holds the values (in this
+  // case the title) provided by the parent (in this case the App widget) and
+  // used by the build method of the State. Fields in a Widget subclass are
+  // always marked "final".
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
+
+  void _incrementCounter() {
+    setState(() {
+      // This call to setState tells the Flutter framework that something has
+      // changed in this State, which causes it to rerun the build method below
+      // so that the display can reflect the updated values. If we changed
+      // _counter without calling setState(), then the build method would not be
+      // called again, and so nothing would appear to happen.
+      _counter++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // This method is rerun every time setState is called, for instance as done
+    // by the _incrementCounter method above.
+    //
+    // The Flutter framework has been optimized to make rerunning build methods
+    // fast, so that you can just rebuild anything that needs updating rather
+    // than having to individually change instances of widgets.
+    return Scaffold(
+      appBar: AppBar(
+        // TRY THIS: Try changing the color here to a specific color (to
+        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
+        // change color while the other colors stay the same.
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Text(widget.title),
+      ),
+      body: Center(
+        // Center is a layout widget. It takes a single child and positions it
+        // in the middle of the parent.
+        child: Column(
+          // Column is also a layout widget. It takes a list of children and
+          // arranges them vertically. By default, it sizes itself to fit its
+          // children horizontally, and tries to be as tall as its parent.
+          //
+          // Column has various properties to control how it sizes itself and
+          // how it positions its children. Here we use mainAxisAlignment to
+          // center the children vertically; the main axis here is the vertical
+          // axis because Columns are vertical (the cross axis would be
+          // horizontal).
+          //
+          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+          // action in the IDE, or press "p" in the console), to see the
+          // wireframe for each widget.
+          mainAxisAlignment: .center,
+          children: [
+            const Text('You have pushed the button this many times:'),
+            Text(
+              '$_counter',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+  Read 1 file
+
+● Write(D:\WORK\PROGRAMPLANNER\lifeplan_app\test\widget_test.dart)
+Added 13 lines, removed 19 lines
+// This is a basic Flutter widget test.
+//
+// To perform an interaction with a widget in your test, use the WidgetTester
+// utility in the flutter_test package. For example, you can send tap and scroll
+// gestures. You can also use WidgetTester to find child widgets in the widget
+// tree, read text, and verify that the values of widget properties are correct.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:lifeplan_app/main.dart';
+
+void main() {
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const MyApp());
+  testWidgets('App boots to the login screen', (WidgetTester tester) async {
+    await tester.pumpWidget(const LifePlanApp());
+    await tester.pumpAndSettle();
+
+    // Verify that our counter starts at 0.
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
+    expect(find.text('LifePlan'), findsOneWidget);
+    expect(find.text('เข้าสู่ระบบ'), findsWidgets);
+  });
+
+    // Tap the '+' icon and trigger a frame.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
+  testWidgets('Tapping continue navigates to the dashboard', (WidgetTester tester) async {
+    await tester.pumpWidget(const LifePlanApp());
+    await tester.pumpAndSettle();
+
+    // Verify that our counter has incremented.
+    expect(find.text('0'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ElevatedButton, 'เข้าสู่ระบบ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ภาพรวมวันนี้'), findsOneWidget);
+  });
+}
+
+Now let's run flutter pub get and flutter analyze to catch errors.
+
+  Ran 2 shell commands
+
+● Update(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\screens\schedule_screen.dart)
+Added 1 line
+import 'package:flutter/material.dart';
+
+import '../data/mock_data.dart';
+import '../models/life_category.dart';
+import '../theme/app_colors.dart';
+
+class ScheduleScreen extends StatelessWidget {
+
+  Ran 1 shell command
+
+Clean. Now let's run the widget tests to make sure the app actually boots and navigates correctly.
+
+  Ran 1 shell command
+
+● Update(D:\WORK\PROGRAMPLANNER\lifeplan_app\pubspec.yaml)
+Added 1 line, removed 1 line
+  # Plus Jakarta Sans (matches the LifePlan UI design)
+  google_fonts: ^6.2.1
+  # Brand icons for Google / Apple sign-in buttons
+  font_awesome_flutter: ^10.7.0
+  font_awesome_flutter: ^11.0.0
+  # Date formatting for schedule / progress screens
+  intl: ^0.19.0
+
+
+  Ran 1 shell command
+
+● Update(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\life_category.dart)
+Removed 1 line
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+import '../theme/app_colors.dart';
+
+
+● Update(D:\WORK\PROGRAMPLANNER\lifeplan_app\lib\models\life_category.dart)
+Added 5 lines, removed 5 lines
+      };
+
+  IconData get icon => switch (this) {
+        LifeCategory.exercise => FontAwesomeIcons.personRunning,
+        LifeCategory.work => FontAwesomeIcons.briefcase,
+        LifeCategory.crm => FontAwesomeIcons.userGroup,
+        LifeCategory.finance => FontAwesomeIcons.wallet,
+        LifeCategory.learning => FontAwesomeIcons.bookOpen,
+        LifeCategory.exercise => Icons.directions_run_rounded,
+        LifeCategory.work => Icons.work_rounded,
+        LifeCategory.crm => Icons.groups_rounded,
+        LifeCategory.finance => Icons.account_balance_wallet_rounded,
+        LifeCategory.learning => Icons.menu_book_rounded,
+      };
+}
+
+  Ran 4 shell commands
+
+Build succeeded. Now serving it and taking a screenshot with Playwright to verify it actually renders.
+
+  Made 2 scratchpad edits +52, read 3 files, ran 3 shell commands
+
+Excellent — navigation works, the app is live and faithful to the design. Let me check the Progress tab too, then click into a module detail screen.
+
+  Made 1 scratchpad edit +19, read 2 files, ran 1 shell command
+
+Full working navigation confirmed end-to-end. Let me stop the local server, clean up temp files, and update the README.
+
+  Ran 2 shell commands
+
+Now updating the README with the Flutter project status.
+
+● Update(D:\WORK\PROGRAMPLANNER\README.md)
+Added 2 lines, removed 2 lines
+|---|---|
+| ชื่อแอป | LifePlan |
+| แพลตฟอร์ม | Android + iOS (แอปเดียวใช้ได้ทั้งสองระบบ) |
+| เทคโนโลยี | Flutter (Dart) |
+| สถานะ | ขั้นตอนออกแบบ UI/UX เสร็จแล้ว — ยังไม่เริ่มพัฒนาโค้ด |
+| เทคโนโลยี | Flutter (Dart) — โปรเจกต์อยู่ที่ `lifeplan_app/` |
+| สถานะ | ออกแบบ UI/UX เสร็จแล้ว + สร้างโปรเจกต์ Flutter พร้อม UI ทั้ง 10 หน้าจอ (ข้อมูล mock) วิเคราะห์และเทสต์ผ่านแ
+ล้ว |
+
+## 2. เป้าหมายของแอป
+
+
+● Update(D:\WORK\PROGRAMPLANNER\README.md)
+Added 26 lines, removed 7 lines
+
+ภาพหน้าจอ (PNG) เก็บไว้ที่โฟลเดอร์ `screenshots/`
+
+## 7. แผนขั้นตอนถัดไป
+## 7. โปรเจกต์ Flutter (`lifeplan_app/`)
+
+- [x] ออกแบบ UI/UX (mockup) ครบ 8 หน้าจอ
+- [ ] รีวิว/ปรับดีไซน์ตามฟีดแบ็ก
+- [ ] ออกแบบโครงสร้างข้อมูล (data model) และสถาปัตยกรรมแอป Flutter
+- [ ] ตั้งค่าโปรเจกต์ Flutter (state management, การจัดเก็บข้อมูล, การนำทาง)
+- [ ] พัฒนาแต่ละโมดูลตามลำดับความสำคัญ
+- [ ] ทดสอบบน Android และ iOS
+- ติดตั้ง Flutter SDK (stable channel) ไว้ที่ `D:\flutter` บนเครื่องนี้แล้ว
+- สร้างโปรเจกต์ด้วย `flutter create` และต่อเติม UI ทั้ง 10 หน้าจอ (Login, Register, Dashboard, Schedule, Progr
+ess, Exercise, Work, CRM, Finance, Learning) รวมถึงหน้า Profile placeholder
+- ใช้ข้อมูลจำลอง (`lib/data/mock_data.dart`) ตามโครงสร้างใน `DATA_MODEL.md` — ยังไม่เชื่อมฐานข้อมูล/บริการหลังบ้านจ
+ริง
+- ระบบนำทาง: Login/Register → RootShell (bottom nav 4 แท็บ) → push เข้าหน้ารายละเอียดแต่ละโมดูลจากการ์ดในหน้าห
+ลัก
+- ธีม/สี/ฟอนต์ (Plus Jakarta Sans ผ่าน `google_fonts`) กำหนดไว้ที่ `lib/theme/`
+- ตรวจสอบแล้วว่า **`flutter analyze` ไม่มี error** และ **`flutter test` ผ่านทั้งหมด**, ทดลองรันจริงผ่าน `flutter
+ build web` แล้วเปิดดู ยืนยันว่าทุกหน้าและการนำทางทำงานถูกต้องตรงกับดีไซน์
+
+### วิธีรันโปรเจกต์
+```bash
+cd lifeplan_app
+flutter pub get
+flutter run          # เลือกอุปกรณ์ Android/iOS/emulator ที่เชื่อมต่อ
+```
+> เครื่องนี้ยังไม่มี Android SDK / Xcode ให้ build เป็น .apk/.ipa ได้โดยตรง — ต้องติดตั้งเพิ่มเมื่อพร้อม build ลงเครื่องจริง
+หรือ emulator
+
+## 8. แผนขั้นตอนถัดไป
+
+- [x] ออกแบบ UI/UX (mockup) ครบ 10 หน้าจอ (รวม Login/Register + Google/Apple Sign-in)
+- [x] ออกแบบโครงสร้างข้อมูล (`DATA_MODEL.md`)
+- [x] สร้างโปรเจกต์ Flutter พร้อม UI ทุกหน้าจอด้วยข้อมูลจำลอง
+- [ ] ติดตั้ง Android SDK / Xcode เพื่อรันบนอุปกรณ์จริงหรือ emulator
+- [ ] เชื่อมระบบยืนยันตัวตนจริง (Firebase Auth / อื่น ๆ) สำหรับ Email, Google, Apple Sign-in
+- [ ] เชื่อมฐานข้อมูลจริง (local storage เช่น Hive/sqflite ก่อน แล้วค่อย sync บนคลาวด์)
+- [ ] ทำให้ฟอร์ม/ปุ่ม/เช็คลิสต์ในแต่ละโมดูลบันทึกข้อมูลได้จริง (ตอนนี้เป็น static UI)
+- [ ] ทดสอบบน Android และ iOS จริง
+
+  Listed 1 directory
+
+These serve as good proof that the running app matches the design. Let's note this in the README and wrap up.
+
+● Update(D:\WORK\PROGRAMPLANNER\README.md)
+Added 1 line, removed 1 line
+
+ไฟล์ต้นฉบับของดีไซน์: `Login.dc.html`, `Register.dc.html`, `Main.dc.html`, `Schedule.dc.html`, `Progress.dc
+.html`, `Exercise.dc.html`, `Work.dc.html`, `CRM.dc.html`, `Finance.dc.html`, `Learning.dc.html`, `can
+vas.json`
+
+ภาพหน้าจอ (PNG) เก็บไว้ที่โฟลเดอร์ `screenshots/`
+ภาพหน้าจอของดีไซน์ (PNG) เก็บไว้ที่โฟลเดอร์ `screenshots/` — ไฟล์ที่ขึ้นต้นด้วย `flutter_` เป็นภาพที่แคปจากแอป Flutter ที่
+รันจริง (ผ่าน `flutter build web`) ใช้ยืนยันว่า UI ตรงกับดีไซน์
+
+## 7. โปรเจกต์ Flutter (`lifeplan_app/`)
+
+
+สรุปงานที่ทำเสร็จ
+
+1. โครงสร้างข้อมูล — DATA_MODEL.md กำหนด entity ทั้งหมด (User, Exercise, Work, Client/CRM, Finance, Learning, Schedule, Progress) พร้อมความสัมพันธ์และแนวทางฝั่ง Flutter
+
+2. โปรเจกต์ Flutter — ติดตั้ง Flutter SDK บนเครื่อง แล้วสร้างแอปที่ D:\WORK\PROGRAMPLANNER\lifeplan_app\:
+- ครบทั้ง 10 หน้าจอตามดีไซน์ (Login/Register พร้อม Google+Apple Sign-in, Dashboard, Schedule, Progress, Exercise, Work, CRM, Finance, Learning + Profile)
+- ระบบนำทางแบบ bottom nav + push เข้าหน้ารายละเอียด ทำงานได้จริง
+- ธีมสี/ฟอนต์ตรงกับดีไซน์ (Plus Jakarta Sans)
+- ข้อมูลจำลองตาม data model ที่ออกแบบไว้
+
+3. ตรวจสอบแล้วจริง ไม่ใช่แค่เขียนโค้ดทิ้งไว้ — flutter analyze ผ่านไม่มี error, flutter test ผ่านทั้งหมด, และ build+รันจริงผ่านเบราว์เซอร์เพื่อคลิกทดสอบการนำทาง (ภาพ flutter_*.png ใน screenshots/)
+
+สิ่งที่ยังไม่ทำ: ยังไม่มี Android SDK/Xcode บนเครื่องนี้ให้ build เป็น .apk/.ipa จริง, ยังไม่เชื่อมระบบ authentication/ฐานข้อมูลจริง (ตอนนี้เป็น UI + mock data)
+
+ต้องการให้ทำต่อส่วนไหน — เชื่อมฐานข้อมูล local (Hive), ทำฟอร์ม/ปุ่มให้บันทึกข้อมูลได้จริง, หรือติดตั้ง Android SDK เพื่อรันบน emulator?
+
+✻ Churned for 26m 54s · done 7:21 PM · 2 shells still running
+
+※ recap: Building the LifePlan life-planning app: design done, Flutter project scaffolded with all 10 screens working on mock data (analyze/tests pass). Next: pick what to wire up next — local database, working forms, or Android SDK setup. (disable recaps in /config)
+
+───────────────────────────

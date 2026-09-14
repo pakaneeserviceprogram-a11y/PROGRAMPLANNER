@@ -1,0 +1,113 @@
+# LifePlan — Handoff / เอกสารต่องาน
+
+อัปเดตล่าสุด: 2026-09-14 — ใช้ไฟล์นี้เพื่อกลับมาทำงานต่อได้เร็ว ไม่ต้องไล่อ่านทั้งบทสนทนาใหม่
+
+ดูภาพรวมโปรเจกต์/ฟีเจอร์ที่ `README.md`, โครงสร้างข้อมูลที่ `DATA_MODEL.md` — ไฟล์นี้เน้นเฉพาะ "จะทำต่อยังไง"
+
+---
+
+## 1. คำสั่งเริ่มงานต่อ (copy-paste ได้เลย)
+
+```bash
+cd D:/WORK/PROGRAMPLANNER/lifeplan_app
+
+# ตั้ง environment (ถ้าเปิด terminal ใหม่ที่ยังไม่มี persistent PATH)
+export JAVA_HOME="C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot"
+export ANDROID_HOME="D:\android-sdk"
+export ANDROID_SDK_ROOT="D:\android-sdk"
+export PATH="/d/flutter/bin:$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+flutter pub get
+flutter analyze                 # ต้องขึ้น "No issues found!"
+flutter test                    # ต้องผ่านทั้ง 10 tests
+
+# รันบนเว็บ (เร็วสุดสำหรับเช็ค UI)
+flutter build web --release
+cd build/web && python -m http.server 8080   # แล้วเปิด http://localhost:8080
+
+# รันบน Android emulator
+flutter emulators --launch lifeplan_avd      # บูตครั้งแรกช้า ~1-2 นาที
+flutter run -d emulator-5554
+```
+
+หมายเหตุ: `ANDROID_HOME`, `ANDROID_SDK_ROOT`, `JAVA_HOME` และการเพิ่ม PATH ถูกตั้งเป็น **persistent user environment variable** ไว้แล้ว (`[Environment]::SetEnvironmentVariable(..., 'User')`) — เทอร์มินัล **ใหม่** (โดยเฉพาะ PowerShell ที่เปิดใหม่) ควรเห็นค่าพวกนี้อัตโนมัติโดยไม่ต้อง export เอง แต่ Git Bash session เดิมที่เปิดค้างจะไม่เห็นจนกว่าจะเปิดใหม่
+
+---
+
+## 2. Environment ที่ติดตั้งไว้บนเครื่องนี้
+
+| อย่าง | ที่อยู่ / เวอร์ชัน |
+|---|---|
+| Flutter SDK | `D:\flutter` (stable, 3.47.4) — ติดตั้งด้วย `git clone -b stable --depth 1` |
+| JDK | `C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot` (Temurin 17, ผ่าน winget) |
+| Android SDK | `D:\android-sdk` (command-line tools เท่านั้น ไม่ใช่ Android Studio เต็ม) |
+| AVD | `lifeplan_avd` — Android 14 (API 34), Pixel 6, google_apis x86_64 |
+| Playwright (สำหรับแคปภาพ/ทดสอบ) | ติดตั้งไว้ที่ scratchpad ของ session เดิม ถ้าต้องใช้ใหม่ให้ `npm install playwright` ใน scratchpad แล้ว `npx playwright install chromium` |
+
+ยังไม่ได้ติดตั้ง: Xcode (ต้องใช้ Mac สำหรับ iOS), Visual Studio C++ workload (ต้องใช้ถ้าจะ build Windows desktop .exe — ไม่จำเป็นสำหรับ Android/iOS/Web)
+
+---
+
+## 3. โครงสร้างโปรเจกต์ (`lifeplan_app/lib/`)
+
+```
+lib/
+  main.dart                     ← entry point, เช็ค session แล้วเข้า Login หรือ RootShell
+  theme/                        ← สี, ฟอนต์ (Plus Jakarta Sans)
+  models/                       ← data class ของแต่ละ entity (มี toMap/fromMap)
+  data/
+    hive_boxes.dart             ← ชื่อ Hive box ทั้งหมด + init()
+    hive_repository.dart        ← generic CRUD wrapper
+    repositories/                ← repository เฉพาะแต่ละโมดูล (ต่อยอด/เพิ่ม field ที่นี่)
+    seed_data.dart               ← ข้อมูลตัวอย่างตอนติดตั้งครั้งแรก
+    insights.dart                ← คำนวณ % ความคืบหน้าแต่ละด้านจากข้อมูลจริง
+    targets.dart                 ← ค่าเป้าหมายคงที่ (ออม/ยอดขาย/ครั้งออกกำลังกาย) — ควรย้ายเป็นตั้งค่าได้ในอนาคต
+  screens/                      ← 1 ไฟล์ต่อ 1 หน้าจอ, ชื่อไฟล์ตรงกับหน้าจอ
+  widgets/                      ← component ใช้ร่วม (การ์ด, ปุ่ม, ฟอร์ม, progress bar)
+
+test/
+  repository_test.dart          ← unit test ของ Hive persistence (เชื่อถือได้, เร็ว)
+  widget_test.dart              ← smoke test หน้า Login เท่านั้น (ดูข้อ 5 ว่าทำไมไม่มี test แบบ tap-through)
+```
+
+**เพิ่มโมดูลใหม่**: เพิ่ม model → เพิ่ม box name ใน `hive_boxes.dart` → สร้าง repository ต่อยอดจาก `HiveRepository<T>` → ใช้ `ValueListenableBuilder`/`AnimatedBuilder(animation: Listenable.merge([...repo.listenable()]))` ในหน้าจอเพื่อ auto-rebuild เมื่อข้อมูลเปลี่ยน
+
+---
+
+## 4. ปัญหาที่เจอแล้วและวิธีแก้ (กันเสียเวลาแก้ซ้ำ)
+
+1. **Android cmdline-tools URL ผิด** — `edgedl.me.gvt1.com` ที่ได้จาก WebFetch คืนค่า 404 ให้ใช้ `https://dl.google.com/android/repository/commandlinetools-win-<build>_latest.zip` แทน (เช็คด้วย `Invoke-WebRequest -UseBasicParsing` ก่อนเสมอ — ไม่มี `-UseBasicParsing` จะ error "NonInteractive mode" ทั้งที่ไม่เกี่ยวกับ network)
+
+2. **sdkmanager --licenses ไม่ยอมรับครบ** — เพราะ pipe แบบ PowerShell native (`"y"*20 | & sdkmanager`) ไม่เสถียรกับโปรแกรมที่ wrap เป็น .bat ให้เขียน "y" หลายบรรทัดลงไฟล์แล้ว redirect ผ่าน `cmd /c "sdkmanager --licenses < yesfile.txt"` แทน (เชื่อถือได้กว่ามาก)
+
+3. **avdmanager ไม่รับ `--sdk_root`** — flag นี้ใช้กับ sdkmanager เท่านั้น avdmanager ใช้ `ANDROID_SDK_ROOT`/`ANDROID_HOME` จาก environment แทน
+
+4. **`flutter test` ค้าง ~90 วินาทีแล้ว fail แบบเงียบ** — สาเหตุจริง: `testWidgets` รันใน FakeAsync zone ซึ่ง**ไม่รอ real file I/O ของ Hive** (`box.put()` เป็น I/O จริงผ่าน dart:io) ทำให้ `pumpAndSettle()` คืนค่าทั้งที่ข้อมูลยังไม่บันทึกเสร็จ
+   - วิธีแก้ที่ใช้จริง: แยก unit test ของ repository ไปใช้ `test()` ธรรมดา (ไม่ใช่ `testWidgets`) ซึ่งไม่มี FakeAsync — เชื่อถือได้และเร็วกว่ามาก (`test/repository_test.dart`)
+   - เก็บ `testWidgets` ไว้แค่ smoke test ที่ไม่ต้องรอ async I/O จริง
+
+5. **`GoogleFonts.config.allowRuntimeFetching = false` ทำให้ throw ใน test** — เพราะไม่ได้ bundle ไฟล์ฟอนต์ไว้ใน assets วิธีแก้: เพิ่ม `ThemeData? theme` parameter ให้ `LifePlanApp` แล้วส่ง `ThemeData(useMaterial3: true)` ธรรมดาตอนเทสต์แทน ไม่ต้องยุ่งกับ GoogleFonts เลย
+
+6. **Gradle ดาวน์โหลดพัง (`504` จาก GitHub)** — `services.gradle.org` redirect ไปที่ `github.com/gradle/gradle-distributions/releases/...` ซึ่งบางครั้ง edge node ที่ใกล้ (สังเกตว่าเป็น region `southeastasia`) เกิด 504 ชั่วคราว **ลองใหม่อีกครั้งมักจะผ่าน** (เจอเองก็หายเองภายใน 1-2 นาที) ถ้ายังไม่หายให้ลอง curl เช็คตรง ๆ ก่อนเสียเวลา debug ฝั่ง Flutter
+
+7. **flutter doctor บอกว่าต้องการ Android SDK 36 + build-tools 28.0.3** — นอกจาก platform-tools/platform-34/build-tools-34 แล้ว ต้องติดตั้ง `platforms;android-36` และ `build-tools;28.0.3` เพิ่มด้วย (Flutter เช็คทั้งสองช่วงเวอร์ชัน)
+
+---
+
+## 5. สิ่งที่ยังไม่ได้ทำ (เรียงตามลำดับที่ควรทำ)
+
+- [ ] **Auth จริง** — ตอนนี้ Login/Register แค่สร้าง/บันทึก `UserProfile` ในเครื่อง ไม่มีการยืนยันตัวตนจริงกับ Google/Apple/อีเมลจริง ๆ ต้องเชื่อม Firebase Auth (หรือบริการอื่น) + ปุ่ม Google/Apple ของจริงต้องใช้ `google_sign_in` / `sign_in_with_apple` package และตั้งค่า OAuth credentials
+- [ ] **Sync ข้ามอุปกรณ์** — Hive เก็บในเครื่องเท่านั้น ถ้าต้องการ sync ต้องมี backend (Firestore เข้ากับโครงสร้างที่ออกแบบไว้ใน `DATA_MODEL.md` ได้ทันที เพราะแต่ละ entity มี `userId` เป็น partition key อยู่แล้ว)
+- [ ] **iOS build** — โค้ด Dart เดียวกันนี้พร้อมสำหรับ iOS แต่ต้องมี Mac + Xcode มา build/test จริง
+- [ ] **มุมมองตารางเวลารายสัปดาห์** — ตอนนี้ `ScheduleScreen` มีแค่มุมมองรายการรวมเรียงตามเวลา ไม่มี grid 7 วัน
+- [ ] **เป้าหมายที่ตั้งค่าได้เอง** — `targets.dart` เป็นค่าคงที่ (เป้าออม, เป้ายอดขาย, เป้าออกกำลังกาย/สัปดาห์) ควรทำเป็นหน้าตั้งค่าที่ผู้ใช้แก้ไขได้ + เก็บใน Hive
+- [ ] **Windows desktop build** — ต้องติดตั้ง Visual Studio "Desktop development with C++" workload ก่อน ถ้าต้องการ .exe (ไม่จำเป็นสำหรับเป้าหมายหลักคือ Android/iOS)
+
+---
+
+## 6. ลิงก์ / ไฟล์อ้างอิง
+
+- ดีไซน์ (Claude Design canvas, แก้ไขได้): https://claude.ai/code/artifact/c58583c1-3ff8-4b8f-8907-45dc918aa714
+- ภาพหน้าจอดีไซน์ + ภาพแอปที่รันจริง: `screenshots/` (ไฟล์ `flutter_*` = build web, `live_*` = คลิกทดสอบผ่าน Playwright, `emulator_*` = รันจริงบน Android emulator)
+- โครงสร้างข้อมูล: `DATA_MODEL.md`
+- ภาพรวมฟีเจอร์/โมดูล: `README.md`

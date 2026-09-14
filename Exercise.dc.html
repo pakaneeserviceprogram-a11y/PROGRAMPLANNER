@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+<style>
+:root{
+  --bg:oklch(98% 0.006 95);--surface:oklch(100% 0 0);--surface-2:oklch(96.3% 0.006 95);
+  --text:oklch(22% 0.02 280);--text-muted:oklch(52% 0.02 280);--text-faint:oklch(68% 0.015 280);
+  --border:oklch(91% 0.006 95);--primary:oklch(58% 0.16 275);
+  --c-exercise:oklch(62% 0.14 150);--c-exercise-soft:oklch(94% 0.045 150);
+  --radius:20px;--radius-sm:14px;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+.screen{width:390px;min-height:844px;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;border-radius:36px;}
+.content{flex:1;padding:4px 20px 104px;display:flex;flex-direction:column;gap:16px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:10px;}
+.row{display:flex;flex-direction:row;align-items:center;} .col{display:flex;flex-direction:column;}
+.between{justify-content:space-between;}
+.progress-track{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;}
+.progress-fill{height:100%;border-radius:999px;}
+.navbar{position:sticky;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:row;justify-content:space-around;align-items:center;padding:12px 8px 22px;}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--text-faint);}
+.navitem.active{color:var(--primary);}
+.header{padding:20px 20px 4px;display:flex;flex-direction:row;align-items:center;gap:12px;}
+h1{font-size:20px;font-weight:800;margin:0;letter-spacing:-0.02em;}
+h2{font-size:16px;font-weight:800;margin:0;} p{margin:0;}
+.icon-btn{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text);}
+.daycard{border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border);display:flex;flex-direction:row;align-items:center;gap:12px;}
+.checkcircle{width:26px;height:26px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+</style>
+</helmet>
+
+<div class="screen">
+  <div class="header">
+    <div class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <h1>ออกกำลังกาย</h1>
+  </div>
+
+  <div class="content">
+
+    <div class="card" style="background:linear-gradient(135deg, var(--c-exercise), oklch(56% 0.13 165));border:none;color:#fff">
+      <div class="row between" style="align-items:flex-start">
+        <div class="col" style="gap:6px">
+          <p style="font-size:13px;font-weight:700;opacity:0.9">เป้าหมายสัปดาห์นี้</p>
+          <p style="font-size:26px;font-weight:800">3 / 5 ครั้ง</p>
+        </div>
+        <svg width="60" height="60" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="8"/>
+          <circle cx="40" cy="40" r="34" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="85.4" transform="rotate(-90 40 40)"/>
+        </svg>
+      </div>
+      <div class="row" style="gap:20px;margin-top:4px">
+        <div class="col" style="gap:2px"><p style="font-size:17px;font-weight:800">126</p><p style="font-size:11px;opacity:0.85">นาทีสัปดาห์นี้</p></div>
+        <div class="col" style="gap:2px"><p style="font-size:17px;font-weight:800">840</p><p style="font-size:11px;opacity:0.85">แคลอรี่</p></div>
+      </div>
+    </div>
+
+    <h2>แผนสัปดาห์นี้</h2>
+
+    <div class="daycard" style="background:var(--c-exercise-soft)">
+      <div class="checkcircle" style="background:var(--c-exercise)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <div class="col" style="gap:2px;flex:1"><p style="font-size:13.5px;font-weight:700">จันทร์ • วิ่ง</p><p style="font-size:12px;color:var(--text-muted)">30 นาที • เสร็จแล้ว</p></div>
+    </div>
+    <div class="daycard" style="background:var(--c-exercise-soft)">
+      <div class="checkcircle" style="background:var(--c-exercise)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <div class="col" style="gap:2px;flex:1"><p style="font-size:13.5px;font-weight:700">อังคาร • เวทเทรนนิ่ง</p><p style="font-size:12px;color:var(--text-muted)">45 นาที • เสร็จแล้ว</p></div>
+    </div>
+    <div class="daycard">
+      <div class="checkcircle" style="background:var(--surface-2);border:2px solid var(--border)"></div>
+      <div class="col" style="gap:2px;flex:1"><p style="font-size:13.5px;font-weight:700">พุธ • พักผ่อน</p><p style="font-size:12px;color:var(--text-muted)">ยืดเหยียด 10 นาที</p></div>
+    </div>
+    <div class="daycard" style="border:1.5px solid var(--c-exercise)">
+      <div class="checkcircle" style="background:var(--surface-2);border:2px solid var(--c-exercise)"></div>
+      <div class="col" style="gap:2px;flex:1"><p style="font-size:13.5px;font-weight:700">พฤหัสบดี • ปั่นจักรยาน</p><p style="font-size:12px;color:var(--text-muted)">วันนี้ • 40 นาที</p></div>
+      <div class="chip" style="background:var(--c-exercise);color:#fff;font-size:11px;padding:5px 10px;border-radius:999px;font-weight:700">วันนี้</div>
+    </div>
+    <div class="daycard">
+      <div class="checkcircle" style="background:var(--surface-2);border:2px solid var(--border)"></div>
+      <div class="col" style="gap:2px;flex:1"><p style="font-size:13.5px;font-weight:700">ศุกร์ • ว่ายน้ำ</p><p style="font-size:12px;color:var(--text-muted)">30 นาที</p></div>
+    </div>
+    <div class="daycard">
+      <div class="checkcircle" style="background:var(--surface-2);border:2px solid var(--border)"></div>
+      <div class="col" style="gap:2px;flex:1"><p style="font-size:13.5px;font-weight:700">เสาร์ • เดินเขา</p><p style="font-size:12px;color:var(--text-muted)">90 นาที</p></div>
+    </div>
+
+    <div class="row" style="justify-content:center;gap:8px;padding:14px;border-radius:var(--radius-sm);border:1.5px dashed var(--border);color:var(--text-muted)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      <p style="font-size:13px;font-weight:700">เพิ่มกิจกรรมออกกำลังกาย</p>
+    </div>
+
+  </div>
+
+  <div class="navbar">
+    <div class="navitem active">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+      หน้าหลัก
+    </div>
+    <div class="navitem">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+      ตารางเวลา
+    </div>
+    <div class="navitem">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+      ความคืบหน้า
+    </div>
+    <div class="navitem">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+      โปรไฟล์
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

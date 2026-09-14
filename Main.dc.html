@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+<style>
+:root{
+  --bg:oklch(98% 0.006 95);
+  --surface:oklch(100% 0 0);
+  --surface-2:oklch(96.3% 0.006 95);
+  --text:oklch(22% 0.02 280);
+  --text-muted:oklch(52% 0.02 280);
+  --text-faint:oklch(68% 0.015 280);
+  --border:oklch(91% 0.006 95);
+  --primary:oklch(58% 0.16 275);
+  --primary-soft:oklch(94% 0.035 275);
+  --c-exercise:oklch(62% 0.14 150);--c-exercise-soft:oklch(94% 0.045 150);
+  --c-work:oklch(58% 0.15 258);--c-work-soft:oklch(94% 0.035 258);
+  --c-crm:oklch(66% 0.16 48);--c-crm-soft:oklch(95% 0.045 48);
+  --c-finance:oklch(58% 0.11 200);--c-finance-soft:oklch(94% 0.03 200);
+  --c-learning:oklch(58% 0.15 305);--c-learning-soft:oklch(94% 0.035 305);
+  --radius:20px;--radius-sm:14px;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+a{color:var(--primary);text-decoration:none;}
+a:hover{color:oklch(48% 0.16 275);}
+.screen{width:390px;min-height:844px;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;border-radius:36px;}
+.content{flex:1;padding:4px 20px 104px;display:flex;flex-direction:column;gap:16px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:10px;}
+.row{display:flex;flex-direction:row;align-items:center;}
+.col{display:flex;flex-direction:column;}
+.between{justify-content:space-between;}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;}
+.progress-track{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;}
+.progress-fill{height:100%;border-radius:999px;}
+.navbar{position:sticky;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:row;justify-content:space-around;align-items:center;padding:12px 8px 22px;}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--text-faint);}
+.navitem.active{color:var(--primary);}
+.header{padding:22px 20px 4px;display:flex;flex-direction:column;gap:2px;}
+h1{font-size:23px;font-weight:800;margin:0;letter-spacing:-0.02em;}
+h2{font-size:16px;font-weight:800;margin:0;letter-spacing:-0.01em;}
+p{margin:0;}
+.icon-btn{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text);}
+.module-card{border-radius:var(--radius-sm);padding:16px;display:flex;flex-direction:column;gap:10px;border:1px solid var(--border);}
+.icon-tile{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+</style>
+</helmet>
+
+<div class="screen">
+  <div class="header">
+    <div class="row between">
+      <div class="col" style="gap:2px">
+        <p style="font-size:13px;color:var(--text-muted);font-weight:700">สวัสดีตอนเช้า</p>
+        <h1>ภาพรวมวันนี้</h1>
+      </div>
+      <div class="icon-btn">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--text-faint);margin-top:2px">วันเสาร์ที่ 14 กันยายน 2569</p>
+  </div>
+
+  <div class="content">
+
+    <div class="card" style="background:linear-gradient(135deg, oklch(58% 0.16 275), oklch(52% 0.17 296));border:none;color:#fff;">
+      <div class="row between" style="align-items:flex-start">
+        <div class="col" style="gap:8px">
+          <p style="font-size:13px;font-weight:700;opacity:0.85">ความสำเร็จวันนี้</p>
+          <p style="font-size:30px;font-weight:800;letter-spacing:-0.02em">8 / 12</p>
+          <p style="font-size:12.5px;opacity:0.85">กิจกรรมเสร็จแล้ว • ต่อเนื่อง 12 วัน</p>
+        </div>
+        <svg width="72" height="72" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="8"/>
+          <circle cx="40" cy="40" r="34" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="68" transform="rotate(-90 40 40)"/>
+          <text x="40" y="45" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">68%</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="row" style="gap:12px">
+      <div class="card" style="flex:1;align-items:flex-start;padding:14px;gap:8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(66% 0.16 48)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-1.5-1-2.5-1-2.5S17 11 17 15a5 5 0 0 1-10 0c0-6 5-7 5-13Z"/></svg>
+        <p style="font-size:18px;font-weight:800">12</p>
+        <p style="font-size:11px;color:var(--text-muted);font-weight:600">วันต่อเนื่อง</p>
+      </div>
+      <div class="card" style="flex:1;align-items:flex-start;padding:14px;gap:8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(58% 0.15 258)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <p style="font-size:18px;font-weight:800">5</p>
+        <p style="font-size:11px;color:var(--text-muted);font-weight:600">งานวันนี้</p>
+      </div>
+      <div class="card" style="flex:1;align-items:flex-start;padding:14px;gap:8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(58% 0.11 200)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+        <p style="font-size:18px;font-weight:800">65%</p>
+        <p style="font-size:11px;color:var(--text-muted);font-weight:600">เป้าออมเดือนนี้</p>
+      </div>
+    </div>
+
+    <h2>ภาพรวมแต่ละด้าน</h2>
+    <div style="display:grid;grid-template-columns:repeat(2, minmax(0,1fr));gap:12px">
+
+      <div class="module-card" style="background:var(--c-exercise-soft)">
+        <div class="icon-tile" style="background:var(--c-exercise);color:#fff">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 8-6-16-3 8H2"/></svg>
+        </div>
+        <p style="font-size:14px;font-weight:700">ออกกำลังกาย</p>
+        <p style="font-size:12px;color:var(--text-muted)">3 / 5 ครั้งสัปดาห์นี้</p>
+        <div class="progress-track"><div class="progress-fill" style="width:60%;background:var(--c-exercise)"></div></div>
+      </div>
+
+      <div class="module-card" style="background:var(--c-work-soft)">
+        <div class="icon-tile" style="background:var(--c-work);color:#fff">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <p style="font-size:14px;font-weight:700">งานประจำ</p>
+        <p style="font-size:12px;color:var(--text-muted)">5 งานที่ต้องทำวันนี้</p>
+        <div class="progress-track"><div class="progress-fill" style="width:40%;background:var(--c-work)"></div></div>
+      </div>
+
+      <div class="module-card" style="background:var(--c-crm-soft)">
+        <div class="icon-tile" style="background:var(--c-crm);color:#fff">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M2 20c0-3.3 3-6 7-6s7 2.7 7 6"/><circle cx="17" cy="8" r="2.3"/><path d="M16 14.3c2.8.4 5 2.7 5 5.7"/></svg>
+        </div>
+        <p style="font-size:14px;font-weight:700">ลูกค้า &amp; ขายประกัน</p>
+        <p style="font-size:12px;color:var(--text-muted)">12 รายต้องติดตาม</p>
+        <div class="progress-track"><div class="progress-fill" style="width:75%;background:var(--c-crm)"></div></div>
+      </div>
+
+      <div class="module-card" style="background:var(--c-finance-soft)">
+        <div class="icon-tile" style="background:var(--c-finance);color:#fff">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"/><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M16 13h3"/></svg>
+        </div>
+        <p style="font-size:14px;font-weight:700">การเงิน</p>
+        <p style="font-size:12px;color:var(--text-muted)">ออม 65% ของเป้าหมาย</p>
+        <div class="progress-track"><div class="progress-fill" style="width:65%;background:var(--c-finance)"></div></div>
+      </div>
+
+      <div class="module-card" style="background:var(--c-learning-soft);grid-column:span 2;flex-direction:row;align-items:center;justify-content:space-between">
+        <div class="row" style="gap:12px">
+          <div class="icon-tile" style="background:var(--c-learning);color:#fff">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-1.5-5-2-8-2v13c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2Z"/></svg>
+          </div>
+          <div class="col" style="gap:2px">
+            <p style="font-size:14px;font-weight:700">เรียนรู้ &amp; พัฒนาตนเอง</p>
+            <p style="font-size:12px;color:var(--text-muted)">ภาษาอังกฤษ • Day 14</p>
+          </div>
+        </div>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+
+    </div>
+
+    <div class="card">
+      <div class="row between">
+        <h2>ตารางวันนี้</h2>
+        <p style="font-size:12.5px;font-weight:700;color:var(--primary)">ดูทั้งหมด</p>
+      </div>
+      <div class="row" style="gap:12px;padding:8px 0">
+        <p style="font-size:12px;color:var(--text-faint);width:42px;flex-shrink:0">06:00</p>
+        <div style="width:6px;height:6px;border-radius:999px;background:var(--c-exercise);flex-shrink:0"></div>
+        <p style="font-size:13.5px;font-weight:600">วิ่งตอนเช้า 30 นาที</p>
+      </div>
+      <div class="row" style="gap:12px;padding:8px 0;border-top:1px solid var(--border)">
+        <p style="font-size:12px;color:var(--text-faint);width:42px;flex-shrink:0">10:00</p>
+        <div style="width:6px;height:6px;border-radius:999px;background:var(--c-crm);flex-shrink:0"></div>
+        <p style="font-size:13.5px;font-weight:600">นัดพบลูกค้า คุณสมชาย</p>
+      </div>
+      <div class="row" style="gap:12px;padding:8px 0;border-top:1px solid var(--border)">
+        <p style="font-size:12px;color:var(--text-faint);width:42px;flex-shrink:0">20:00</p>
+        <div style="width:6px;height:6px;border-radius:999px;background:var(--c-learning);flex-shrink:0"></div>
+        <p style="font-size:13.5px;font-weight:600">เรียนภาษาอังกฤษ</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="navbar">
+    <div class="navitem active">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+      หน้าหลัก
+    </div>
+    <div class="navitem">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+      ตารางเวลา
+    </div>
+    <div class="navitem">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+      ความคืบหน้า
+    </div>
+    <div class="navitem">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+      โปรไฟล์
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

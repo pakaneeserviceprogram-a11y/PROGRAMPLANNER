@@ -1,0 +1,27 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 844 },
+    { "file": "Schedule.dc.html", "x": 470, "y": 0, "w": 390, "h": 844 },
+    { "file": "Progress.dc.html", "x": 940, "y": 0, "w": 390, "h": 844 },
+    { "file": "Exercise.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844 },
+    { "file": "Work.dc.html", "x": 0, "y": 964, "w": 390, "h": 844 },
+    { "file": "CRM.dc.html", "x": 470, "y": 964, "w": 390, "h": 844 },
+    { "file": "Finance.dc.html", "x": 940, "y": 964, "w": 390, "h": 844 },
+    { "file": "Learning.dc.html", "x": 1410, "y": 964, "w": 390, "h": 844 },
+    { "file": "Login.dc.html", "x": 0, "y": 1928, "w": 390, "h": 844 },
+    { "file": "Register.dc.html", "x": 470, "y": 1928, "w": 390, "h": 844 }
+  ],
+  "annotations": [
+    { "id": "note-home", "x": 0, "y": -80, "w": 390, "text": "หน้าหลัก — ภาพรวมทุกด้าน" },
+    { "id": "note-schedule", "x": 470, "y": -80, "w": 390, "text": "ตารางเวลารายวัน/สัปดาห์" },
+    { "id": "note-progress", "x": 940, "y": -80, "w": 390, "text": "ความคืบหน้า & สถิติ" },
+    { "id": "note-exercise", "x": 1410, "y": -80, "w": 390, "text": "ออกกำลังกาย" },
+    { "id": "note-work", "x": 0, "y": 884, "w": 390, "text": "งานประจำ" },
+    { "id": "note-crm", "x": 470, "y": 884, "w": 390, "text": "ลูกค้า & ขายประกัน" },
+    { "id": "note-finance", "x": 940, "y": 884, "w": 390, "text": "การเงิน" },
+    { "id": "note-learning", "x": 1410, "y": 884, "w": 390, "text": "เรียนรู้ & พัฒนาตนเอง" },
+    { "id": "note-login", "x": 0, "y": 1848, "w": 390, "text": "เข้าสู่ระบบ (รวม Google Sign-in)" },
+    { "id": "note-register", "x": 470, "y": 1848, "w": 390, "text": "สมัครสมาชิก (รวม Google Sign-in)" }
+  ],
+  "launch": { "view": "canvas" }
+}

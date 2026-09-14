@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+<style>
+:root{
+  --bg:oklch(98% 0.006 95);--surface:oklch(100% 0 0);--surface-2:oklch(96.3% 0.006 95);
+  --text:oklch(22% 0.02 280);--text-muted:oklch(52% 0.02 280);--text-faint:oklch(68% 0.015 280);
+  --border:oklch(91% 0.006 95);--primary:oklch(58% 0.16 275);
+  --c-learning:oklch(58% 0.15 305);--c-learning-soft:oklch(94% 0.035 305);
+  --radius:20px;--radius-sm:14px;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+.screen{width:390px;min-height:844px;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;border-radius:36px;}
+.content{flex:1;padding:4px 20px 104px;display:flex;flex-direction:column;gap:16px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:10px;}
+.row{display:flex;flex-direction:row;align-items:center;} .col{display:flex;flex-direction:column;}
+.between{justify-content:space-between;}
+.progress-track{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;}
+.progress-fill{height:100%;border-radius:999px;}
+.navbar{position:sticky;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:row;justify-content:space-around;align-items:center;padding:12px 8px 22px;}
+.navitem{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--text-faint);}
+.navitem.active{color:var(--primary);}
+.header{padding:20px 20px 4px;display:flex;flex-direction:row;align-items:center;gap:12px;}
+h1{font-size:20px;font-weight:800;margin:0;letter-spacing:-0.02em;}
+h2{font-size:16px;font-weight:800;margin:0;} p{margin:0;}
+.icon-btn{width:40px;height:40px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text);}
+.skillcard{border-radius:var(--radius-sm);padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:10px;}
+.icon-tile{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+</style>
+</helmet>
+
+<div class="screen">
+  <div class="header">
+    <div class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <h1>เรียนรู้ &amp; พัฒนาตนเอง</h1>
+  </div>
+
+  <div class="content">
+
+    <div class="card" style="background:linear-gradient(135deg, var(--c-learning), oklch(52% 0.16 330));border:none;color:#fff">
+      <div class="row between">
+        <div class="col" style="gap:4px">
+          <p style="font-size:13px;font-weight:700;opacity:0.9">สตรีคการเรียนรู้</p>
+          <p style="font-size:26px;font-weight:800">14 วันติดต่อกัน</p>
+        </div>
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-1.5-1-2.5-1-2.5S17 11 17 15a5 5 0 0 1-10 0c0-6 5-7 5-13Z"/></svg>
+      </div>
+      <p style="font-size:12px;opacity:0.85">วันนี้เรียนแล้ว 1 บทเรียน • เป้าหมาย 20 นาที/วัน</p>
+    </div>
+
+    <h2>เส้นทางการเรียนรู้ของฉัน</h2>
+
+    <div class="skillcard" style="background:var(--c-learning-soft)">
+      <div class="row between">
+        <div class="row" style="gap:12px">
+          <div class="icon-tile" style="background:var(--c-learning);color:#fff">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9S9.5 5.5 12 3Z"/></svg>
+          </div>
+          <div class="col" style="gap:2px">
+            <p style="font-size:14px;font-weight:700">ภาษาอังกฤษ</p>
+            <p style="font-size:12px;color:var(--text-muted)">ระดับ Intermediate • Day 14</p>
+          </div>
+        </div>
+        <div class="chip" style="background:var(--c-learning);color:#fff;font-size:11px;padding:6px 12px;border-radius:999px;font-weight:700">เรียนต่อ</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:56%;background:var(--c-learning)"></div></div>
+    </div>
+
+    <div class="skillcard">
+      <div class="row between">
+        <div class="row" style="gap:12px">
+          <div class="icon-tile" style="background:oklch(94% 0.03 200);color:oklch(58% 0.11 200)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+          </div>
+          <div class="col" style="gap:2px">
+            <p style="font-size:14px;font-weight:700">สกิลการลงทุน</p>
+            <p style="font-size:12px;color:var(--text-muted)">พื้นฐานหุ้นและกองทุนรวม</p>
+          </div>
+        </div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:38%;background:oklch(58% 0.11 200)"></div></div>
+    </div>
+
+    <div class="skillcard">
+      <div class="row between">
+        <div class="row" style="gap:12px">
+          <div class="icon-tile" style="background:oklch(94% 0.05 48);color:oklch(60% 0.15 48)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01"/></svg>
+          </div>
+          <div class="col" style="gap:2px">
+            <p style="font-size:14px;font-weight:700">คณิตศาสตร์</p>
+            <p style="font-size:12px;color:var(--text-muted)">สถิติและความน่าจะเป็น</p>
+          </div>
+        </div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:22%;background:oklch(60% 0.15 48)"></div></div>
+    </div>
+
+    <div class="skillcard">
+      <div class="row between">
+        <div class="row" style="gap:12px">
+          <div class="icon-tile" style="background:oklch(94% 0.035 258);color:oklch(58% 0.15 258)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2a6.5 6.5 0 1 0 4.9 10.8A7 7 0 1 1 9.5 2Z"/></svg>
+          </div>
+          <div class="col" style="gap:2px">
+            <p style="font-size:14px;font-weight:700">พัฒนาสมอง</p>
+            <p style="font-size:12px;color:var(--text-muted)">เกมฝึกความจำและสมาธิ</p>
+          </div>
+        </div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:70%;background:oklch(58% 0.15 258)"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>บทเรียนถัดไปที่แนะนำ</h2>
+      <div class="row" style="gap:12px">
+        <div class="icon-tile" style="background:var(--c-learning-soft);color:var(--c-learning)">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3Z"/></svg>
+        </div>
+        <div class="col" style="gap:2px;flex:1">
+          <p style="font-size:13.5px;font-weight:700">Daily Conversation: Business English</p>
+          <p style="font-size:12px;color:var(--text-muted)">15 นาที • บทที่ 14</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="navbar">
+    <div class="navitem active">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+      หน้าหลัก
+    </div>
+    <div class="navitem">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+      ตารางเวลา
+    </div>
+    <div class="navitem">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+      ความคืบหน้า
+    </div>
+    <div class="navitem">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+      โปรไฟล์
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
