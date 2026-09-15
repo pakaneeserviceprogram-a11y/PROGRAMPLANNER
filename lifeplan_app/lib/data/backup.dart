@@ -34,6 +34,7 @@ class BackupService {
     HiveBoxes.scheduleEvents,
     HiveBoxes.learningStreak,
     HiveBoxes.goalSettings,
+    HiveBoxes.appSettings,
   ];
 
   /// ชื่อไฟล์ที่แนะนำ เช่น `lifeplan-backup-2026-09-15-1433.json`

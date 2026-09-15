@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ic_notification ถูกอ้างชื่อจากโค้ด Dart เท่านั้น (flutter_local_notifications)
+  ตัว shrinkResources จึงมองไม่เห็นและลบทิ้ง ทำให้การแจ้งเตือนไม่ขึ้นบน release build
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_notification" />

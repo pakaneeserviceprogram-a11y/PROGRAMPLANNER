@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../data/id_gen.dart';
+import '../data/notifications.dart';
 import '../data/repositories/schedule_repository.dart';
 import '../models/life_category.dart';
 import '../models/schedule_event.dart';
@@ -28,6 +31,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   /// 1 = จันทร์ ... 7 = อาทิตย์ (ตรงกับ DateTime.weekday)
   int _selectedWeekday = DateTime.now().weekday;
   bool _weekView = false;
+
+  Future<void> _deleteEvent(String id) async {
+    await _repo.delete(id);
+    unawaited(NotificationService.syncScheduleReminders());
+  }
 
   void _selectDay(int weekday) => setState(() {
         _selectedWeekday = weekday;
@@ -100,6 +108,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           subtitle: subtitleController.text.trim().isEmpty ? null : subtitleController.text.trim(),
           category: selectedCategory,
         ));
+        unawaited(NotificationService.syncScheduleReminders());
         // เด้งไปวันที่เพิ่งบันทึก เพื่อให้เห็นกิจกรรมใหม่ทันที
         if (mounted) _selectDay(selectedWeekday);
         if (context.mounted) Navigator.of(context).pop();
@@ -198,7 +207,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               Expanded(
                 child: _weekView
                     ? _WeekGrid(week: week, weekStart: weekStart, today: now.weekday, onDayTap: _selectDay)
-                    : _DayTimeline(events: week[_selectedWeekday - 1], weekday: _selectedWeekday, onDelete: _repo.delete),
+                    : _DayTimeline(events: week[_selectedWeekday - 1], weekday: _selectedWeekday, onDelete: _deleteEvent),
               ),
             ],
           );

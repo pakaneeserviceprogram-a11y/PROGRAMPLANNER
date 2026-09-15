@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'data/hive_boxes.dart';
+import 'data/notifications.dart';
 import 'data/repositories/user_repository.dart';
 import 'data/seed_data.dart';
 import 'screens/auth/login_screen.dart';
@@ -11,6 +14,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await HiveBoxes.init();
   await SeedData.seedIfEmpty();
+  // ตั้งการเตือนใหม่ตามตารางล่าสุด (ไม่ await เพื่อไม่ให้หน่วงการเปิดแอป —
+  // ถ้าผู้ใช้ปิดการเตือนไว้ ฟังก์ชันนี้จะแค่ล้างของเก่าแล้วจบ)
+  unawaited(NotificationService.syncScheduleReminders());
   runApp(const LifePlanApp());
 }
 

@@ -7,6 +7,7 @@ import '../widgets/app_card.dart';
 import 'auth/login_screen.dart';
 import 'backup_screen.dart';
 import 'goal_settings_screen.dart';
+import 'notification_settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -71,7 +72,12 @@ class ProfileScreen extends StatelessWidget {
                       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BackupScreen())),
                     ),
                     const Divider(height: 1, color: AppColors.border),
-                    const _ProfileRow(icon: Icons.notifications_none_rounded, label: 'การแจ้งเตือน'),
+                    _ProfileRow(
+                      icon: Icons.notifications_none_rounded,
+                      label: 'การแจ้งเตือน',
+                      onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const NotificationSettingsScreen())),
+                    ),
                     const Divider(height: 1, color: AppColors.border),
                     const _ProfileRow(icon: Icons.lock_outline_rounded, label: 'ความเป็นส่วนตัว & ความปลอดภัย'),
                     const Divider(height: 1, color: AppColors.border),

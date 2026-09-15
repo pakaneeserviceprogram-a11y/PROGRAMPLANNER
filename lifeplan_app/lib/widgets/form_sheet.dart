@@ -50,7 +50,8 @@ class LabeledDropdown<T> extends StatelessWidget {
   final T value;
   final List<T> options;
   final String Function(T) display;
-  final ValueChanged<T?> onChanged;
+  /// null = ปิดใช้งาน dropdown (DropdownButton จะเป็นสีจาง กดไม่ได้)
+  final ValueChanged<T?>? onChanged;
 
   const LabeledDropdown({
     super.key,
@@ -58,7 +59,7 @@ class LabeledDropdown<T> extends StatelessWidget {
     required this.value,
     required this.options,
     required this.display,
-    required this.onChanged,
+    this.onChanged,
   });
 
   @override

@@ -110,7 +110,11 @@ test/
 
 11. **Gradle แก้ชื่อ `repo.maven.apache.org` ไม่ได้ → build ล้มตอนโหลด dependency ใหม่** — อาการ: `Could not resolve org.jetbrains.kotlinx:kotlinx-coroutines-android` / "Got socket exception during request. It might be caused by SSL misconfiguration" สาเหตุจริงคือ **DNS ของเครือข่ายนี้แก้ชื่อ repo.maven.apache.org ไม่ได้** (`nslookup` ผ่าน 8.8.8.8 ได้ปกติ แต่ resolver ของเครื่องไม่ได้) วิธีแก้ที่ใช้: เพิ่ม mirror ของ Maven Central ที่ Google โฮสต์ (`https://maven-central.storage-download.googleapis.com/maven2/`) เป็น repository ตัวแรกใน `android/build.gradle.kts` และ `android/settings.gradle.kts` — ถ้าเจออาการนี้อีกให้เช็ค DNS ก่อน อย่าเพิ่งโทษ Gradle/SSL
 
-12. **`JAVA_HOME` ชนกับโปรเจกต์อื่น** — เครื่องนี้เดิมตั้ง `JAVA_HOME` เป็น GraalVM JDK 21 (`D:\POS\API\...`) ตอนนี้ user-level ถูกเปลี่ยนเป็น Temurin 17 แล้ว ถ้างานอื่นต้องใช้ JDK 21 ให้ export เฉพาะ session นั้น
+12. **แจ้งเตือนไม่ขึ้นเฉพาะบน release build (debug ปกติ)** — สาเหตุ: `isShrinkResources = true` ลบ `drawable/ic_notification` ทิ้ง เพราะไอคอนถูกอ้างชื่อจากฝั่ง Dart เท่านั้น Gradle จึงมองไม่เห็นการใช้งาน วิธีแก้: `android/app/src/main/res/raw/keep.xml` ที่ระบุ `tools:keep="@drawable/ic_notification"` ตรวจว่าไอคอนรอดด้วย `aapt2 dump resources <apk> | grep ic_notification`
+
+13. **`adb install -r` ขึ้น INSTALL_FAILED_VERSION_DOWNGRADE** — APK จาก `--split-per-abi` มี versionCode บวก 1000×ABI (x86_64 = 4001) ส่วน APK รวมเป็น 1 การสลับไปมาระหว่างสองแบบต้อง `adb uninstall` ก่อน
+
+14. **`JAVA_HOME` ชนกับโปรเจกต์อื่น** — เครื่องนี้เดิมตั้ง `JAVA_HOME` เป็น GraalVM JDK 21 (`D:\POS\API\...`) ตอนนี้ user-level ถูกเปลี่ยนเป็น Temurin 17 แล้ว ถ้างานอื่นต้องใช้ JDK 21 ให้ export เฉพาะ session นั้น
 
 ---
 
@@ -127,6 +131,13 @@ test/
   - keystore จริงที่ `android/lifeplan-release.jks` + `android/key.properties` (**ไม่อยู่ใน git** — อ่าน `android/README-signing.md` ก่อน ห้ามทำหาย)
   - `--split-per-abi` ลดขนาดจาก 50.6MB เหลือ arm64 17.9MB
   - เปิด minify + shrinkResources ใน release build
+
+- [x] **แจ้งเตือนตามตารางเวลา** — ทำแล้ว (2026-09-15): `lib/data/notifications.dart` + หน้า `NotificationSettingsScreen` (โปรไฟล์ → การแจ้งเตือน)
+  - เตือนซ้ำทุกสัปดาห์ตาม weekday+เวลาของกิจกรรม, เลือกเตือนล่วงหน้าได้ (ตรงเวลา/5/10/15/30/60 นาที)
+  - ตั้งใหม่ทั้งชุดทุกครั้งที่ตาราง/การตั้งค่าเปลี่ยน และตอนเปิดแอป (`main.dart`) — ไม่มีการเตือนค้างของกิจกรรมที่ลบแล้ว
+  - ใช้ตารางแบบ inexact จึงไม่ต้องขอสิทธิ์ SCHEDULE_EXACT_ALARM (ไม่เด้งผู้ใช้ออกไปหน้าตั้งค่าระบบ)
+  - `test/notification_schedule_test.dart` คุมการคำนวณเวลาเตือน (รวมเคสเตือนล่วงหน้าข้ามเที่ยงคืน)
+  - เพิ่มเก็บค่าใน box `app_settings` (อยู่ในไฟล์สำรองด้วยแล้ว)
 
 - [ ] **Sync ข้ามอุปกรณ์** — Hive เก็บในเครื่องเท่านั้น ถ้าต้องการ sync ต้องมี backend (Firestore เข้ากับโครงสร้างที่ออกแบบไว้ใน `DATA_MODEL.md` ได้ทันที เพราะแต่ละ entity มี `userId` เป็น partition key อยู่แล้ว)
 - [ ] **iOS build** — โค้ด Dart เดียวกันนี้พร้อมสำหรับ iOS แต่ต้องมี Mac + Xcode มา build/test จริง
