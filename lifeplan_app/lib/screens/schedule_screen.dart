@@ -18,6 +18,15 @@ const _weekdayFullLabels = ['จันทร์', 'อังคาร', 'พุ�
 DateTime _startOfWeek(DateTime now) =>
     DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
 
+const _dangerColor = Color(0xFFB3401E);
+
+String _formatTime(TimeOfDay t) => '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+TimeOfDay _parseTime(String hhmm) {
+  final parts = hhmm.split(':');
+  return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+}
+
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
 
@@ -32,9 +41,39 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   int _selectedWeekday = DateTime.now().weekday;
   bool _weekView = false;
 
-  Future<void> _deleteEvent(String id) async {
-    await _repo.delete(id);
-    unawaited(NotificationService.syncScheduleReminders());
+  void _syncReminders() {
+    // ตั้งเตือนใหม่ไม่สำเร็จไม่ควรทำให้การแก้ตารางล้ม — ข้อมูลบันทึกไปแล้ว
+    unawaited(NotificationService.syncScheduleReminders().catchError((Object e) {
+      debugPrint('ตั้งการแจ้งเตือนใหม่ไม่สำเร็จ: $e');
+      return 0;
+    }));
+  }
+
+  Future<bool> _confirmDelete(BuildContext context, ScheduleEvent e) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('ลบกิจกรรม?'),
+        content: Text('“${e.title}” วัน${_weekdayFullLabels[e.weekday - 1]} เวลา ${e.time} '
+            'จะถูกลบออกจากตารางและการแจ้งเตือน'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('ยกเลิก')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: _dangerColor),
+            child: const Text('ลบ'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
+  Future<void> _deleteEvent(ScheduleEvent e) async {
+    await _repo.delete(e.id);
+    _syncReminders();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ลบ “${e.title}” แล้ว')));
   }
 
   void _selectDay(int weekday) => setState(() {
@@ -42,17 +81,36 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _weekView = false;
       });
 
-  Future<void> _openAddForm(BuildContext context) async {
-    final titleController = TextEditingController();
-    final subtitleController = TextEditingController();
-    LifeCategory selectedCategory = LifeCategory.work;
-    int selectedWeekday = _selectedWeekday;
-    TimeOfDay selectedTime = TimeOfDay.now();
+  /// ฟอร์มเดียวใช้ทั้งเพิ่มใหม่ (existing = null) และแก้ไขกิจกรรมเดิม
+  Future<void> _openEventForm(BuildContext context, {ScheduleEvent? existing}) async {
+    final titleController = TextEditingController(text: existing?.title);
+    final subtitleController = TextEditingController(text: existing?.subtitle);
+    LifeCategory selectedCategory = existing?.category ?? LifeCategory.work;
+    int selectedWeekday = existing?.weekday ?? _selectedWeekday;
+    TimeOfDay selectedTime = existing != null ? _parseTime(existing.time) : TimeOfDay.now();
 
     await showAppFormSheet(
       context: context,
-      title: 'เพิ่มกิจกรรมในตารางเวลา',
+      title: existing == null ? 'เพิ่มกิจกรรมในตารางเวลา' : 'แก้ไขกิจกรรม',
       submitLabel: 'บันทึก',
+      footerBuilder: existing == null
+          ? null
+          : (sheetCtx) => SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () async {
+                    if (!await _confirmDelete(sheetCtx, existing)) return;
+                    if (sheetCtx.mounted) Navigator.of(sheetCtx).pop();
+                    await _deleteEvent(existing);
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: _dangerColor,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                  label: const Text('ลบกิจกรรมนี้', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
       bodyBuilder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,10 +144,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
-                child: Text(
-                  '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
-                  style: const TextStyle(fontSize: 14, color: AppColors.text),
-                ),
+                child: Text(_formatTime(selectedTime), style: const TextStyle(fontSize: 14, color: AppColors.text)),
               ),
             ),
             const SizedBox(height: 14),
@@ -101,15 +156,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         final title = titleController.text.trim();
         if (title.isEmpty) return;
         await _repo.put(ScheduleEvent(
-          id: newId(),
-          time: '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+          id: existing?.id ?? newId(),
+          time: _formatTime(selectedTime),
           weekday: selectedWeekday,
           title: title,
           subtitle: subtitleController.text.trim().isEmpty ? null : subtitleController.text.trim(),
           category: selectedCategory,
         ));
-        unawaited(NotificationService.syncScheduleReminders());
-        // เด้งไปวันที่เพิ่งบันทึก เพื่อให้เห็นกิจกรรมใหม่ทันที
+        _syncReminders();
+        // เด้งไปวันที่เพิ่งบันทึก เพื่อให้เห็นกิจกรรมทันที (กรณีแก้ไขแล้วย้ายวันด้วย)
         if (mounted) _selectDay(selectedWeekday);
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -146,7 +201,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             ),
                             const SizedBox(width: 10),
                             GestureDetector(
-                              onTap: () => _openAddForm(context),
+                              onTap: () => _openEventForm(context),
                               child: Container(
                                 width: 40,
                                 height: 40,
@@ -206,8 +261,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               ),
               Expanded(
                 child: _weekView
-                    ? _WeekGrid(week: week, weekStart: weekStart, today: now.weekday, onDayTap: _selectDay)
-                    : _DayTimeline(events: week[_selectedWeekday - 1], weekday: _selectedWeekday, onDelete: _deleteEvent),
+                    ? _WeekGrid(
+                        week: week,
+                        weekStart: weekStart,
+                        today: now.weekday,
+                        onDayTap: _selectDay,
+                        onEventTap: (e) => _openEventForm(context, existing: e),
+                      )
+                    : _DayTimeline(
+                        events: week[_selectedWeekday - 1],
+                        weekday: _selectedWeekday,
+                        onEventTap: (e) => _openEventForm(context, existing: e),
+                        confirmDelete: (e) => _confirmDelete(context, e),
+                        onDelete: _deleteEvent,
+                      ),
               ),
             ],
           );
@@ -264,12 +331,19 @@ class _ViewToggle extends StatelessWidget {
 
 /// ตาราง 7 คอลัมน์ (จันทร์–อาทิตย์) เลื่อนแนวนอนได้ แต่ละคอลัมน์เรียงกิจกรรมตามเวลา
 class _WeekGrid extends StatelessWidget {
-  const _WeekGrid({required this.week, required this.weekStart, required this.today, required this.onDayTap});
+  const _WeekGrid({
+    required this.week,
+    required this.weekStart,
+    required this.today,
+    required this.onDayTap,
+    required this.onEventTap,
+  });
 
   final List<List<ScheduleEvent>> week;
   final DateTime weekStart;
   final int today;
   final ValueChanged<int> onDayTap;
+  final ValueChanged<ScheduleEvent> onEventTap;
 
   @override
   Widget build(BuildContext context) {
@@ -331,26 +405,30 @@ class _WeekGrid extends StatelessWidget {
                     child: Column(
                       children: [
                         for (final e in events)
-                          Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: e.category.softColor,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border(left: BorderSide(color: e.category.color, width: 3)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(e.time,
-                                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
-                                const SizedBox(height: 2),
-                                Text(e.title,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, height: 1.25)),
-                              ],
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => onEventTap(e),
+                            child: Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: e.category.softColor,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border(left: BorderSide(color: e.category.color, width: 3)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(e.time,
+                                      style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+                                  const SizedBox(height: 2),
+                                  Text(e.title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, height: 1.25)),
+                                ],
+                              ),
                             ),
                           ),
                       ],
@@ -365,13 +443,21 @@ class _WeekGrid extends StatelessWidget {
   }
 }
 
-/// มุมมองรายวัน — ไทม์ไลน์ของวันที่เลือก ปัดซ้ายเพื่อลบ
+/// มุมมองรายวัน — ไทม์ไลน์ของวันที่เลือก แตะเพื่อแก้ไข ปัดซ้ายเพื่อลบ
 class _DayTimeline extends StatelessWidget {
-  const _DayTimeline({required this.events, required this.weekday, required this.onDelete});
+  const _DayTimeline({
+    required this.events,
+    required this.weekday,
+    required this.onEventTap,
+    required this.confirmDelete,
+    required this.onDelete,
+  });
 
   final List<ScheduleEvent> events;
   final int weekday;
-  final Future<void> Function(String id) onDelete;
+  final ValueChanged<ScheduleEvent> onEventTap;
+  final Future<bool> Function(ScheduleEvent e) confirmDelete;
+  final Future<void> Function(ScheduleEvent e) onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -391,13 +477,14 @@ class _DayTimeline extends StatelessWidget {
         return Dismissible(
           key: ValueKey(e.id),
           direction: DismissDirection.endToStart,
-          onDismissed: (_) => onDelete(e.id),
+          confirmDismiss: (_) => confirmDelete(e),
+          onDismissed: (_) => onDelete(e),
           background: Container(
             margin: const EdgeInsets.only(bottom: 18, left: 70),
             decoration: BoxDecoration(color: const Color(0xFFFCE4DE), borderRadius: BorderRadius.circular(14)),
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 18),
-            child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFB3401E)),
+            child: const Icon(Icons.delete_outline_rounded, color: _dangerColor),
           ),
           child: IntrinsicHeight(
             child: Row(
@@ -417,23 +504,35 @@ class _DayTimeline extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 18),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: e.category.softColor,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(e.title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                        if (e.subtitle != null) ...[
-                          const SizedBox(height: 3),
-                          Text(e.subtitle!, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onEventTap(e),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 18),
+                      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+                      decoration: BoxDecoration(
+                        color: e.category.softColor,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(e.title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                                if (e.subtitle != null) ...[
+                                  const SizedBox(height: 3),
+                                  Text(e.subtitle!, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.edit_outlined, size: 16, color: AppColors.textFaint),
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),

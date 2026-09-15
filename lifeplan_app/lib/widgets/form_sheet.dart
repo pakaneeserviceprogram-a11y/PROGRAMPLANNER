@@ -12,6 +12,7 @@ Future<void> showAppFormSheet({
   required Widget Function(BuildContext context) bodyBuilder,
   required String submitLabel,
   required VoidCallback onSubmit,
+  Widget Function(BuildContext context)? footerBuilder,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -36,6 +37,10 @@ Future<void> showAppFormSheet({
               bodyBuilder(ctx),
               const SizedBox(height: 20),
               PrimaryButton(label: submitLabel, onPressed: onSubmit),
+              if (footerBuilder != null) ...[
+                const SizedBox(height: 10),
+                footerBuilder(ctx),
+              ],
             ],
           ),
         ),
