@@ -149,6 +149,33 @@ void main() {
     expect(sorted.last.title, 'เย็น');
   });
 
+  test('ScheduleRepository groups events by weekday', () async {
+    final repo = ScheduleRepository();
+    await repo.put(const ScheduleEvent(id: 'w1', time: '18:00', weekday: DateTime.wednesday, title: 'พุธเย็น', category: LifeCategory.finance));
+    await repo.put(const ScheduleEvent(id: 'w2', time: '06:00', weekday: DateTime.wednesday, title: 'พุธเช้า', category: LifeCategory.exercise));
+    await repo.put(const ScheduleEvent(id: 'w3', time: '09:00', weekday: DateTime.saturday, title: 'เสาร์', category: LifeCategory.learning));
+
+    final wed = repo.getByWeekday(DateTime.wednesday);
+    expect(wed.map((e) => e.title), ['พุธเช้า', 'พุธเย็น']);
+    expect(repo.getByWeekday(DateTime.sunday), isEmpty);
+
+    final week = repo.getWeek();
+    expect(week.length, 7);
+    expect(week[DateTime.wednesday - 1].length, 2);
+    expect(week[DateTime.saturday - 1].single.title, 'เสาร์');
+  });
+
+  test('ScheduleEvent saved before the weekly view falls back to Monday', () {
+    final legacy = ScheduleEvent.fromMap(const {
+      'id': 'legacy',
+      'time': '08:00',
+      'title': 'ของเดิม',
+      'subtitle': null,
+      'category': 'work',
+    });
+    expect(legacy.weekday, DateTime.monday);
+  });
+
   test('Insights.categoryScores reflects real Hive data', () async {
     final workRepo = WorkTaskRepository();
     await workRepo.put(WorkTask(id: newId(), title: 'A', status: TaskStatus.done, priority: TaskPriority.normal));

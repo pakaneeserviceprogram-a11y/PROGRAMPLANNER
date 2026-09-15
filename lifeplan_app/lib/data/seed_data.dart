@@ -107,12 +107,19 @@ class SeedData {
   static Future<void> _seedSchedule() async {
     final repo = ScheduleRepository();
     if (repo.getAll().isNotEmpty) return;
-    const items = [
-      ScheduleEvent(id: 's1', time: '06:00', title: 'วิ่งตอนเช้า', subtitle: 'สวนสาธารณะใกล้บ้าน • 30 นาที', category: LifeCategory.exercise),
-      ScheduleEvent(id: 's2', time: '09:00', title: 'ประชุมทีมงานประจำ', subtitle: 'ห้องประชุม A • 09:00–12:00', category: LifeCategory.work),
-      ScheduleEvent(id: 's3', time: '13:30', title: 'นัดพบลูกค้า คุณสมชาย', subtitle: 'นำเสนอแผนประกันสุขภาพ • 45 นาที', category: LifeCategory.crm),
-      ScheduleEvent(id: 's4', time: '18:00', title: 'บันทึกรายรับ-รายจ่าย', subtitle: '10 นาที', category: LifeCategory.finance),
-      ScheduleEvent(id: 's5', time: '20:00', title: 'เรียนภาษาอังกฤษ', subtitle: 'บทที่ 14 • Daily conversation • 20 นาที', category: LifeCategory.learning),
+    // ตัวอย่างวันนี้ 5 รายการ + อีก 4 รายการกระจายในสัปดาห์ เพื่อให้มุมมองรายสัปดาห์มีข้อมูลให้ดู
+    final today = DateTime.now().weekday;
+    int dayAfter(int offset) => ((today - 1 + offset) % 7) + 1;
+    final items = [
+      ScheduleEvent(id: 's1', time: '06:00', weekday: today, title: 'วิ่งตอนเช้า', subtitle: 'สวนสาธารณะใกล้บ้าน • 30 นาที', category: LifeCategory.exercise),
+      ScheduleEvent(id: 's2', time: '09:00', weekday: today, title: 'ประชุมทีมงานประจำ', subtitle: 'ห้องประชุม A • 09:00–12:00', category: LifeCategory.work),
+      ScheduleEvent(id: 's3', time: '13:30', weekday: today, title: 'นัดพบลูกค้า คุณสมชาย', subtitle: 'นำเสนอแผนประกันสุขภาพ • 45 นาที', category: LifeCategory.crm),
+      ScheduleEvent(id: 's4', time: '18:00', weekday: today, title: 'บันทึกรายรับ-รายจ่าย', subtitle: '10 นาที', category: LifeCategory.finance),
+      ScheduleEvent(id: 's5', time: '20:00', weekday: today, title: 'เรียนภาษาอังกฤษ', subtitle: 'บทที่ 14 • Daily conversation • 20 นาที', category: LifeCategory.learning),
+      ScheduleEvent(id: 's6', time: '06:00', weekday: dayAfter(1), title: 'เวทเทรนนิ่ง', subtitle: 'ฟิตเนส • 45 นาที', category: LifeCategory.exercise),
+      ScheduleEvent(id: 's7', time: '10:00', weekday: dayAfter(2), title: 'ติดตามลูกค้าเก่า', subtitle: 'โทร 5 ราย • 1 ชั่วโมง', category: LifeCategory.crm),
+      ScheduleEvent(id: 's8', time: '19:30', weekday: dayAfter(3), title: 'สรุปยอดขายประจำสัปดาห์', subtitle: '30 นาที', category: LifeCategory.finance),
+      ScheduleEvent(id: 's9', time: '09:30', weekday: dayAfter(5), title: 'อ่านหนังสือ / คอร์สออนไลน์', subtitle: 'วันหยุด • 1 ชั่วโมง', category: LifeCategory.learning),
     ];
     for (final i in items) {
       await repo.put(i);

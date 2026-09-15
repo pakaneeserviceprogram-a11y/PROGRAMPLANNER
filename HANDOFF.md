@@ -117,7 +117,10 @@ test/
 - [ ] **Auth จริง** — ตอนนี้ Login/Register แค่สร้าง/บันทึก `UserProfile` ในเครื่อง ไม่มีการยืนยันตัวตนจริงกับ Google/Apple/อีเมลจริง ๆ ต้องเชื่อม Firebase Auth (หรือบริการอื่น) + ปุ่ม Google/Apple ของจริงต้องใช้ `google_sign_in` / `sign_in_with_apple` package และตั้งค่า OAuth credentials
 - [ ] **Sync ข้ามอุปกรณ์** — Hive เก็บในเครื่องเท่านั้น ถ้าต้องการ sync ต้องมี backend (Firestore เข้ากับโครงสร้างที่ออกแบบไว้ใน `DATA_MODEL.md` ได้ทันที เพราะแต่ละ entity มี `userId` เป็น partition key อยู่แล้ว)
 - [ ] **iOS build** — โค้ด Dart เดียวกันนี้พร้อมสำหรับ iOS แต่ต้องมี Mac + Xcode มา build/test จริง
-- [ ] **มุมมองตารางเวลารายสัปดาห์** — ตอนนี้ `ScheduleScreen` มีแค่มุมมองรายการรวมเรียงตามเวลา ไม่มี grid 7 วัน
+- [x] **มุมมองตารางเวลารายสัปดาห์** — ทำแล้ว (2026-09-15): `ScheduleEvent` มีฟิลด์ `weekday` (1–7), `ScheduleRepository.getByWeekday()/getWeek()`, `ScheduleScreen` เป็น StatefulWidget สลับ "วัน / สัปดาห์" ได้ — มุมมองสัปดาห์เป็นตาราง 7 คอลัมน์เลื่อนแนวนอน, แถบ 7 วันกดเลือกวันได้และมีจุดบอกว่าวันไหนมีกิจกรรม, ฟอร์มเพิ่มกิจกรรมเลือกวันได้
+  - เรคคอร์ดเก่าที่บันทึกก่อนหน้านี้ (ไม่มี `weekday`) จะถูกอ่านเป็นวันจันทร์ — มี test คุมไว้ที่ `repository_test.dart`
+  - Dashboard "ตารางวันนี้" กรองเฉพาะ weekday ของวันนี้แล้ว (เดิมโชว์รวมทุกวัน)
+  - test หน้าจอ: `test/schedule_screen_test.dart` (เขียน Hive ใน `setUp` ก่อน pump เพื่อเลี่ยงปัญหา FakeAsync ข้อ 4)
 - [x] **เป้าหมายที่ตั้งค่าได้เอง** — ทำแล้ว (2026-09-15): `GoalSettings` model + box `goal_settings` + หน้า `GoalSettingsScreen` (เข้าจาก โปรไฟล์ → ตั้งค่าเป้าหมาย) ทุกหน้าที่ใช้เป้าหมาย rebuild อัตโนมัติเมื่อบันทึก
   - การ์ดออกกำลังกายบน Dashboard ใช้ "เสร็จ / เป้าต่อสัปดาห์" ตรงกับ % แล้ว (2026-09-15)
 - [ ] **Windows desktop build** — ต้องติดตั้ง Visual Studio "Desktop development with C++" workload ก่อน ถ้าต้องการ .exe (ไม่จำเป็นสำหรับเป้าหมายหลักคือ Android/iOS)
