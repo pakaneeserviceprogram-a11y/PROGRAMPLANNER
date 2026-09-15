@@ -5,6 +5,7 @@ import '../models/user_profile.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_card.dart';
 import 'auth/login_screen.dart';
+import 'backup_screen.dart';
 import 'goal_settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -62,6 +63,12 @@ class ProfileScreen extends StatelessWidget {
                       icon: Icons.track_changes_rounded,
                       label: 'ตั้งค่าเป้าหมาย',
                       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GoalSettingsScreen())),
+                    ),
+                    const Divider(height: 1, color: AppColors.border),
+                    _ProfileRow(
+                      icon: Icons.backup_outlined,
+                      label: 'สำรอง & กู้คืนข้อมูล',
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BackupScreen())),
                     ),
                     const Divider(height: 1, color: AppColors.border),
                     const _ProfileRow(icon: Icons.notifications_none_rounded, label: 'การแจ้งเตือน'),

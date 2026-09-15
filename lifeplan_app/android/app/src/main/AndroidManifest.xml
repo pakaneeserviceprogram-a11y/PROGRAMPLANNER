@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="lifeplan_app"
+        android:label="LifePlan"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

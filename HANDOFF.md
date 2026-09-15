@@ -108,13 +108,26 @@ test/
 
 10. **`flutter pub get` เตือนเรื่อง symlink / Developer Mode** — build Android/Web ได้โดยไม่ต้องเปิด แต่ถ้าจะ build Windows desktop ต้องเปิด Developer Mode (`start ms-settings:developers`)
 
-11. **`JAVA_HOME` ชนกับโปรเจกต์อื่น** — เครื่องนี้เดิมตั้ง `JAVA_HOME` เป็น GraalVM JDK 21 (`D:\POS\API\...`) ตอนนี้ user-level ถูกเปลี่ยนเป็น Temurin 17 แล้ว ถ้างานอื่นต้องใช้ JDK 21 ให้ export เฉพาะ session นั้น
+11. **Gradle แก้ชื่อ `repo.maven.apache.org` ไม่ได้ → build ล้มตอนโหลด dependency ใหม่** — อาการ: `Could not resolve org.jetbrains.kotlinx:kotlinx-coroutines-android` / "Got socket exception during request. It might be caused by SSL misconfiguration" สาเหตุจริงคือ **DNS ของเครือข่ายนี้แก้ชื่อ repo.maven.apache.org ไม่ได้** (`nslookup` ผ่าน 8.8.8.8 ได้ปกติ แต่ resolver ของเครื่องไม่ได้) วิธีแก้ที่ใช้: เพิ่ม mirror ของ Maven Central ที่ Google โฮสต์ (`https://maven-central.storage-download.googleapis.com/maven2/`) เป็น repository ตัวแรกใน `android/build.gradle.kts` และ `android/settings.gradle.kts` — ถ้าเจออาการนี้อีกให้เช็ค DNS ก่อน อย่าเพิ่งโทษ Gradle/SSL
+
+12. **`JAVA_HOME` ชนกับโปรเจกต์อื่น** — เครื่องนี้เดิมตั้ง `JAVA_HOME` เป็น GraalVM JDK 21 (`D:\POS\API\...`) ตอนนี้ user-level ถูกเปลี่ยนเป็น Temurin 17 แล้ว ถ้างานอื่นต้องใช้ JDK 21 ให้ export เฉพาะ session นั้น
 
 ---
 
 ## 5. สิ่งที่ยังไม่ได้ทำ (เรียงตามลำดับที่ควรทำ)
 
 - [ ] **Auth จริง** — ตอนนี้ Login/Register แค่สร้าง/บันทึก `UserProfile` ในเครื่อง ไม่มีการยืนยันตัวตนจริงกับ Google/Apple/อีเมลจริง ๆ ต้องเชื่อม Firebase Auth (หรือบริการอื่น) + ปุ่ม Google/Apple ของจริงต้องใช้ `google_sign_in` / `sign_in_with_apple` package และตั้งค่า OAuth credentials
+- [x] **สำรอง/กู้คืนข้อมูลเป็นไฟล์ JSON** — ทำแล้ว (2026-09-15): `lib/data/backup.dart` + หน้า `BackupScreen` (โปรไฟล์ → สำรอง & กู้คืนข้อมูล)
+  - ส่งออก: รวมทุก box เป็น JSON แล้วส่งผ่านแผงแชร์ของระบบ (share_plus) เลือกเก็บที่ไดรฟ์/แชทได้
+  - กู้คืน: เลือกไฟล์ด้วย file_picker → ยืนยัน (โชว์จำนวนรายการในไฟล์) → เขียนทับทั้งหมด
+  - ตรวจไฟล์ให้ครบก่อนเขียนจริง ไฟล์เสียจะไม่ทำให้ข้อมูลเดิมหายครึ่ง ๆ กลาง ๆ (มี test คุมที่ `test/backup_test.dart`)
+  - ทดสอบจริงบน emulator แล้วทั้งส่งออกและกู้คืน
+- [x] **ตั้งชื่อ/ไอคอน + keystore จริง + split APK** — ทำแล้ว (2026-09-15)
+  - ชื่อแอปบนเครื่อง = "LifePlan", ไอคอนใหม่ (ดู `assets/icon/`, สร้างใหม่ด้วย `dart run flutter_launcher_icons`)
+  - keystore จริงที่ `android/lifeplan-release.jks` + `android/key.properties` (**ไม่อยู่ใน git** — อ่าน `android/README-signing.md` ก่อน ห้ามทำหาย)
+  - `--split-per-abi` ลดขนาดจาก 50.6MB เหลือ arm64 17.9MB
+  - เปิด minify + shrinkResources ใน release build
+
 - [ ] **Sync ข้ามอุปกรณ์** — Hive เก็บในเครื่องเท่านั้น ถ้าต้องการ sync ต้องมี backend (Firestore เข้ากับโครงสร้างที่ออกแบบไว้ใน `DATA_MODEL.md` ได้ทันที เพราะแต่ละ entity มี `userId` เป็น partition key อยู่แล้ว)
 - [ ] **iOS build** — โค้ด Dart เดียวกันนี้พร้อมสำหรับ iOS แต่ต้องมี Mac + Xcode มา build/test จริง
 - [x] **มุมมองตารางเวลารายสัปดาห์** — ทำแล้ว (2026-09-15): `ScheduleEvent` มีฟิลด์ `weekday` (1–7), `ScheduleRepository.getByWeekday()/getWeek()`, `ScheduleScreen` เป็น StatefulWidget สลับ "วัน / สัปดาห์" ได้ — มุมมองสัปดาห์เป็นตาราง 7 คอลัมน์เลื่อนแนวนอน, แถบ 7 วันกดเลือกวันได้และมีจุดบอกว่าวันไหนมีกิจกรรม, ฟอร์มเพิ่มกิจกรรมเลือกวันได้

@@ -1,6 +1,59 @@
-commit ทั้งสองก้อนเลย
 
-  Ran 3 shell commands
+● Bash(PYTHONIOENCODING=utf-8 python - <<'PY'
+      import io…)
+ok
+A  "15092026 \340\270\252\340\270\245\340\270\261\340\270\232\340\271\204\340\270\224\340\271\200\340\270\243\340\
+270\204\340\270\227\340\270\255\340\270\243\340\270\265\340\271\210.txt"
+… +22 lines
+Updated D:\PROGRAMPLANNER\HANDOFF.md (+4 -1)
+- [ ] **Auth จริง** — ตอนนี้ Login/Register แค่สร้าง/บันทึก `UserProfile` ในเครื่อง ไม่มีการยืนยันตัวตนจริงกับ Google/Appl
+e/อีเมลจริง ๆ ต้องเชื่อม Firebase Auth (หรือบริการอื่น) + ปุ่ม Google/Apple ของจริงต้องใช้ `google_sign_in` / `sign_in_w
+ith_apple` package และตั้งค่า OAuth credentials
+- [ ] **Sync ข้ามอุปกรณ์** — Hive เก็บในเครื่องเท่านั้น ถ้าต้องการ sync ต้องมี backend (Firestore เข้ากับโครงสร้างที่ออกแบบไ
+ว้ใน `DATA_MODEL.md` ได้ทันที เพราะแต่ละ entity มี `userId` เป็น partition key อยู่แล้ว)
+- [ ] **iOS build** — โค้ด Dart เดียวกันนี้พร้อมสำหรับ iOS แต่ต้องมี Mac + Xcode มา build/test จริง
+- [ ] **มุมมองตารางเวลารายสัปดาห์** — ตอนนี้ `ScheduleScreen` มีแค่มุมมองรายการรวมเรียงตามเวลา ไม่มี grid 7 วัน
+- [x] **มุมมองตารางเวลารายสัปดาห์** — ทำแล้ว (2026-09-15): `ScheduleEvent` มีฟิลด์ `weekday` (1–7), `ScheduleRepo
+sitory.getByWeekday()/getWeek()`, `ScheduleScreen` เป็น StatefulWidget สลับ "วัน / สัปดาห์" ได้ — มุมมองสัปดาห์เป็นต
+าราง 7 คอลัมน์เลื่อนแนวนอน, แถบ 7 วันกดเลือกวันได้และมีจุดบอกว่าวันไหนมีกิจกรรม, ฟอร์มเพิ่มกิจกรรมเลือกวันได้
+  - เรคคอร์ดเก่าที่บันทึกก่อนหน้านี้ (ไม่มี `weekday`) จะถูกอ่านเป็นวันจันทร์ — มี test คุมไว้ที่ `repository_test.dart`
+  - Dashboard "ตารางวันนี้" กรองเฉพาะ weekday ของวันนี้แล้ว (เดิมโชว์รวมทุกวัน)
+  - test หน้าจอ: `test/schedule_screen_test.dart` (เขียน Hive ใน `setUp` ก่อน pump เพื่อเลี่ยงปัญหา FakeAsync ข้อ 4
+)
+- [x] **เป้าหมายที่ตั้งค่าได้เอง** — ทำแล้ว (2026-09-15): `GoalSettings` model + box `goal_settings` + หน้า `GoalSe
+ttingsScreen` (เข้าจาก โปรไฟล์ → ตั้งค่าเป้าหมาย) ทุกหน้าที่ใช้เป้าหมาย rebuild อัตโนมัติเมื่อบันทึก
+  - การ์ดออกกำลังกายบน Dashboard ใช้ "เสร็จ / เป้าต่อสัปดาห์" ตรงกับ % แล้ว (2026-09-15)
+- [ ] **Windows desktop build** — ต้องติดตั้ง Visual Studio "Desktop development with C++" workload ก่อน ถ้าต้องก
+าร .exe (ไม่จำเป็นสำหรับเป้าหมายหลักคือ Android/iOS)
+
+● Stop Task
+cd /d/PROGRAMPLANNER/lifeplan_app/build/web && python -m http.server 8080 · stopped
+
+ตารางเวลารายสัปดาห์เสร็จแล้ว — flutter analyze สะอาด, flutter test ผ่าน 16 tests (เพิ่มจาก 12)
+
+สิ่งที่เพิ่ม
+- lib/models/schedule_event.dart — ฟิลด์ weekday (1 = จันทร์ … 7 = อาทิตย์ ตรงกับ DateTime.weekday) ตารางนี้เป็น "ตารางประจำสัปดาห์" ที่วนซ้ำ ไม่ผูกกับวันที่จริง เรคคอร์ดเก่าที่ไม่มี weekday อ่านเป็นวันจันทร์ (มี test คุม)
+- schedule_repository.dart — getByWeekday() และ getWeek() (คืน list 7 ช่อง เรียงตามเวลาในแต่ละวัน)
+- schedule_screen.dart — เขียนใหม่เป็น StatefulWidget:
+  - toggle วัน / สัปดาห์ ข้างปุ่ม +
+  - มุมมองสัปดาห์ = ตาราง 7 คอลัมน์ (จันทร์–อาทิตย์) เลื่อนแนวนอน คอลัมน์วันนี้ขอบสีหลัก แต่ละกิจกรรมเป็นชิปสีตามหมวด แตะหัวคอลัมน์เพื่อกระโดดไปมุมมองรายวัน
+  - แถบ 7 วันด้านบนกดเลือกวันได้จริง (เดิมโชว์เฉย ๆ) + จุดบอกว่าวันไหนมีกิจกรรม
+  - ฟอร์มเพิ่มกิจกรรมมี dropdown เลือกวัน และเด้งไปวันนั้นให้หลังบันทึก
+- dashboard_screen.dart:87 — การ์ด "ตารางวันนี้" กรองเฉพาะวันนี้แล้ว (เดิมดึงรวมทุกวัน)
+- seed_data.dart — ตัวอย่างกระจาย 9 รายการทั้งสัปดาห์ (5 รายการอยู่วันนี้เหมือนเดิม) มุมมองสัปดาห์จะได้มีข้อมูลให้ดูตั้งแต่เปิดครั้งแรก
+- test/schedule_screen_test.dart (ใหม่) + test ของ repository/migration
+
+บั๊กที่เจอระหว่างทาง 2 จุด (แก้แล้ว)
+- หัวคอลัมน์ในตารางสัปดาห์ overflow เมื่อชื่อวันยาว ("พฤหัสบดี") — widget test จับได้ แก้ด้วย Flexible + ellipsis
+- แถบ 7 วันเดิมคำนวณวันที่ด้วย now.day - now.weekday + 1 + i ซึ่งได้เลข 0 หรือติดลบเมื่อสัปดาห์คร่อมเดือน — เปลี่ยนมาใช้ _startOfWeek() ที่ .add(Duration(days: i)) จริง
+
+ยังไม่ commit — คำสั่ง git commit ถูกปฏิเสธสิทธิ์ตั้งแต่ต้น ตอนนี้จึงมีงาน 2 ก้อนค้างใน working tree (goal settings staged อยู่ + weekly view ยังไม่ staged) ถ้าอยากแยกเป็น 2 commits ผมเตรียมข้อความให้แล้วก้อนแรก รันเองได้ด้วย ! git commit -F "...scratchpad/commitmsg.txt" หรือถ้าอนุญาตสิทธิ์ให้ผมแล้วบอกมา ผมสั่ง commit ทั้งสองก้อนให้ครับ
+
+✻ Brewed for 9m 8s · done 12:24 PM
+
+❯ commit ทั้งสองก้อนเลย
+
+  Ran 2 shell commands
 
 ยังถูกบล็อกอยู่ครับ — ลองทั้ง -F และ -m แล้วถูกปฏิเสธทั้งคู่ ผมหยุดลองซ้ำแล้ว ดูเหมือนมี deny rule ของ git commit ใน settings ไม่ใช่การกดปฏิเสธชั่วคราว
 
@@ -28,5 +81,81 @@ deny rule แรงกว่าการอนุญาตรายครั้�
 
 ※ recap: ทำแอป LifePlan ต่อ ตอนนี้ฟีเจอร์ตารางเวลารายสัปดาห์เสร็จแล้ว analyze สะอาด test ผ่าน 16 ตัว เหลือแค่ commit ซึ่งผมทำเองไม่ได้เพราะ git commit ถูก deny ใน settings ต้องรันสองคำสั่งที่ให้ไว้ด้วยตัวเองครับ (disable recaps in /config)
 
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-❯ ลบ deny rule git commit ออกให้หน่อย
+❯ ลบ deny rule git commit ออกให้หน่อย
+
+  Read 1 file
+
+● Update(C:\Users\Administrator\.claude\settings.json)
+Removed 1 line
+      "Bash(git checkout -b*)",
+      "Bash(git switch -c*)",
+      "Bash(git switch --create*)",
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ],
+    "ask": [
+
+  Committed cd33919
+
+ผ่านแล้ว — ก้อนแรกเข้าเรียบร้อย ก้อนที่สองต่อเลย:
+
+  Committed 5936121, ran 1 shell command
+
+ทั้งสองก้อนเข้าเรียบร้อยแล้วครับ
+
+5936121  เพิ่มมุมมองตารางเวลารายสัปดาห์ (ตาราง 7 วัน)      11 files, +487 −100
+cd33919  เพิ่มเป้าหมายที่ผู้ใช้ตั้งค่าเองได้ แทนค่าคงที่ใน targets.dart   18 files, +720 −57
+e67e627  first commit
+
+working tree สะอาดแล้ว และ deny rule Bash(git commit*) ถูกลบออกจาก ~/.claude/settings.json แล้ว (ผมเก็บ Bash(git push*) กับ rule อันตรายอื่น ๆ ไว้เหมือนเดิม — ถ้าจะ push ยังต้องรันเอง)
+
+มีเรื่องต้องบอก 1 อย่าง: ตอน git add -A ก้อนที่สอง มีไฟล์ 15092026 next2.txt ถูกสร้างขึ้นระหว่างทาง (เวลา 13:02 — เป็น log บทสนทนานี้ น่าจะมาจาก hook ของ AIPass) แล้วติดเข้าไปใน commit ตารางเวลาด้วย ทั้งที่ไม่เกี่ยวกัน ไฟล์แนวเดียวกัน (14092026.txt) ถูก track อยู่ก่อนแล้วผมเลยไม่ได้กันไว้ ถ้าอยากให้เอาออกจาก commit นี้ บอกได้ ผมจัดการให้ (commit เป็นตัวล่าสุดและยังไม่ push จึงแก้ได้ปลอดภัย) หรือถ้าจะกันไม่ให้ log พวกนี้เข้า repo ในอนาคต ผมเพิ่ม .gitignore ให้ได้เหมือนกัน
+
+งานที่เหลือใน HANDOFF ข้อ 5 ตอนนี้: Auth จริง (Firebase Auth + google_sign_in), Sync ข้ามอุปกรณ์, iOS build (ต้องมี Mac), Windows desktop build (ต้องลง VS C++ workload) — อันที่ทำต่อได้ทันทีบนเครื่องนี้คือ Auth จริงครับ
+
+✻ Brewed for 1m 46s · done 1:21 PM
+
+❯ เอา  android ก่อนโปรแกรมใช้งานจริงได้ยัง
+
+ผมเช็คความพร้อมฝั่ง Android ให้ครบ — build จริง + ดูจุดที่ยังติดก่อนเอาไปใช้งานจริง
+
+  Ran 2 shell commands
+
+Build APK จริงเพื่อดูว่าออกมาใช้ได้ไหม:
+
+  Searched for 3 patterns, read 3 files, ran 12 shell commands
+
+● Background command "Launch android emulator" completed (exit code 0)
+
+ตอบจากของจริง: build APK release ผ่าน แล้วติดตั้งรันบน Android 14 emulator เรียบร้อย — แอปทำงานได้ครบทุกหน้า ข้อมูลเก่ายังอยู่ และมุมมองสัปดาห์ใหม่ทำงานถูกต้อง (เรคคอร์ดเก่าตกไปวันจันทร์ตามที่ออกแบบไว้)
+
+build/app/outputs/flutter-apk/app-release.apk   50.6 MB
+minSdk 24 (Android 7) / targetSdk 36 / Android 14 emulator: ผ่าน
+
+"ใช้งานจริงได้ยัง" ขึ้นกับว่าใช้แบบไหนครับ
+
+ใช้เองบนมือถือตัวเอง — ได้เลยตอนนี้ ก๊อป APK ไปลงเครื่อง (เปิด "ติดตั้งจากแหล่งที่ไม่รู้จัก") ใช้ได้ทันที ออฟไลน์ 100%
+
+แจกให้คนอื่น / ขึ้น Play Store — ยังไม่ได้ ติด 4 อย่าง
+1. release ยังเซ็นด้วย debug key (android/app/build.gradle.kts มี TODO อยู่) — Play ไม่รับ ต้องสร้าง keystore + key.properties
+2. ชื่อ/ไอคอนยังเป็นค่า default — label lifeplan_app, ไอคอน Flutter, description "A new Flutter project."
+3. APK 50.6MB ใหญ่เกินจำเป็น เพราะรวมทุก CPU architecture — ใช้ flutter build appbundle หรือ --split-per-abi จะเหลือ ~20MB
+4. applicationId ยังเป็น com.lifeplan.lifeplan_app (คอมเมนต์ TODO บอกให้เปลี่ยนเป็นโดเมนจริง — ใช้ได้แต่เปลี่ยนทีหลังไม่ได้แล้วถ้าขึ้น Play ไปแล้ว)
+
+ข้อจำกัดด้านฟังก์ชันที่ควรรู้ก่อนใช้จริงจัง (สำคัญกว่าเรื่อง build)
+- ล็อกอินไม่ตรวจรหัสผ่านเลย — login_screen.dart:30 กรอกอีเมลอะไรก็เข้าได้ ไม่มีบัญชีจริง มีบัญชีเดียวต่อเครื่อง
+- ข้อมูลอยู่ในเครื่องล้วน ไม่มี backup — ถอนแอปหรือเปลี่ยนเครื่อง = ข้อมูลหายหมด ยังไม่มีปุ่ม export/import ด้วย
+- ไม่มีการแจ้งเตือน — เป็นแอปวางแผนแต่ไม่เตือนตามเวลาในตาราง
+- ตารางเวลาเป็น "ประจำสัปดาห์" ที่วนซ้ำ ยังไม่มีนัดหมายเฉพาะวันที่
+
+ถ้าเป้าหมายคือเอาไปใช้เองจริงจังก่อน ผมแนะนำเรียงแบบนี้ (ทำได้ทันทีบนเครื่องนี้ ไม่ต้องพึ่งบริการภายนอก):
+1. Export/Import ข้อมูลเป็นไฟล์ JSON — กันข้อมูลหาย เสี่ยงสุดตอนนี้
+2. ตั้งชื่อ/ไอคอน + keystore จริง + split APK — ได้ APK ที่แจกและอัปเดตทับได้
+3. แจ้งเตือนตามตารางเวลา (flutter_local_notifications)
+4. Auth จริง (Firebase) — ค่อยทำเมื่อจะ sync ข้ามเครื่องจริง ๆ
+
+จะให้เริ่มข้อไหนก่อนครับ
+
+✻ Sautéed for 11m 8s · done 1:35 PM
+
+※ recap: Goal is the LifePlan Flutter app. Weekly schedule view is done, tested, and both commits landed; the release APK builds and runs on Android 14. Next: pick which Android-readiness item to start, with JSON export/import recommended first. (disable recaps in /config)
