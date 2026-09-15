@@ -5,12 +5,16 @@ import '../data/repositories/client_repository.dart';
 import '../data/repositories/exercise_repository.dart';
 import '../data/repositories/finance_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
+import '../data/repositories/meal_repository.dart';
 import '../data/repositories/schedule_repository.dart';
 import '../data/repositories/skill_track_repository.dart';
 import '../data/repositories/user_repository.dart';
+import '../data/repositories/water_repository.dart';
 import '../data/repositories/work_task_repository.dart';
 import '../models/client.dart';
 import '../models/life_category.dart';
+import '../models/meal_entry.dart';
+import '../models/water_log.dart';
 import '../models/work_task.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_card.dart';
@@ -21,6 +25,7 @@ import 'crm_screen.dart';
 import 'exercise_screen.dart';
 import 'finance_screen.dart';
 import 'learning_screen.dart';
+import 'nutrition_screen.dart';
 import 'work_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -49,6 +54,8 @@ class DashboardScreen extends StatelessWidget {
     final financeRepo = FinanceRepository();
     final skillRepo = SkillTrackRepository();
     final scheduleRepo = ScheduleRepository();
+    final mealRepo = MealRepository();
+    final waterRepo = WaterRepository();
     final userRepo = UserRepository();
     final goalsRepo = GoalSettingsRepository();
 
@@ -61,6 +68,8 @@ class DashboardScreen extends StatelessWidget {
           financeRepo.listenable(),
           skillRepo.listenable(),
           scheduleRepo.listenable(),
+          mealRepo.listenable(),
+          waterRepo.listenable(),
           userRepo.listenable(),
           goalsRepo.listenable(),
         ]),
@@ -77,6 +86,11 @@ class DashboardScreen extends StatelessWidget {
 
           final clients = clientRepo.getAll();
           final needsFollowUp = clients.where((c) => c.stage != ClientStage.closedWon).length;
+
+          final mealTotals = NutritionTotals.of(mealRepo.getToday());
+          final waterToday = waterRepo.getToday();
+          final calorieTarget = goalsRepo.get().calorieTarget;
+          final waterGlassTarget = (goalsRepo.get().waterTargetMl / WaterLog.glassMl).round();
 
           final skills = skillRepo.getAll();
           final primarySkill = skills.isNotEmpty ? skills.first : null;
@@ -215,36 +229,18 @@ class DashboardScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              GestureDetector(
+              _WideModuleCard(
+                category: LifeCategory.nutrition,
+                subtitle: '${mealTotals.calories} / $calorieTarget kcal • น้ำ ${waterToday.glasses}/$waterGlassTarget แก้ว',
+                onTap: () => _open(context, const NutritionScreen()),
+              ),
+              const SizedBox(height: 12),
+              _WideModuleCard(
+                category: LifeCategory.learning,
+                subtitle: primarySkill != null
+                    ? '${primarySkill.name} • ${primarySkill.progressPercent}%'
+                    : 'ยังไม่มีเส้นทางการเรียนรู้',
                 onTap: () => _open(context, const LearningScreen()),
-                child: AppCard(
-                  color: LifeCategory.learning.softColor,
-                  borderColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          IconTile(icon: LifeCategory.learning.icon, background: LifeCategory.learning.color),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('เรียนรู้ & พัฒนาตนเอง', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 2),
-                              Text(
-                                primarySkill != null ? '${primarySkill.name} • ${primarySkill.progressPercent}%' : 'ยังไม่มีเส้นทางการเรียนรู้',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
-                    ],
-                  ),
-                ),
               ),
               const SizedBox(height: 16),
 
@@ -302,6 +298,57 @@ class _StatTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
         ],
+      ),
+    );
+  }
+}
+
+/// การ์ดเต็มความกว้างสำหรับโมดูลที่ไม่ได้อยู่ในกริด (โภชนาการ, เรียนรู้)
+class _WideModuleCard extends StatelessWidget {
+  final LifeCategory category;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _WideModuleCard({required this.category, required this.subtitle, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AppCard(
+        color: category.softColor,
+        borderColor: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  IconTile(icon: category.icon, background: category.color),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(category.label,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 2),
+                        Text(subtitle,
+                            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+          ],
+        ),
       ),
     );
   }

@@ -48,7 +48,49 @@
 
 ---
 
-## 3. Work (งานประจำ)
+## 3. Nutrition (ทานอาหาร & โภชนาการ)
+
+### MealEntry — มื้ออาหารหนึ่งรายการ
+| ฟิลด์ | ชนิด | คำอธิบาย |
+|---|---|---|
+| id | String | |
+| userId | String | อ้างอิง User |
+| title | String | ชื่อเมนู เช่น "ข้าวกล้องอกไก่" |
+| type | enum: `breakfast`, `lunch`, `dinner`, `snack` | มื้อ |
+| date | DateTime | วันของมื้อนี้ (ตัดเวลาออก เหลือปี-เดือน-วัน) |
+| time | String | เวลาที่ทาน รูปแบบ `HH:mm` |
+| calories | int | พลังงาน (kcal) |
+| proteinGrams | double | โปรตีน (กรัม) |
+| carbGrams | double | แป้ง / คาร์โบไฮเดรต (กรัม) |
+| fatGrams | double | ไขมัน (กรัม) |
+| sugarGrams | double | น้ำตาล (กรัม) |
+| vitamins | List<enum: `a`, `b`, `c`, `d`, `e`, `k`> | วิตามินที่ได้รับจากมื้อนี้ |
+| workoutTiming | enum: `none`, `preWorkout`, `postWorkout` | ความสัมพันธ์กับเวลาออกกำลังกาย |
+
+### WaterLog — การดื่มน้ำรายวัน
+| ฟิลด์ | ชนิด | คำอธิบาย |
+|---|---|---|
+| id | String | = คีย์วัน `yyyy-MM-dd` (หนึ่งรายการต่อหนึ่งวัน บันทึกซ้ำจะทับของเดิม) |
+| userId | String | |
+| date | DateTime | วันที่ |
+| milliliters | int | ปริมาณสะสมของวันนั้น (มล.) — 1 แก้ว = 250 มล. |
+
+### NutritionGoal — เป้าหมายโภชนาการต่อวัน
+| ฟิลด์ | ชนิด | คำอธิบาย |
+|---|---|---|
+| userId | String | |
+| calorieTarget | int | พลังงานต่อวัน (ค่าเริ่มต้น 2,000 kcal) |
+| proteinTarget | double | โปรตีน (ค่าเริ่มต้น 60 ก.) |
+| carbTarget | double | แป้ง (ค่าเริ่มต้น 250 ก.) |
+| fatTarget | double | ไขมัน (ค่าเริ่มต้น 65 ก.) |
+| sugarLimit | double | **เพดาน** น้ำตาลที่ไม่ควรเกิน (ค่าเริ่มต้น 25 ก. ตามคำแนะนำ WHO) |
+| waterTargetMl | int | น้ำดื่มต่อวัน (ค่าเริ่มต้น 2,000 มล.) |
+
+**คะแนนโภชนาการรายวัน** (`Insights.nutritionScore`) = ค่าเฉลี่ยของ 4 ส่วน: พลังงาน/เป้า, โปรตีน/เป้า, น้ำ/เป้า และคะแนนน้ำตาล (อยู่ในเพดาน = เต็ม, เกินเพดานยิ่งมากยิ่งลดลงตามสัดส่วน `sugarLimit / sugarGrams`) — ยังไม่มีข้อมูลทั้งมื้ออาหารและน้ำของวันนั้น = 0
+
+---
+
+## 4. Work (งานประจำ)
 
 ### WorkTask
 | ฟิลด์ | ชนิด | คำอธิบาย |
@@ -65,7 +107,7 @@
 
 ---
 
-## 4. CRM (ลูกค้า & ขายประกัน)
+## 5. CRM (ลูกค้า & ขายประกัน)
 
 ### Client (ลูกค้า)
 | ฟิลด์ | ชนิด | คำอธิบาย |
@@ -91,7 +133,7 @@
 
 ---
 
-## 5. Finance (การเงิน)
+## 6. Finance (การเงิน)
 
 ### Transaction (รายการรายรับ-รายจ่าย)
 | ฟิลด์ | ชนิด | คำอธิบาย |
@@ -114,7 +156,7 @@
 
 ---
 
-## 6. Learning (เรียนรู้ & พัฒนาตนเอง)
+## 7. Learning (เรียนรู้ & พัฒนาตนเอง)
 
 ### SkillTrack (เส้นทางการเรียนรู้)
 | ฟิลด์ | ชนิด | คำอธิบาย |
@@ -146,7 +188,7 @@
 
 ---
 
-## 7. Schedule (ตารางเวลา)
+## 8. Schedule (ตารางเวลา)
 
 ### ScheduleEvent
 เหตุการณ์ในตารางเวลา — อาจอ้างอิงกลับไปยัง item ของโมดูลอื่น (เช่น ExercisePlanItem, WorkTask, Client follow-up, LearningSession) เพื่อให้ตารางเวลาเป็น "มุมมองรวม" ของทุกโมดูล
@@ -156,7 +198,7 @@
 | id | String | |
 | userId | String | |
 | title | String | |
-| category | enum: `exercise`, `work`, `crm`, `finance`, `learning`, `other` | ใช้กำหนดสีในตารางเวลา |
+| category | enum: `exercise`, `nutrition`, `work`, `crm`, `finance`, `learning`, `other` | ใช้กำหนดสีในตารางเวลา |
 | startTime | DateTime | |
 | durationMinutes | int | |
 | linkedEntityId | String? | id ของ record ต้นทางในโมดูลนั้น ๆ (ถ้ามี) |
@@ -170,7 +212,7 @@
 
 ---
 
-## 8. Progress (ความคืบหน้า & วัดผล)
+## 9. Progress (ความคืบหน้า & วัดผล)
 
 ข้อมูลในหน้านี้ส่วนใหญ่เป็น **ค่าที่คำนวณ (derived/aggregate)** จากโมดูลอื่น ไม่จำเป็นต้องมีตารางเก็บแยกทั้งหมด แต่แนะนำให้ cache เป็นรายสัปดาห์เพื่อประสิทธิภาพ:
 
@@ -194,10 +236,12 @@
 
 ---
 
-## 9. ความสัมพันธ์ระหว่าง Entity (สรุป)
+## 10. ความสัมพันธ์ระหว่าง Entity (สรุป)
 
 ```
 User (1) ──< ExercisePlanItem
+User (1) ──< MealEntry
+User (1) ──< WaterLog (1 รายการต่อวัน, คีย์ = yyyy-MM-dd)
 User (1) ──< WorkTask
 User (1) ──< Client
 User (1) ──< Transaction
@@ -207,11 +251,12 @@ User (1) ──< Achievement
 User (1) ──1 SavingGoal (ต่อเดือน)
 User (1) ──1 SalesGoal (ต่อเดือน)
 User (1) ──1 ExerciseWeeklyGoal (ต่อสัปดาห์)
+User (1) ──1 NutritionGoal (ต่อวัน)
 ```
 
-## 10. แนวทางฝั่ง Flutter
+## 11. แนวทางฝั่ง Flutter
 
 - แต่ละ entity ด้านบน = 1 Dart class ใน `lib/models/` พร้อม `fromJson` / `toJson`
 - ระยะแรก (สเตจ mockup → ใช้งานได้จริงบนเครื่อง) เก็บข้อมูลด้วย local storage (เช่น Hive หรือ sqflite) — ยังไม่ต้องมี backend
-- **เป้าหมาย (SavingGoal / SalesGoal / ExerciseWeeklyGoal) ในแอปตอนนี้:** รวมเป็นเอกสารเดียว `GoalSettings` (`lib/models/goal_settings.dart`) ใน Hive box `goal_settings` คีย์ `current` — ฟิลด์ `savingTarget` (double, ค่าเริ่มต้น 50,000), `salesTarget` (double, 250,000), `exerciseWeeklyTarget` (int, 5) ยังไม่แยกตามเดือน/สัปดาห์และยังไม่มี `userId`/`currentAmount` (ยอดออมคำนวณจาก Transaction หมวด `investmentSaving`) ถ้าย้ายไป Firestore ค่อยแยกเป็น 3 entity ตามตารางด้านบน
+- **เป้าหมาย (SavingGoal / SalesGoal / ExerciseWeeklyGoal / NutritionGoal) ในแอปตอนนี้:** รวมเป็นเอกสารเดียว `GoalSettings` (`lib/models/goal_settings.dart`) ใน Hive box `goal_settings` คีย์ `current` — ฟิลด์ `savingTarget` (double, ค่าเริ่มต้น 50,000), `salesTarget` (double, 250,000), `exerciseWeeklyTarget` (int, 5), `calorieTarget` (int, 2,000), `proteinTarget` (double, 60), `carbTarget` (double, 250), `fatTarget` (double, 65), `sugarLimit` (double, 25), `waterTargetMl` (int, 2,000) ยังไม่แยกตามเดือน/สัปดาห์และยังไม่มี `userId`/`currentAmount` (ยอดออมคำนวณจาก Transaction หมวด `investmentSaving`) ถ้าย้ายไป Firestore ค่อยแยกเป็น 4 entity ตามตารางด้านบน
 - โครงสร้างนี้ map ตรงกับ Firestore ได้ทันทีถ้าต้องการ sync ข้ามอุปกรณ์ในอนาคต (แต่ละ collection = entity, `userId` เป็น partition key)

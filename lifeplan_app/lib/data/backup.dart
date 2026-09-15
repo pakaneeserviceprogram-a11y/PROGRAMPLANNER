@@ -28,6 +28,8 @@ class BackupService {
     HiveBoxes.userProfile,
     HiveBoxes.workTasks,
     HiveBoxes.exerciseItems,
+    HiveBoxes.mealEntries,
+    HiveBoxes.waterLogs,
     HiveBoxes.clients,
     HiveBoxes.financeTransactions,
     HiveBoxes.skillTracks,

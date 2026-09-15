@@ -4,11 +4,12 @@ import '../theme/app_colors.dart';
 
 /// The life domains LifePlan tracks. Shared across dashboard, schedule and
 /// progress so every module keeps one consistent color + icon.
-enum LifeCategory { exercise, work, crm, finance, learning }
+enum LifeCategory { exercise, nutrition, work, crm, finance, learning }
 
 extension LifeCategoryX on LifeCategory {
   String get label => switch (this) {
         LifeCategory.exercise => 'ออกกำลังกาย',
+        LifeCategory.nutrition => 'ทานอาหาร & โภชนาการ',
         LifeCategory.work => 'งานประจำ',
         LifeCategory.crm => 'ลูกค้า & ขายประกัน',
         LifeCategory.finance => 'การเงิน',
@@ -17,6 +18,7 @@ extension LifeCategoryX on LifeCategory {
 
   Color get color => switch (this) {
         LifeCategory.exercise => AppColors.exercise,
+        LifeCategory.nutrition => AppColors.nutrition,
         LifeCategory.work => AppColors.work,
         LifeCategory.crm => AppColors.crm,
         LifeCategory.finance => AppColors.finance,
@@ -25,6 +27,7 @@ extension LifeCategoryX on LifeCategory {
 
   Color get softColor => switch (this) {
         LifeCategory.exercise => AppColors.exerciseSoft,
+        LifeCategory.nutrition => AppColors.nutritionSoft,
         LifeCategory.work => AppColors.workSoft,
         LifeCategory.crm => AppColors.crmSoft,
         LifeCategory.finance => AppColors.financeSoft,
@@ -33,6 +36,7 @@ extension LifeCategoryX on LifeCategory {
 
   IconData get icon => switch (this) {
         LifeCategory.exercise => Icons.directions_run_rounded,
+        LifeCategory.nutrition => Icons.restaurant_rounded,
         LifeCategory.work => Icons.work_rounded,
         LifeCategory.crm => Icons.groups_rounded,
         LifeCategory.finance => Icons.account_balance_wallet_rounded,

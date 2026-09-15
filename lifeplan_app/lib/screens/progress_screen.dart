@@ -5,7 +5,9 @@ import '../data/repositories/client_repository.dart';
 import '../data/repositories/exercise_repository.dart';
 import '../data/repositories/finance_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
+import '../data/repositories/meal_repository.dart';
 import '../data/repositories/skill_track_repository.dart';
+import '../data/repositories/water_repository.dart';
 import '../data/repositories/work_task_repository.dart';
 import '../models/life_category.dart';
 import '../theme/app_colors.dart';
@@ -24,6 +26,8 @@ class ProgressScreen extends StatelessWidget {
     final financeRepo = FinanceRepository();
     final skillRepo = SkillTrackRepository();
     final goalsRepo = GoalSettingsRepository();
+    final mealRepo = MealRepository();
+    final waterRepo = WaterRepository();
 
     return SafeArea(
       child: AnimatedBuilder(
@@ -34,6 +38,8 @@ class ProgressScreen extends StatelessWidget {
           financeRepo.listenable(),
           skillRepo.listenable(),
           goalsRepo.listenable(),
+          mealRepo.listenable(),
+          waterRepo.listenable(),
         ]),
         builder: (context, _) {
           final scores = Insights.categoryScores();

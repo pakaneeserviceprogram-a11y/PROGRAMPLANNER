@@ -2,14 +2,18 @@ import '../models/client.dart';
 import '../models/exercise_item.dart';
 import '../models/finance_transaction.dart';
 import '../models/life_category.dart';
+import '../models/meal_entry.dart';
 import '../models/schedule_event.dart';
 import '../models/skill_track.dart';
+import '../models/water_log.dart';
 import '../models/work_task.dart';
 import 'repositories/client_repository.dart';
 import 'repositories/exercise_repository.dart';
 import 'repositories/finance_repository.dart';
+import 'repositories/meal_repository.dart';
 import 'repositories/schedule_repository.dart';
 import 'repositories/skill_track_repository.dart';
+import 'repositories/water_repository.dart';
 import 'repositories/work_task_repository.dart';
 
 /// Populates every box with sample data the first time the app runs, so a
@@ -21,6 +25,7 @@ class SeedData {
 
   static Future<void> seedIfEmpty() async {
     await _seedExercise();
+    await _seedNutrition();
     await _seedWork();
     await _seedClients();
     await _seedFinance();
@@ -41,6 +46,64 @@ class SeedData {
     ];
     for (final i in items) {
       await repo.put(i);
+    }
+  }
+
+  static Future<void> _seedNutrition() async {
+    final repo = MealRepository();
+    if (repo.getAll().isEmpty) {
+      final today = DateTime.now();
+      final meals = [
+        MealEntry(
+          id: 'm1',
+          title: 'ข้าวต้มปลา + ไข่ต้ม',
+          type: MealType.breakfast,
+          time: '07:00',
+          date: today,
+          calories: 420,
+          proteinGrams: 26,
+          carbGrams: 52,
+          fatGrams: 9,
+          sugarGrams: 3,
+          vitamins: const [Vitamin.b, Vitamin.d],
+        ),
+        MealEntry(
+          id: 'm2',
+          title: 'กล้วยหอม 1 ผล',
+          type: MealType.snack,
+          time: '09:30',
+          date: today,
+          calories: 105,
+          proteinGrams: 1.3,
+          carbGrams: 27,
+          fatGrams: 0.4,
+          sugarGrams: 14,
+          vitamins: const [Vitamin.b, Vitamin.c],
+          workoutTiming: WorkoutTiming.preWorkout,
+        ),
+        MealEntry(
+          id: 'm3',
+          title: 'ข้าวกล้องอกไก่ผัดผักรวม',
+          type: MealType.lunch,
+          time: '12:15',
+          date: today,
+          calories: 610,
+          proteinGrams: 42,
+          carbGrams: 70,
+          fatGrams: 14,
+          sugarGrams: 6,
+          vitamins: const [Vitamin.a, Vitamin.c, Vitamin.k],
+          workoutTiming: WorkoutTiming.postWorkout,
+        ),
+      ];
+      for (final m in meals) {
+        await repo.put(m);
+      }
+    }
+
+    final waterRepo = WaterRepository();
+    if (waterRepo.getAll().isEmpty) {
+      await waterRepo.put(WaterLog(date: DateTime.now(), milliliters: 4 * WaterLog.glassMl));
     }
   }
 
@@ -120,6 +183,9 @@ class SeedData {
       ScheduleEvent(id: 's7', time: '10:00', weekday: dayAfter(2), title: 'ติดตามลูกค้าเก่า', subtitle: 'โทร 5 ราย • 1 ชั่วโมง', category: LifeCategory.crm),
       ScheduleEvent(id: 's8', time: '19:30', weekday: dayAfter(3), title: 'สรุปยอดขายประจำสัปดาห์', subtitle: '30 นาที', category: LifeCategory.finance),
       ScheduleEvent(id: 's9', time: '09:30', weekday: dayAfter(5), title: 'อ่านหนังสือ / คอร์สออนไลน์', subtitle: 'วันหยุด • 1 ชั่วโมง', category: LifeCategory.learning),
+      ScheduleEvent(id: 's10', time: '07:00', weekday: today, title: 'มื้อเช้า', subtitle: 'โปรตีน + แป้งเชิงซ้อน • บันทึกโภชนาการ', category: LifeCategory.nutrition),
+      ScheduleEvent(id: 's11', time: '12:00', weekday: today, title: 'มื้อกลางวัน', subtitle: 'เน้นผักและโปรตีน • เลี่ยงน้ำหวาน', category: LifeCategory.nutrition),
+      ScheduleEvent(id: 's12', time: '18:30', weekday: today, title: 'มื้อเย็น', subtitle: 'มื้อเบา • ดื่มน้ำให้ครบ 2,000 มล.', category: LifeCategory.nutrition),
     ];
     for (final i in items) {
       await repo.put(i);

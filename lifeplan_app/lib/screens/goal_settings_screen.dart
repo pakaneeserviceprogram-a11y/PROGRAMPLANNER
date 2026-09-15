@@ -9,7 +9,7 @@ import '../widgets/auth_widgets.dart';
 import '../widgets/back_button_circle.dart';
 
 /// Lets the user edit the goals that drive progress on the Finance, CRM,
-/// Exercise, Dashboard and Progress screens.
+/// Exercise, Nutrition, Dashboard and Progress screens.
 class GoalSettingsScreen extends StatefulWidget {
   const GoalSettingsScreen({super.key});
 
@@ -22,6 +22,12 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
   late final TextEditingController _savingController;
   late final TextEditingController _salesController;
   late final TextEditingController _exerciseController;
+  late final TextEditingController _calorieController;
+  late final TextEditingController _proteinController;
+  late final TextEditingController _carbController;
+  late final TextEditingController _fatController;
+  late final TextEditingController _sugarController;
+  late final TextEditingController _waterController;
 
   @override
   void initState() {
@@ -30,6 +36,12 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     _savingController = TextEditingController(text: goals.savingTarget.toStringAsFixed(0));
     _salesController = TextEditingController(text: goals.salesTarget.toStringAsFixed(0));
     _exerciseController = TextEditingController(text: '${goals.exerciseWeeklyTarget}');
+    _calorieController = TextEditingController(text: '${goals.calorieTarget}');
+    _proteinController = TextEditingController(text: goals.proteinTarget.toStringAsFixed(0));
+    _carbController = TextEditingController(text: goals.carbTarget.toStringAsFixed(0));
+    _fatController = TextEditingController(text: goals.fatTarget.toStringAsFixed(0));
+    _sugarController = TextEditingController(text: goals.sugarLimit.toStringAsFixed(0));
+    _waterController = TextEditingController(text: '${goals.waterTargetMl}');
   }
 
   @override
@@ -37,6 +49,12 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     _savingController.dispose();
     _salesController.dispose();
     _exerciseController.dispose();
+    _calorieController.dispose();
+    _proteinController.dispose();
+    _carbController.dispose();
+    _fatController.dispose();
+    _sugarController.dispose();
+    _waterController.dispose();
     super.dispose();
   }
 
@@ -54,6 +72,13 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     final sales = _parsePositive(_salesController.text);
     final exercise = int.tryParse(_exerciseController.text.trim());
 
+    final calorie = _parsePositive(_calorieController.text);
+    final protein = _parsePositive(_proteinController.text);
+    final carb = _parsePositive(_carbController.text);
+    final fat = _parsePositive(_fatController.text);
+    final sugar = _parsePositive(_sugarController.text);
+    final water = _parsePositive(_waterController.text);
+
     if (saving == null || sales == null) {
       _showMessage('กรุณากรอกเป้าหมายเงินเป็นตัวเลขที่มากกว่า 0');
       return;
@@ -62,8 +87,22 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       _showMessage('เป้าหมายออกกำลังกายต้องอยู่ระหว่าง 1–21 ครั้งต่อสัปดาห์');
       return;
     }
+    if (calorie == null || protein == null || carb == null || fat == null || sugar == null || water == null) {
+      _showMessage('เป้าหมายโภชนาการทุกช่องต้องเป็นตัวเลขที่มากกว่า 0');
+      return;
+    }
 
-    await _repo.save(GoalSettings(savingTarget: saving, salesTarget: sales, exerciseWeeklyTarget: exercise));
+    await _repo.save(GoalSettings(
+      savingTarget: saving,
+      salesTarget: sales,
+      exerciseWeeklyTarget: exercise,
+      calorieTarget: calorie.round(),
+      proteinTarget: protein,
+      carbTarget: carb,
+      fatTarget: fat,
+      sugarLimit: sugar,
+      waterTargetMl: water.round(),
+    ));
     if (!mounted) return;
     _showMessage('บันทึกเป้าหมายแล้ว');
     Navigator.of(context).maybePop();
@@ -74,6 +113,12 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       _savingController.text = GoalSettings.defaultSavingTarget.toStringAsFixed(0);
       _salesController.text = GoalSettings.defaultSalesTarget.toStringAsFixed(0);
       _exerciseController.text = '${GoalSettings.defaultExerciseWeeklyTarget}';
+      _calorieController.text = '${GoalSettings.defaultCalorieTarget}';
+      _proteinController.text = GoalSettings.defaultProteinTarget.toStringAsFixed(0);
+      _carbController.text = GoalSettings.defaultCarbTarget.toStringAsFixed(0);
+      _fatController.text = GoalSettings.defaultFatTarget.toStringAsFixed(0);
+      _sugarController.text = GoalSettings.defaultSugarLimit.toStringAsFixed(0);
+      _waterController.text = '${GoalSettings.defaultWaterTargetMl}';
     });
   }
 
@@ -124,6 +169,72 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
                 keyboardType: TextInputType.number,
               ),
             ),
+            const SizedBox(height: 14),
+            _GoalCard(
+              category: LifeCategory.nutrition,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AuthField(
+                    label: 'พลังงานต่อวัน (kcal)',
+                    hint: 'เช่น 2000',
+                    controller: _calorieController,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AuthField(
+                          label: 'โปรตีน (ก./วัน)',
+                          hint: 'เช่น 60',
+                          controller: _proteinController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AuthField(
+                          label: 'แป้ง (ก./วัน)',
+                          hint: 'เช่น 250',
+                          controller: _carbController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AuthField(
+                          label: 'ไขมัน (ก./วัน)',
+                          hint: 'เช่น 65',
+                          controller: _fatController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AuthField(
+                          label: 'น้ำตาลไม่เกิน (ก./วัน)',
+                          hint: 'เช่น 25',
+                          controller: _sugarController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  AuthField(
+                    label: 'น้ำดื่มต่อวัน (มล.)',
+                    hint: 'เช่น 2000',
+                    controller: _waterController,
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
             PrimaryButton(label: 'บันทึกเป้าหมาย', onPressed: _save),
             const SizedBox(height: 8),
@@ -149,17 +260,19 @@ class _GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 6,
-            height: 72,
-            decoration: BoxDecoration(color: category.color, borderRadius: BorderRadius.circular(999)),
-          ),
-          const SizedBox(width: 14),
-          Expanded(child: child),
-        ],
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 6,
+              constraints: const BoxConstraints(minHeight: 72),
+              decoration: BoxDecoration(color: category.color, borderRadius: BorderRadius.circular(999)),
+            ),
+            const SizedBox(width: 14),
+            Expanded(child: child),
+          ],
+        ),
       ),
     );
   }

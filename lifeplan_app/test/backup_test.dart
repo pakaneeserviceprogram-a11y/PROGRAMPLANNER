@@ -23,6 +23,8 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.userProfile),
       Hive.openBox<Map>(HiveBoxes.workTasks),
       Hive.openBox<Map>(HiveBoxes.exerciseItems),
+      Hive.openBox<Map>(HiveBoxes.mealEntries),
+      Hive.openBox<Map>(HiveBoxes.waterLogs),
       Hive.openBox<Map>(HiveBoxes.clients),
       Hive.openBox<Map>(HiveBoxes.financeTransactions),
       Hive.openBox<Map>(HiveBoxes.skillTracks),

@@ -10,18 +10,22 @@ import 'package:lifeplan_app/data/repositories/exercise_repository.dart';
 import 'package:lifeplan_app/data/repositories/finance_repository.dart';
 import 'package:lifeplan_app/data/repositories/goal_settings_repository.dart';
 import 'package:lifeplan_app/data/repositories/learning_streak_repository.dart';
+import 'package:lifeplan_app/data/repositories/meal_repository.dart';
 import 'package:lifeplan_app/data/repositories/schedule_repository.dart';
 import 'package:lifeplan_app/data/repositories/skill_track_repository.dart';
 import 'package:lifeplan_app/data/repositories/user_repository.dart';
+import 'package:lifeplan_app/data/repositories/water_repository.dart';
 import 'package:lifeplan_app/data/repositories/work_task_repository.dart';
 import 'package:lifeplan_app/models/client.dart';
 import 'package:lifeplan_app/models/exercise_item.dart';
 import 'package:lifeplan_app/models/finance_transaction.dart';
 import 'package:lifeplan_app/models/goal_settings.dart';
 import 'package:lifeplan_app/models/life_category.dart';
+import 'package:lifeplan_app/models/meal_entry.dart';
 import 'package:lifeplan_app/models/schedule_event.dart';
 import 'package:lifeplan_app/models/skill_track.dart';
 import 'package:lifeplan_app/models/user_profile.dart';
+import 'package:lifeplan_app/models/water_log.dart';
 import 'package:lifeplan_app/models/work_task.dart';
 
 // Plain `test()` (not `testWidgets()`) so real Hive file I/O runs on the
@@ -34,6 +38,8 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.userProfile),
       Hive.openBox<Map>(HiveBoxes.workTasks),
       Hive.openBox<Map>(HiveBoxes.exerciseItems),
+      Hive.openBox<Map>(HiveBoxes.mealEntries),
+      Hive.openBox<Map>(HiveBoxes.waterLogs),
       Hive.openBox<Map>(HiveBoxes.clients),
       Hive.openBox<Map>(HiveBoxes.financeTransactions),
       Hive.openBox<Map>(HiveBoxes.skillTracks),
@@ -222,5 +228,133 @@ void main() {
     scores = Insights.categoryScores();
     expect(scores[LifeCategory.exercise], 50);
     expect(scores[LifeCategory.finance], 50);
+  });
+
+  test('MealRepository เก็บคุณค่าโภชนาการครบและเรียงตามเวลาในวันเดียวกัน', () async {
+    final repo = MealRepository();
+    final today = DateTime.now();
+
+    await repo.put(MealEntry(
+      id: newId(),
+      title: 'มื้อเย็น',
+      type: MealType.dinner,
+      time: '18:30',
+      date: today,
+      calories: 500,
+      proteinGrams: 30,
+      carbGrams: 45,
+      fatGrams: 12,
+      sugarGrams: 8,
+      vitamins: const [Vitamin.a, Vitamin.c],
+      workoutTiming: WorkoutTiming.postWorkout,
+    ));
+    await repo.put(MealEntry(
+      id: newId(),
+      title: 'มื้อเช้า',
+      type: MealType.breakfast,
+      time: '07:00',
+      date: today,
+      calories: 300,
+      proteinGrams: 20,
+      carbGrams: 35,
+      fatGrams: 6,
+      sugarGrams: 4,
+      vitamins: const [Vitamin.b],
+    ));
+    // มื้อของเมื่อวาน ต้องไม่ถูกนับรวมกับวันนี้
+    await repo.put(MealEntry(
+      id: newId(),
+      title: 'มื้อเมื่อวาน',
+      type: MealType.lunch,
+      time: '12:00',
+      date: today.subtract(const Duration(days: 1)),
+      calories: 999,
+    ));
+
+    final todays = repo.getForDay(today);
+    expect(todays.map((m) => m.title), ['มื้อเช้า', 'มื้อเย็น']);
+
+    final totals = repo.totalsForDay(today);
+    expect(totals.calories, 800);
+    expect(totals.protein, 50);
+    expect(totals.carbs, 80);
+    expect(totals.fat, 18);
+    expect(totals.sugar, 12);
+    expect(totals.vitamins, {Vitamin.a, Vitamin.b, Vitamin.c});
+    expect(totals.missingVitamins, [Vitamin.d, Vitamin.e, Vitamin.k]);
+
+    final reloaded = todays.last;
+    expect(reloaded.workoutTiming, WorkoutTiming.postWorkout);
+  });
+
+  test('WaterRepository บวก/ลบทีละแก้วต่อวัน และไม่ติดลบ', () async {
+    final repo = WaterRepository();
+    expect(repo.getToday().milliliters, 0);
+
+    await repo.addGlass();
+    await repo.addGlass();
+    expect(repo.getToday().milliliters, 2 * WaterLog.glassMl);
+    expect(repo.getToday().glasses, 2);
+
+    await repo.removeGlass();
+    await repo.removeGlass();
+    await repo.removeGlass();
+    expect(repo.getToday().milliliters, 0);
+
+    // วันเดียวกันต้องทับรายการเดิมเสมอ ไม่สร้างเพิ่ม
+    expect(repo.getAll().length, 1);
+  });
+
+  test('Insights.nutritionScore คิดจากแคลอรี่ โปรตีน น้ำ และเพดานน้ำตาล', () async {
+    // ยังไม่มีข้อมูลเลย = 0
+    expect(Insights.nutritionScore(), 0);
+
+    await GoalSettingsRepository().save(const GoalSettings(
+      calorieTarget: 2000,
+      proteinTarget: 60,
+      sugarLimit: 25,
+      waterTargetMl: 2000,
+    ));
+
+    await MealRepository().put(MealEntry(
+      id: newId(),
+      title: 'ครบครึ่งเป้า',
+      type: MealType.lunch,
+      time: '12:00',
+      date: DateTime.now(),
+      calories: 1000,
+      proteinGrams: 30,
+      sugarGrams: 10,
+    ));
+    await WaterRepository().addMilliliters(1000);
+
+    // แคลอรี่ 50% + โปรตีน 50% + น้ำ 50% + น้ำตาลไม่เกินเพดาน 100% = 62.5 → 63
+    expect(Insights.nutritionScore(), 63);
+    expect(Insights.categoryScores()[LifeCategory.nutrition], 63);
+
+    // น้ำตาลเกินเพดานสองเท่า ส่วนนี้เหลือ 50% → (50+50+50+50)/4 = 50
+    await MealRepository().put(MealEntry(
+      id: newId(),
+      title: 'ของหวาน',
+      type: MealType.snack,
+      time: '15:00',
+      date: DateTime.now(),
+      sugarGrams: 40,
+    ));
+    expect(Insights.nutritionScore(), 50);
+  });
+
+  test('GoalSettingsRepository เก็บเป้าหมายโภชนาการ และคืนค่าเริ่มต้นเมื่อยังไม่เคยตั้ง', () async {
+    final repo = GoalSettingsRepository();
+    expect(repo.get().calorieTarget, GoalSettings.defaultCalorieTarget);
+    expect(repo.get().waterTargetMl, GoalSettings.defaultWaterTargetMl);
+
+    await repo.save(repo.get().copyWith(calorieTarget: 1800, proteinTarget: 90, waterTargetMl: 2500));
+    final loaded = repo.get();
+    expect(loaded.calorieTarget, 1800);
+    expect(loaded.proteinTarget, 90);
+    expect(loaded.waterTargetMl, 2500);
+    // ฟิลด์เดิมของโมดูลอื่นต้องไม่หายไป
+    expect(loaded.savingTarget, GoalSettings.defaultSavingTarget);
   });
 }
