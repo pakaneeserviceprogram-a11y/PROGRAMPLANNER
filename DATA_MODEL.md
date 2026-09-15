@@ -208,4 +208,5 @@ User (1) ──1 ExerciseWeeklyGoal (ต่อสัปดาห์)
 
 - แต่ละ entity ด้านบน = 1 Dart class ใน `lib/models/` พร้อม `fromJson` / `toJson`
 - ระยะแรก (สเตจ mockup → ใช้งานได้จริงบนเครื่อง) เก็บข้อมูลด้วย local storage (เช่น Hive หรือ sqflite) — ยังไม่ต้องมี backend
+- **เป้าหมาย (SavingGoal / SalesGoal / ExerciseWeeklyGoal) ในแอปตอนนี้:** รวมเป็นเอกสารเดียว `GoalSettings` (`lib/models/goal_settings.dart`) ใน Hive box `goal_settings` คีย์ `current` — ฟิลด์ `savingTarget` (double, ค่าเริ่มต้น 50,000), `salesTarget` (double, 250,000), `exerciseWeeklyTarget` (int, 5) ยังไม่แยกตามเดือน/สัปดาห์และยังไม่มี `userId`/`currentAmount` (ยอดออมคำนวณจาก Transaction หมวด `investmentSaving`) ถ้าย้ายไป Firestore ค่อยแยกเป็น 3 entity ตามตารางด้านบน
 - โครงสร้างนี้ map ตรงกับ Firestore ได้ทันทีถ้าต้องการ sync ข้ามอุปกรณ์ในอนาคต (แต่ละ collection = entity, `userId` เป็น partition key)

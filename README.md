@@ -135,17 +135,18 @@ Bottom Navigation 4 แท็บ: **หน้าหลัก · ตาราง�
 | การเงิน | เพิ่มรายรับ/รายจ่าย พร้อมหมวดหมู่ — สัดส่วนค่าใช้จ่ายและเป้าออมคำนวณจากรายการจริง |
 | เรียนรู้ & พัฒนาตนเอง | เพิ่มเส้นทางการเรียนรู้, กด "เรียนต่อ" เพื่อเพิ่ม % และนับสตรีครายวัน |
 | ตารางเวลา | เพิ่มกิจกรรมใหม่ (เลือกเวลาจริงผ่าน time picker), ปัดลบ |
+| ตั้งค่าเป้าหมาย (โปรไฟล์ → ตั้งค่าเป้าหมาย) | แก้เป้าเงินออม, เป้ายอดขายเบี้ยประกัน, เป้าออกกำลังกาย/สัปดาห์ — % ในหน้าการเงิน, CRM, ออกกำลังกาย, Dashboard, Progress คำนวณใหม่ทันที |
 
 ### 7.3 ทดสอบแล้วจริง
 
 - **`flutter analyze`** — ไม่มี error
-- **`flutter test`** — ผ่านทั้งหมด (10 tests): unit test ของทุก repository (`test/repository_test.dart`) ยืนยันว่า add/update/delete ผ่าน Hive ทำงานถูกต้องจริง + smoke test ของหน้า Login (`test/widget_test.dart`)
+- **`flutter test`** — ผ่านทั้งหมด (12 tests): unit test ของทุก repository (`test/repository_test.dart`) ยืนยันว่า add/update/delete ผ่าน Hive ทำงานถูกต้องจริง รวมถึงเป้าหมายที่บันทึกไว้ถูกนำไปคำนวณ % ใน `Insights` + smoke test ของหน้า Login (`test/widget_test.dart`)
 - **`flutter build web`** — build จริงและคลิกทดสอบผ่านเบราว์เซอร์: เข้าสู่ระบบ → เพิ่มงานใหม่ → **reload หน้าเว็บทั้งหมด → ข้อมูลยังอยู่** (พิสูจน์ว่า Hive persist ข้ามการรีโหลดจริง ไม่ใช่แค่ state ในหน่วยความจำ)
 - **รันบน Android emulator จริง** — build เป็น .apk ผ่าน Gradle, ติดตั้งและรันบน AVD (`lifeplan_avd`, Android 14 / API 34, Pixel 6) สำเร็จ กดปุ่มผ่าน adb ยืนยันว่าทำงานถูกต้องเหมือนบนเว็บ (ภาพ `screenshots/emulator_*.png`)
 
 ### 7.4 Android SDK บนเครื่องนี้
 
-ติดตั้งแบบ command-line tools เท่านั้น (ไม่ใช่ Android Studio เต็มรูปแบบ) ไว้ที่ `D:\android-sdk` พร้อม JDK 17 ที่ `C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot` ตั้งค่า environment variable (`ANDROID_HOME`, `ANDROID_SDK_ROOT`, `JAVA_HOME`) แบบถาวรไว้แล้ว มี AVD ชื่อ `lifeplan_avd` พร้อมใช้งาน
+ติดตั้งแบบ command-line tools เท่านั้น (ไม่ใช่ Android Studio เต็มรูปแบบ) ไว้ที่ `D:\android-sdk` พร้อม JDK 17 ที่ `C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot` ตั้งค่า environment variable (`ANDROID_HOME`, `ANDROID_SDK_ROOT`, `JAVA_HOME`) แบบถาวรไว้แล้ว มี AVD ชื่อ `lifeplan_avd` พร้อมใช้งาน (cache ของ Gradle/Pub/AVD ย้ายไปไว้ที่ D: — รายละเอียดและปัญหาที่เจอตอนติดตั้งดู `HANDOFF.md`)
 
 ### วิธีรันโปรเจกต์
 ```bash
@@ -165,6 +166,7 @@ flutter run                               # เลือกอุปกรณ์
 - [x] สร้างโปรเจกต์ Flutter พร้อม UI ทุกหน้าจอ
 - [x] เชื่อมฐานข้อมูล local จริง (Hive) — ฟอร์ม/ปุ่ม/เช็คลิสต์บันทึกข้อมูลได้จริงทุกโมดูล
 - [x] ติดตั้ง Android SDK + สร้าง emulator ทดสอบรันแอปจริงสำเร็จ
+- [x] หน้าตั้งค่าเป้าหมายที่ผู้ใช้แก้ไขได้ (เก็บใน Hive แทนค่าคงที่)
 - [ ] เชื่อมระบบยืนยันตัวตนจริง (Firebase Auth / อื่น ๆ) สำหรับ Email, Google, Apple Sign-in — ตอนนี้เป็นการจำลองบัญชีในเครื่อง
 - [ ] Sync ข้อมูลข้ามอุปกรณ์ผ่านคลาวด์ (Hive ปัจจุบันเก็บในเครื่องเท่านั้น)
 - [ ] ติดตั้ง Xcode บน Mac เพื่อทดสอบและ build iOS จริง

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/id_gen.dart';
 import '../data/repositories/finance_repository.dart';
-import '../data/targets.dart';
+import '../data/repositories/goal_settings_repository.dart';
 import '../models/finance_transaction.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_card.dart';
@@ -73,21 +73,23 @@ class FinanceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final repo = FinanceRepository();
+    final goalsRepo = GoalSettingsRepository();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
-        child: ValueListenableBuilder(
-          valueListenable: repo.listenable(),
-          builder: (context, _, _) {
+        child: AnimatedBuilder(
+          animation: Listenable.merge([repo.listenable(), goalsRepo.listenable()]),
+          builder: (context, _) {
+            final goals = goalsRepo.get();
             final txs = repo.getAll()..sort((a, b) => b.date.compareTo(a.date));
             final income = txs.where((t) => t.type == TransactionType.income).fold<double>(0, (s, t) => s + t.amount);
             final expense = txs.where((t) => t.type == TransactionType.expense).fold<double>(0, (s, t) => s + t.amount);
             final savingsCurrent = txs
                 .where((t) => t.type == TransactionType.expense && t.category == ExpenseCategory.investmentSaving)
                 .fold<double>(0, (s, t) => s + t.amount);
-            final savingsProgress = (savingsCurrent / kSavingTarget).clamp(0, 1).toDouble();
-            final remaining = (kSavingTarget - savingsCurrent).clamp(0, kSavingTarget);
+            final savingsProgress = (savingsCurrent / goals.savingTarget).clamp(0, 1).toDouble();
+            final remaining = (goals.savingTarget - savingsCurrent).clamp(0, goals.savingTarget);
 
             final expenseTxs = txs.where((t) => t.type == TransactionType.expense).toList();
             final byCategory = <ExpenseCategory, double>{};
@@ -167,7 +169,7 @@ class FinanceScreen extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text.rich(TextSpan(children: [
                         TextSpan(text: '฿${savingsCurrent.toStringAsFixed(0)} ', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white)),
-                        TextSpan(text: '/ ฿${kSavingTarget.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white70)),
+                        TextSpan(text: '/ ฿${goals.savingTarget.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white70)),
                       ])),
                       const SizedBox(height: 10),
                       ProgressTrack(value: savingsProgress, color: Colors.white, trackColor: Colors.white.withValues(alpha: 0.25)),

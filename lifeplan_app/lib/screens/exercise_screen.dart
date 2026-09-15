@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/id_gen.dart';
 import '../data/repositories/exercise_repository.dart';
-import '../data/targets.dart';
+import '../data/repositories/goal_settings_repository.dart';
 import '../models/exercise_item.dart';
 import '../models/life_category.dart';
 import '../theme/app_colors.dart';
@@ -79,18 +79,20 @@ class ExerciseScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     const category = LifeCategory.exercise;
     final repo = ExerciseRepository();
+    final goalsRepo = GoalSettingsRepository();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
-        child: ValueListenableBuilder(
-          valueListenable: repo.listenable(),
-          builder: (context, _, _) {
+        child: AnimatedBuilder(
+          animation: Listenable.merge([repo.listenable(), goalsRepo.listenable()]),
+          builder: (context, _) {
+            final goals = goalsRepo.get();
             final items = repo.getAll();
             final doneCount = items.where((i) => i.isDone).length;
             final totalMinutes = items.where((i) => i.isDone).fold<int>(0, (sum, i) => sum + i.durationMinutes);
             final calories = totalMinutes * 7; // rough estimate for display purposes
-            final progress = (doneCount / kExerciseWeeklyTarget).clamp(0, 1).toDouble();
+            final progress = (doneCount / goals.exerciseWeeklyTarget).clamp(0, 1).toDouble();
 
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -126,7 +128,7 @@ class ExerciseScreen extends StatelessWidget {
                             children: [
                               const Text('เป้าหมายสัปดาห์นี้', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white70)),
                               const SizedBox(height: 6),
-                              Text('$doneCount / $kExerciseWeeklyTarget ครั้ง', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
+                              Text('$doneCount / ${goals.exerciseWeeklyTarget} ครั้ง', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white)),
                             ],
                           ),
                           SizedBox(

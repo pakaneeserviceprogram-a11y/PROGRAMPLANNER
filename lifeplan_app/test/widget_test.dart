@@ -23,6 +23,7 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.skillTracks),
       Hive.openBox<Map>(HiveBoxes.scheduleEvents),
       Hive.openBox<Map>(HiveBoxes.learningStreak),
+      Hive.openBox<Map>(HiveBoxes.goalSettings),
     ]);
     await SeedData.seedIfEmpty();
   });

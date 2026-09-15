@@ -4,6 +4,7 @@ import '../data/insights.dart';
 import '../data/repositories/client_repository.dart';
 import '../data/repositories/exercise_repository.dart';
 import '../data/repositories/finance_repository.dart';
+import '../data/repositories/goal_settings_repository.dart';
 import '../data/repositories/skill_track_repository.dart';
 import '../data/repositories/work_task_repository.dart';
 import '../models/life_category.dart';
@@ -22,6 +23,7 @@ class ProgressScreen extends StatelessWidget {
     final clientRepo = ClientRepository();
     final financeRepo = FinanceRepository();
     final skillRepo = SkillTrackRepository();
+    final goalsRepo = GoalSettingsRepository();
 
     return SafeArea(
       child: AnimatedBuilder(
@@ -31,6 +33,7 @@ class ProgressScreen extends StatelessWidget {
           clientRepo.listenable(),
           financeRepo.listenable(),
           skillRepo.listenable(),
+          goalsRepo.listenable(),
         ]),
         builder: (context, _) {
           final scores = Insights.categoryScores();

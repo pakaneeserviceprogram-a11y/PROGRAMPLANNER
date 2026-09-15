@@ -8,6 +8,7 @@ import 'package:lifeplan_app/data/insights.dart';
 import 'package:lifeplan_app/data/repositories/client_repository.dart';
 import 'package:lifeplan_app/data/repositories/exercise_repository.dart';
 import 'package:lifeplan_app/data/repositories/finance_repository.dart';
+import 'package:lifeplan_app/data/repositories/goal_settings_repository.dart';
 import 'package:lifeplan_app/data/repositories/learning_streak_repository.dart';
 import 'package:lifeplan_app/data/repositories/schedule_repository.dart';
 import 'package:lifeplan_app/data/repositories/skill_track_repository.dart';
@@ -16,6 +17,7 @@ import 'package:lifeplan_app/data/repositories/work_task_repository.dart';
 import 'package:lifeplan_app/models/client.dart';
 import 'package:lifeplan_app/models/exercise_item.dart';
 import 'package:lifeplan_app/models/finance_transaction.dart';
+import 'package:lifeplan_app/models/goal_settings.dart';
 import 'package:lifeplan_app/models/life_category.dart';
 import 'package:lifeplan_app/models/schedule_event.dart';
 import 'package:lifeplan_app/models/skill_track.dart';
@@ -37,6 +39,7 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.skillTracks),
       Hive.openBox<Map>(HiveBoxes.scheduleEvents),
       Hive.openBox<Map>(HiveBoxes.learningStreak),
+      Hive.openBox<Map>(HiveBoxes.goalSettings),
     ]);
   });
 
@@ -153,5 +156,44 @@ void main() {
 
     final scores = Insights.categoryScores();
     expect(scores[LifeCategory.work], 50); // 1 of 2 tasks done
+  });
+
+  test('GoalSettingsRepository returns defaults, then saved values', () async {
+    final repo = GoalSettingsRepository();
+    final defaults = repo.get();
+    expect(defaults.savingTarget, GoalSettings.defaultSavingTarget);
+    expect(defaults.salesTarget, GoalSettings.defaultSalesTarget);
+    expect(defaults.exerciseWeeklyTarget, GoalSettings.defaultExerciseWeeklyTarget);
+
+    await repo.save(defaults.copyWith(savingTarget: 80000, exerciseWeeklyTarget: 3));
+    final loaded = repo.get();
+    expect(loaded.savingTarget, 80000);
+    expect(loaded.salesTarget, GoalSettings.defaultSalesTarget);
+    expect(loaded.exerciseWeeklyTarget, 3);
+  });
+
+  test('Insights.categoryScores uses the saved goals', () async {
+    final exerciseRepo = ExerciseRepository();
+    for (var i = 0; i < 2; i++) {
+      await exerciseRepo.put(ExercisePlanItem(id: newId(), title: 'วิ่ง', type: ExerciseType.run, dayLabel: 'จันทร์', durationMinutes: 30, isDone: true));
+    }
+    await FinanceRepository().put(FinanceTransaction(
+      id: newId(),
+      title: 'ออมเงิน',
+      date: DateTime.now(),
+      amount: 10000,
+      type: TransactionType.expense,
+      category: ExpenseCategory.investmentSaving,
+    ));
+
+    // Defaults: 2 / 5 sessions = 40%, ฿10,000 / ฿50,000 = 20%.
+    var scores = Insights.categoryScores();
+    expect(scores[LifeCategory.exercise], 40);
+    expect(scores[LifeCategory.finance], 20);
+
+    await GoalSettingsRepository().save(const GoalSettings(savingTarget: 20000, exerciseWeeklyTarget: 4));
+    scores = Insights.categoryScores();
+    expect(scores[LifeCategory.exercise], 50);
+    expect(scores[LifeCategory.finance], 50);
   });
 }

@@ -4,6 +4,7 @@ import '../data/insights.dart';
 import '../data/repositories/client_repository.dart';
 import '../data/repositories/exercise_repository.dart';
 import '../data/repositories/finance_repository.dart';
+import '../data/repositories/goal_settings_repository.dart';
 import '../data/repositories/schedule_repository.dart';
 import '../data/repositories/skill_track_repository.dart';
 import '../data/repositories/user_repository.dart';
@@ -49,6 +50,7 @@ class DashboardScreen extends StatelessWidget {
     final skillRepo = SkillTrackRepository();
     final scheduleRepo = ScheduleRepository();
     final userRepo = UserRepository();
+    final goalsRepo = GoalSettingsRepository();
 
     return SafeArea(
       child: AnimatedBuilder(
@@ -60,6 +62,7 @@ class DashboardScreen extends StatelessWidget {
           skillRepo.listenable(),
           scheduleRepo.listenable(),
           userRepo.listenable(),
+          goalsRepo.listenable(),
         ]),
         builder: (context, _) {
           final scores = Insights.categoryScores();
@@ -67,6 +70,7 @@ class DashboardScreen extends StatelessWidget {
 
           final exerciseItems = exerciseRepo.getAll();
           final exerciseDone = exerciseItems.where((e) => e.isDone).length;
+          final exerciseTarget = goalsRepo.get().exerciseWeeklyTarget;
 
           final tasks = workRepo.getAll();
           final tasksToday = tasks.where((t) => t.status != TaskStatus.done).length;
@@ -186,7 +190,7 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   _ModuleCard(
                     category: LifeCategory.exercise,
-                    subtitle: '$exerciseDone / ${exerciseItems.length} ครั้งสัปดาห์นี้',
+                    subtitle: '$exerciseDone / $exerciseTarget ครั้งสัปดาห์นี้',
                     progress: (scores[LifeCategory.exercise] ?? 0) / 100,
                     onTap: () => _open(context, const ExerciseScreen()),
                   ),

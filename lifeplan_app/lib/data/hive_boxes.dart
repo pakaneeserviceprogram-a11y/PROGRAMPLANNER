@@ -15,6 +15,7 @@ class HiveBoxes {
   static const skillTracks = 'skill_tracks';
   static const scheduleEvents = 'schedule_events';
   static const learningStreak = 'learning_streak';
+  static const goalSettings = 'goal_settings';
 
   static Future<void> init() async {
     await Hive.initFlutter();
@@ -27,6 +28,7 @@ class HiveBoxes {
       Hive.openBox<Map>(skillTracks),
       Hive.openBox<Map>(scheduleEvents),
       Hive.openBox<Map>(learningStreak),
+      Hive.openBox<Map>(goalSettings),
     ]);
   }
 }

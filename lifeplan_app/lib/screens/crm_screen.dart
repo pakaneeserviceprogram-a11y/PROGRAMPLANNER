@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/id_gen.dart';
 import '../data/repositories/client_repository.dart';
-import '../data/targets.dart';
+import '../data/repositories/goal_settings_repository.dart';
 import '../models/client.dart';
 import '../theme/app_colors.dart';
 import '../widgets/auth_widgets.dart';
@@ -70,19 +70,21 @@ class CrmScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final repo = ClientRepository();
+    final goalsRepo = GoalSettingsRepository();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
-        child: ValueListenableBuilder(
-          valueListenable: repo.listenable(),
-          builder: (context, _, _) {
+        child: AnimatedBuilder(
+          animation: Listenable.merge([repo.listenable(), goalsRepo.listenable()]),
+          builder: (context, _) {
+            final goals = goalsRepo.get();
             final clients = repo.getAll();
             final newLeads = clients.where((c) => c.stage == ClientStage.newLead).length;
             final appointments = clients.where((c) => c.stage == ClientStage.contacted || c.stage == ClientStage.proposalSent || c.stage == ClientStage.followUp).length;
             final closedWon = clients.where((c) => c.stage == ClientStage.closedWon).toList();
             final achievedPremium = closedWon.fold<double>(0, (sum, c) => sum + c.premiumAmount);
-            final progress = (achievedPremium / kSalesTarget).clamp(0, 1).toDouble();
+            final progress = (achievedPremium / goals.salesTarget).clamp(0, 1).toDouble();
 
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -113,7 +115,7 @@ class CrmScreen extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text.rich(TextSpan(children: [
                         TextSpan(text: '฿${achievedPremium.toStringAsFixed(0)} ', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white)),
-                        TextSpan(text: '/ ฿${kSalesTarget.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white70)),
+                        TextSpan(text: '/ ฿${goals.salesTarget.toStringAsFixed(0)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white70)),
                       ])),
                       const SizedBox(height: 10),
                       ProgressTrack(value: progress, color: Colors.white, trackColor: Colors.white.withValues(alpha: 0.25)),

@@ -5,6 +5,7 @@ import '../models/user_profile.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_card.dart';
 import 'auth/login_screen.dart';
+import 'goal_settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -56,14 +57,18 @@ class ProfileScreen extends StatelessWidget {
               AppCard(
                 padding: EdgeInsets.zero,
                 child: Column(
-                  children: const [
-                    _ProfileRow(icon: Icons.track_changes_rounded, label: 'เป้าหมายรายวัน'),
-                    Divider(height: 1, color: AppColors.border),
-                    _ProfileRow(icon: Icons.notifications_none_rounded, label: 'การแจ้งเตือน'),
-                    Divider(height: 1, color: AppColors.border),
-                    _ProfileRow(icon: Icons.lock_outline_rounded, label: 'ความเป็นส่วนตัว & ความปลอดภัย'),
-                    Divider(height: 1, color: AppColors.border),
-                    _ProfileRow(icon: Icons.help_outline_rounded, label: 'ช่วยเหลือ'),
+                  children: [
+                    _ProfileRow(
+                      icon: Icons.track_changes_rounded,
+                      label: 'ตั้งค่าเป้าหมาย',
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GoalSettingsScreen())),
+                    ),
+                    const Divider(height: 1, color: AppColors.border),
+                    const _ProfileRow(icon: Icons.notifications_none_rounded, label: 'การแจ้งเตือน'),
+                    const Divider(height: 1, color: AppColors.border),
+                    const _ProfileRow(icon: Icons.lock_outline_rounded, label: 'ความเป็นส่วนตัว & ความปลอดภัย'),
+                    const Divider(height: 1, color: AppColors.border),
+                    const _ProfileRow(icon: Icons.help_outline_rounded, label: 'ช่วยเหลือ'),
                   ],
                 ),
               ),
@@ -105,20 +110,24 @@ class ProfileScreen extends StatelessWidget {
 class _ProfileRow extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
-  const _ProfileRow({required this.icon, required this.label});
+  const _ProfileRow({required this.icon, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Icon(icon, size: 19, color: AppColors.textMuted),
-          const SizedBox(width: 14),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600))),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint, size: 20),
-        ],
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 19, color: AppColors.textMuted),
+            const SizedBox(width: 14),
+            Expanded(child: Text(label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600))),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint, size: 20),
+          ],
+        ),
       ),
     );
   }
