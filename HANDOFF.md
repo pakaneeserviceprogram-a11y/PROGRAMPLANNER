@@ -1,8 +1,25 @@
 # LifePlan — Handoff / เอกสารต่องาน
 
-อัปเดตล่าสุด: 2026-09-15 (ย้ายโปรเจกต์มาที่ `D:\PROGRAMPLANNER` + ติดตั้ง environment ใหม่) — ใช้ไฟล์นี้เพื่อกลับมาทำงานต่อได้เร็ว ไม่ต้องไล่อ่านทั้งบทสนทนาใหม่
+อัปเดตล่าสุด: 2026-09-15 (รอบค่ำ บนเครื่องที่ใช้ `D:\WORK\PROGRAMPLANNER` — หน้าตารางเวลาแก้ไข/ลบได้ + build APK บนเครื่องนี้ผ่าน) — ใช้ไฟล์นี้เพื่อกลับมาทำงานต่อได้เร็ว ไม่ต้องไล่อ่านทั้งบทสนทนาใหม่
 
 ดูภาพรวมโปรเจกต์/ฟีเจอร์ที่ `README.md`, โครงสร้างข้อมูลที่ `DATA_MODEL.md` — ไฟล์นี้เน้นเฉพาะ "จะทำต่อยังไง"
+
+---
+
+## 0. สรุปงานรอบล่าสุด (2026-09-15 ค่ำ, เครื่อง `D:\WORK\PROGRAMPLANNER`)
+
+| commit | งาน |
+|---|---|
+| `7fb005f` | **หน้าตารางเวลาแก้ไขและลบกิจกรรมได้** — แตะกิจกรรม (ทั้งมุมมองรายวันและรายสัปดาห์) เปิดฟอร์มเดิมที่กรอกค่าไว้แล้ว, ปุ่ม "ลบกิจกรรมนี้" ในฟอร์ม, ถามยืนยันก่อนลบทุกครั้ง (รวมตอนปัดซ้าย), ลบแล้วขึ้น SnackBar, ตั้งการแจ้งเตือนใหม่อัตโนมัติ |
+| `b1185e6` | `android/gradle.properties`: `kotlin.incremental=false` — แก้ build APK ล้ม (ดูข้อ 4.15) |
+| `29cf8f6` | บันทึก `14092026.txt` |
+
+- `showAppFormSheet` (`lib/widgets/form_sheet.dart`) มีพารามิเตอร์ใหม่ `footerBuilder` สำหรับปุ่มรองใต้ปุ่มบันทึก — หน้าอื่นที่อยากทำ "แก้ไข/ลบ" ใช้แพตเทิร์นเดียวกับ `_openEventForm` ใน `schedule_screen.dart` ได้เลย
+- `flutter analyze` ไม่มีปัญหา, `flutter test` ผ่าน **29 tests**
+- APK ล่าสุด (มีฟีเจอร์แก้ไข/ลบ) อยู่ที่ `lifeplan_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` — **เซ็นด้วย debug key** เพราะเครื่องนี้ไม่มี `lifeplan-release.jks` / `key.properties` (อยู่บนเครื่องเดิม `D:\PROGRAMPLANNER`) ใช้ทดสอบได้ แต่ห้ามแจกจ่าย และติดตั้งทับแอปที่เซ็นด้วย release key ไม่ได้
+- ยังไม่ได้ทดสอบฟีเจอร์แก้ไข/ลบบนมือถือ/emulator จริง (มีแค่ widget test)
+
+**ความต่างของเครื่องนี้กับเครื่องเดิม:** โปรเจกต์อยู่ที่ `D:\WORK\PROGRAMPLANNER` (ไม่ใช่ `D:\PROGRAMPLANNER`), ไม่ได้ตั้ง `PUB_CACHE`/`GRADLE_USER_HOME` → pub cache อยู่ที่ `C:\Users\naris\AppData\Local\Pub\Cache`, เปิด Windows Developer Mode แล้ว
 
 ---
 
@@ -22,7 +39,7 @@ export PATH="/d/flutter/bin:/c/Program Files/Eclipse Adoptium/jdk-17.0.20.101-ho
 
 flutter pub get
 flutter analyze                 # ต้องขึ้น "No issues found!"
-flutter test                    # ต้องผ่านทั้ง 12 tests
+flutter test                    # ต้องผ่านทั้ง 29 tests
 
 # รันบนเว็บ (เร็วสุดสำหรับเช็ค UI)
 flutter build web --release
@@ -106,7 +123,11 @@ test/
 
 9. **`flutter build apk` ครั้งแรก fail: `sdkmanager.bat finished with non-zero exit value -1073740791 (NTSTATUS 0xC0000409)`** — Gradle พยายามโหลด NDK (`flutter.ndkVersion` = 28.2.13676358) ผ่าน `sdkmanager.bat` ตัวใหม่แล้ว crash **สั่ง build ซ้ำอีกครั้งจะผ่าน** เพราะรอบถัดไป Gradle ใช้ตัวโหลดภายในของตัวเองติดตั้ง NDK ได้ (หรือติดตั้งล่วงหน้าด้วย `android.exe sdk install ndk/28.2.13676358`)
 
-10. **`flutter pub get` เตือนเรื่อง symlink / Developer Mode** — build Android/Web ได้โดยไม่ต้องเปิด แต่ถ้าจะ build Windows desktop ต้องเปิด Developer Mode (`start ms-settings:developers`)
+10. **"Building with plugins requires symlink support. Please enable Developer Mode"** — `flutter test` ผ่านได้โดยไม่ต้องเปิด แต่ `flutter build apk` จะหยุดทันที (โปรเจกต์มี plugin เช่น file_picker, flutter_local_notifications) ต้องเปิด Windows Developer Mode ก่อน: `start ms-settings:developers` แล้วเปิดสวิตช์ หรือสั่งผ่าน registry (ต้องกด UAC):
+    ```powershell
+    Start-Process reg.exe -ArgumentList 'add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /t REG_DWORD /f /v AllowDevelopmentWithoutDevLicense /d 1' -Verb RunAs -Wait
+    ```
+    ตรวจว่าเปิดจริงด้วย `reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /v AllowDevelopmentWithoutDevLicense` (ต้องได้ `0x1`) — การเปิดหน้า Settings อย่างเดียวไม่ได้แปลว่าเปิดสวิตช์แล้ว
 
 11. **Gradle แก้ชื่อ `repo.maven.apache.org` ไม่ได้ → build ล้มตอนโหลด dependency ใหม่** — อาการ: `Could not resolve org.jetbrains.kotlinx:kotlinx-coroutines-android` / "Got socket exception during request. It might be caused by SSL misconfiguration" สาเหตุจริงคือ **DNS ของเครือข่ายนี้แก้ชื่อ repo.maven.apache.org ไม่ได้** (`nslookup` ผ่าน 8.8.8.8 ได้ปกติ แต่ resolver ของเครื่องไม่ได้) วิธีแก้ที่ใช้: เพิ่ม mirror ของ Maven Central ที่ Google โฮสต์ (`https://maven-central.storage-download.googleapis.com/maven2/`) เป็น repository ตัวแรกใน `android/build.gradle.kts` และ `android/settings.gradle.kts` — ถ้าเจออาการนี้อีกให้เช็ค DNS ก่อน อย่าเพิ่งโทษ Gradle/SSL
 
@@ -115,6 +136,10 @@ test/
 13. **`adb install -r` ขึ้น INSTALL_FAILED_VERSION_DOWNGRADE** — APK จาก `--split-per-abi` มี versionCode บวก 1000×ABI (x86_64 = 4001) ส่วน APK รวมเป็น 1 การสลับไปมาระหว่างสองแบบต้อง `adb uninstall` ก่อน
 
 14. **`JAVA_HOME` ชนกับโปรเจกต์อื่น** — เครื่องนี้เดิมตั้ง `JAVA_HOME` เป็น GraalVM JDK 21 (`D:\POS\API\...`) ตอนนี้ user-level ถูกเปลี่ยนเป็น Temurin 17 แล้ว ถ้างานอื่นต้องใช้ JDK 21 ให้ export เฉพาะ session นั้น
+
+15. **`flutter build apk` ล้มที่ `:android_file_picker:compileReleaseKotlin` — "Could not close incremental caches"** (stack trace มี `FilesKt.toRelativeString` / `RelocatableFileToPathConverter`) — สาเหตุ: Kotlin incremental compiler แปลง path เป็น relative ไม่ได้เมื่อซอร์สของ plugin (pub cache บน **C:**) กับโฟลเดอร์ build (**D:**) อยู่คนละไดรฟ์ `flutter clean` แล้ว build ใหม่ก็ยังล้มเหมือนเดิม วิธีแก้ที่ใช้: `kotlin.incremental=false` ใน `android/gradle.properties` (commit แล้ว) — build ผ่านใน ~2–4.5 นาที อีกทางคือตั้ง `PUB_CACHE` ให้อยู่ไดรฟ์เดียวกับโปรเจกต์
+
+16. **widget test ที่กดบันทึก/ลบผ่านหน้าจอค้างไม่จบ** (ต่อจากข้อ 4) — `box.put()` บน Hive ที่เป็นไฟล์จริงไม่จบใน FakeAsync ของ `testWidgets` ฟอร์มจึงไม่ปิด และ `pumpAndSettle()` วนไม่จบ ส่วน `--timeout` ของ `flutter test` ก็ไม่ช่วยตัดให้ วิธีแก้ใน `test/schedule_screen_test.dart`: เปิด box แบบ in-memory `Hive.openBox<Map>(name, bytes: Uint8List(0))` แล้วใน `tearDown` ต้อง `await Hive.close()` ก่อน `tearDownTestHive()` (ไม่งั้นขึ้น "unsupported for memory boxes") ปุ่มที่อยู่ล่าง bottom sheet ต้อง `ensureVisible` ก่อน `tap` เพราะจอเทสต์สูงแค่ 600px — รันเทสต์ครอบด้วย `timeout 280 flutter test ...` กันค้าง
 
 ---
 
@@ -144,7 +169,10 @@ test/
 - [x] **มุมมองตารางเวลารายสัปดาห์** — ทำแล้ว (2026-09-15): `ScheduleEvent` มีฟิลด์ `weekday` (1–7), `ScheduleRepository.getByWeekday()/getWeek()`, `ScheduleScreen` เป็น StatefulWidget สลับ "วัน / สัปดาห์" ได้ — มุมมองสัปดาห์เป็นตาราง 7 คอลัมน์เลื่อนแนวนอน, แถบ 7 วันกดเลือกวันได้และมีจุดบอกว่าวันไหนมีกิจกรรม, ฟอร์มเพิ่มกิจกรรมเลือกวันได้
   - เรคคอร์ดเก่าที่บันทึกก่อนหน้านี้ (ไม่มี `weekday`) จะถูกอ่านเป็นวันจันทร์ — มี test คุมไว้ที่ `repository_test.dart`
   - Dashboard "ตารางวันนี้" กรองเฉพาะ weekday ของวันนี้แล้ว (เดิมโชว์รวมทุกวัน)
-  - test หน้าจอ: `test/schedule_screen_test.dart` (เขียน Hive ใน `setUp` ก่อน pump เพื่อเลี่ยงปัญหา FakeAsync ข้อ 4)
+  - test หน้าจอ: `test/schedule_screen_test.dart` (ใช้ Hive box แบบ in-memory เพื่อเลี่ยงปัญหา FakeAsync ข้อ 4/16)
+- [x] **แก้ไข/ลบกิจกรรมในตารางเวลา** — ทำแล้ว (2026-09-15 ค่ำ) ดูข้อ 0
+- [ ] **แก้ไขรายการในหน้าอื่น** — งานประจำ/ออกกำลังกาย/ลูกค้า/การเงิน/เรียนรู้ ยังเพิ่มได้อย่างเดียว (บางหน้าปัดลบได้) ใช้แพตเทิร์น `footerBuilder` + `_openEventForm(existing:)` จากหน้าตารางเวลาได้
+- [ ] **ทดสอบแก้ไข/ลบตารางเวลาบนเครื่องจริง** และ build APK ด้วย release key บนเครื่องที่มี keystore
 - [x] **เป้าหมายที่ตั้งค่าได้เอง** — ทำแล้ว (2026-09-15): `GoalSettings` model + box `goal_settings` + หน้า `GoalSettingsScreen` (เข้าจาก โปรไฟล์ → ตั้งค่าเป้าหมาย) ทุกหน้าที่ใช้เป้าหมาย rebuild อัตโนมัติเมื่อบันทึก
   - การ์ดออกกำลังกายบน Dashboard ใช้ "เสร็จ / เป้าต่อสัปดาห์" ตรงกับ % แล้ว (2026-09-15)
 - [ ] **Windows desktop build** — ต้องติดตั้ง Visual Studio "Desktop development with C++" workload ก่อน ถ้าต้องการ .exe (ไม่จำเป็นสำหรับเป้าหมายหลักคือ Android/iOS)
