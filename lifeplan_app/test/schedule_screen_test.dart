@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_test/hive_test.dart';
 
+import 'package:lifeplan_app/data/calendar_utils.dart';
 import 'package:lifeplan_app/data/hive_boxes.dart';
 import 'package:lifeplan_app/data/repositories/schedule_repository.dart';
 import 'package:lifeplan_app/models/life_category.dart';
@@ -32,6 +33,10 @@ void main() {
   });
 
   Future<void> tapVisible(WidgetTester tester, String text) async {
+    await tester.ensureVisible(find.text(text));
+    await tester.pumpAndSettle();
+    // ฟอร์มยาวเกินจอทดสอบ (800x600) และช่องข้อความที่เพิ่งพิมพ์จะเลื่อนตัวเองกลับมาให้เห็น
+    // หลังเลื่อนครั้งแรก — ต้องเลื่อนซ้ำอีกรอบให้ปุ่มอยู่ในจอจริง
     await tester.ensureVisible(find.text(text));
     await tester.pumpAndSettle();
     await tester.tap(find.text(text));
@@ -133,5 +138,121 @@ void main() {
 
     expect(find.text('แก้ไขกิจกรรม'), findsOneWidget);
     expect(find.text('วันพฤหัสบดี'), findsOneWidget);
+  });
+
+  testWidgets('เพิ่มกิจกรรมใหม่แบบเลือกหลายวัน สร้างรายการแยกของแต่ละวันในชุดเดียวกัน', (tester) async {
+    await pumpScreen(tester);
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).first, 'เข้านอน');
+    await tapVisible(tester, 'ทุกวัน');
+    await tapVisible(tester, 'บันทึก');
+
+    final beds = ScheduleRepository().getAll().where((e) => e.title == 'เข้านอน').toList();
+    expect(beds.map((e) => e.weekday).toSet(), {1, 2, 3, 4, 5, 6, 7});
+    expect(beds.map((e) => e.id).toSet(), hasLength(7));
+    expect(beds.map((e) => e.seriesKey).toSet(), hasLength(1));
+    expect(beds.map((e) => e.time).toSet(), hasLength(1));
+  });
+
+  testWidgets('แก้ไขกิจกรรมแล้วคัดลอกไปวันอื่น จากนั้นแก้ทั้งชุดได้', (tester) async {
+    await pumpScreen(tester);
+    await tester.tap(find.text('จ'));
+    await tester.pump();
+
+    // คัดลอกวิ่งวันจันทร์ไปวันอังคารและพุธ
+    await tester.tap(find.text('วิ่งเช้าวันจันทร์'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('weekday-chip-2')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('weekday-chip-2')));
+    await tester.tap(find.byKey(const ValueKey('weekday-chip-3')));
+    await tester.pump();
+    await tapVisible(tester, 'บันทึก');
+
+    final repo = ScheduleRepository();
+    final runs = repo.getAll().where((e) => e.title == 'วิ่งเช้าวันจันทร์').toList();
+    expect(runs.map((e) => e.weekday).toSet(), {1, 2, 3});
+
+    // เปิดวันอังคาร แล้วแก้ชื่อทั้งชุด
+    await tester.tap(find.text('อ'));
+    await tester.pump();
+    await tester.tap(find.text('วิ่งเช้าวันจันทร์'));
+    await tester.pumpAndSettle();
+    expect(find.text('ใช้การแก้ไขกับทุกวันในชุดนี้'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'วิ่ง 6 โมงเช้า');
+    await tester.ensureVisible(find.byType(Switch));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Switch));
+    await tester.pump();
+    await tapVisible(tester, 'บันทึก');
+
+    final renamed = repo.getAll().where((e) => e.title == 'วิ่ง 6 โมงเช้า').toList();
+    expect(renamed.map((e) => e.weekday).toSet(), {1, 2, 3});
+    expect(repo.getAll().singleWhere((e) => e.id == 'thu').title, 'นัดลูกค้าพฤหัส');
+  });
+
+  testWidgets('ลบกิจกรรมที่มีหลายวัน เลือกลบทุกวันในชุดได้', (tester) async {
+    final repo = ScheduleRepository();
+    await repo.copyToWeekdays(repo.getAll().singleWhere((e) => e.id == 'mon'), [2, 3]);
+
+    await pumpScreen(tester);
+    await tester.tap(find.text('อ'));
+    await tester.pump();
+    await tester.tap(find.text('วิ่งเช้าวันจันทร์'));
+    await tester.pumpAndSettle();
+
+    await tapVisible(tester, 'ลบกิจกรรมนี้');
+    expect(find.text('ลบเฉพาะวันนี้'), findsOneWidget);
+    await tester.tap(find.text('ลบทุกวัน (3)'));
+    await tester.pumpAndSettle();
+
+    expect(repo.getAll().map((e) => e.id), ['thu']);
+  });
+
+  testWidgets('มุมมองเดือนแสดงปฏิทิน แตะวันที่แล้วเห็นกิจกรรมของวันนั้น', (tester) async {
+    await pumpScreen(tester);
+    await tester.tap(find.text('เดือน'));
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    expect(find.text(CalendarUtils.thaiMonthYear(now)), findsOneWidget);
+
+    // แตะวันพฤหัสบดีแรกของเดือนนี้
+    final thursday = CalendarUtils.monthGrid(now.year, now.month)
+        .firstWhere((d) => d.month == now.month && d.weekday == DateTime.thursday);
+    final cell = find.byKey(ValueKey('month-cell-${thursday.year}-${thursday.month}-${thursday.day}'));
+    await tester.ensureVisible(cell);
+    await tester.pumpAndSettle();
+    await tester.tap(cell);
+    await tester.pumpAndSettle();
+
+    expect(find.text('นัดลูกค้าพฤหัส'), findsOneWidget);
+    expect(find.text('วิ่งเช้าวันจันทร์'), findsNothing);
+
+    // เลื่อนไปเดือนถัดไป
+    final next = CalendarUtils.addMonths(DateTime(now.year, now.month), 1);
+    await tester.tap(find.byTooltip('ถัดไป'));
+    await tester.pumpAndSettle();
+    expect(find.text(CalendarUtils.thaiMonthYear(next)), findsOneWidget);
+  });
+
+  testWidgets('มุมมองปีแสดงครบ 12 เดือน แตะเดือนเพื่อเปิดปฏิทินรายเดือน', (tester) async {
+    await pumpScreen(tester);
+    await tester.tap(find.text('ปี'));
+    await tester.pumpAndSettle();
+
+    final year = DateTime.now().year;
+    expect(find.text('ปี ${year + 543} ($year)'), findsOneWidget);
+    for (var m = 1; m <= 12; m++) {
+      expect(find.byKey(ValueKey('mini-month-$year-$m'), skipOffstage: false), findsOneWidget);
+    }
+
+    final march = find.byKey(ValueKey('mini-month-$year-3'));
+    await tester.tap(march);
+    await tester.pumpAndSettle();
+    expect(find.text('มีนาคม ${year + 543}'), findsOneWidget);
   });
 }

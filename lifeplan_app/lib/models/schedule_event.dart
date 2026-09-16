@@ -8,6 +8,10 @@ class ScheduleEvent {
   final String? subtitle;
   final LifeCategory category;
 
+  /// กิจกรรมที่คัดลอกไปหลายวันจะมี seriesId เดียวกัน เพื่อให้แก้/ลบพร้อมกันทุกวันได้
+  /// (null = รายการเดี่ยวหรือรายการต้นฉบับรุ่นเก่า ใช้ [seriesKey] แทนเสมอ)
+  final String? seriesId;
+
   const ScheduleEvent({
     required this.id,
     required this.time,
@@ -15,7 +19,32 @@ class ScheduleEvent {
     required this.title,
     this.subtitle,
     required this.category,
+    this.seriesId,
   });
+
+  /// คีย์ของชุดกิจกรรม — ต้นฉบับที่ยังไม่มี seriesId ใช้ id ตัวเอง
+  /// สำเนาที่คัดลอกจากมันจึงได้ seriesId = id ของต้นฉบับ โดยไม่ต้องแก้ต้นฉบับ
+  String get seriesKey => seriesId ?? id;
+
+  ScheduleEvent copyWith({
+    String? id,
+    String? time,
+    int? weekday,
+    String? title,
+    String? subtitle,
+    bool clearSubtitle = false,
+    LifeCategory? category,
+    String? seriesId,
+  }) =>
+      ScheduleEvent(
+        id: id ?? this.id,
+        time: time ?? this.time,
+        weekday: weekday ?? this.weekday,
+        title: title ?? this.title,
+        subtitle: clearSubtitle ? null : (subtitle ?? this.subtitle),
+        category: category ?? this.category,
+        seriesId: seriesId ?? this.seriesId,
+      );
 
   Map<String, dynamic> toMap() => {
         'id': id,
@@ -24,6 +53,7 @@ class ScheduleEvent {
         'title': title,
         'subtitle': subtitle,
         'category': category.name,
+        'seriesId': seriesId,
       };
 
   factory ScheduleEvent.fromMap(Map<String, dynamic> map) => ScheduleEvent(
@@ -34,5 +64,6 @@ class ScheduleEvent {
         title: map['title'] as String,
         subtitle: map['subtitle'] as String?,
         category: LifeCategory.values.firstWhere((e) => e.name == map['category'], orElse: () => LifeCategory.work),
+        seriesId: map['seriesId'] as String?,
       );
 }

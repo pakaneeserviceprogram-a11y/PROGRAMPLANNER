@@ -242,6 +242,80 @@ void main() {
     expect(week[DateTime.saturday - 1].single.title, 'เสาร์');
   });
 
+  test('ScheduleRepository.copyToWeekdays creates independent copies in one series', () async {
+    final repo = ScheduleRepository();
+    const run = ScheduleEvent(id: 'run', time: '06:00', weekday: DateTime.monday, title: 'วิ่งตอนเช้า', category: LifeCategory.exercise);
+    await repo.put(run);
+
+    // วันของต้นฉบับเอง (จันทร์) ต้องถูกข้าม
+    final created = await repo.copyToWeekdays(run, [1, 2, 3, 4, 5, 6, 7]);
+    expect(created, 6);
+    expect(repo.getAll(), hasLength(7));
+    for (var d = 1; d <= 7; d++) {
+      expect(repo.getByWeekday(d).single.time, '06:00');
+    }
+
+    // ต้นฉบับรุ่นเก่าไม่มี seriesId แต่สำเนาผูกกับ id ของมัน → ทั้ง 7 วันอยู่ชุดเดียวกัน
+    final series = repo.seriesOf(repo.getByWeekday(DateTime.friday).single);
+    expect(series.map((e) => e.weekday), [1, 2, 3, 4, 5, 6, 7]);
+    expect(series.map((e) => e.id).toSet(), hasLength(7));
+
+    // คัดลอกซ้ำไม่สร้างรายการซ้ำ
+    expect(await repo.copyToWeekdays(run, [2, 3]), 0);
+    expect(repo.getAll(), hasLength(7));
+
+    // แก้ไขทีละวันได้โดยไม่กระทบวันอื่น
+    final tue = repo.getByWeekday(DateTime.tuesday).single;
+    await repo.put(tue.copyWith(time: '05:30'));
+    expect(repo.getByWeekday(DateTime.tuesday).single.time, '05:30');
+    expect(repo.getByWeekday(DateTime.wednesday).single.time, '06:00');
+  });
+
+  test('ScheduleRepository.updateSeries and deleteSeries touch every day in the series only', () async {
+    final repo = ScheduleRepository();
+    const sleep = ScheduleEvent(id: 'bed', time: '22:30', weekday: DateTime.monday, title: 'เข้านอน', category: LifeCategory.sleep);
+    await repo.put(sleep);
+    await repo.copyToWeekdays(sleep, [2, 3]);
+    await repo.put(const ScheduleEvent(
+        id: 'other', time: '22:30', weekday: DateTime.tuesday, title: 'อ่านหนังสือ', category: LifeCategory.learning));
+
+    final edited = repo
+        .getByWeekday(DateTime.wednesday)
+        .firstWhere((e) => e.title == 'เข้านอน')
+        .copyWith(time: '23:00', subtitle: 'วางมือถือ');
+    await repo.put(edited);
+    expect(await repo.updateSeries(edited), 3);
+
+    final beds = repo.getAll().where((e) => e.title == 'เข้านอน').toList();
+    expect(beds.map((e) => e.time).toSet(), {'23:00'});
+    expect(beds.map((e) => e.subtitle).toSet(), {'วางมือถือ'});
+    expect(beds.map((e) => e.weekday).toSet(), {1, 2, 3}, reason: 'วันของแต่ละรายการต้องคงเดิม');
+    expect(repo.getAll().singleWhere((e) => e.id == 'other').time, '22:30');
+
+    expect(await repo.deleteSeries(edited), 3);
+    expect(repo.getAll().map((e) => e.id), ['other']);
+  });
+
+  test('ScheduleRepository.copyDay copies a whole day and skips existing duplicates', () async {
+    final repo = ScheduleRepository();
+    await repo.put(const ScheduleEvent(id: 'm1', time: '06:00', weekday: DateTime.monday, title: 'วิ่ง', category: LifeCategory.exercise));
+    await repo.put(const ScheduleEvent(id: 'm2', time: '09:00', weekday: DateTime.monday, title: 'ประชุม', category: LifeCategory.work));
+    await repo.put(const ScheduleEvent(id: 't1', time: '06:00', weekday: DateTime.tuesday, title: 'วิ่ง', category: LifeCategory.exercise));
+
+    expect(await repo.copyDay(DateTime.monday, [DateTime.tuesday, DateTime.wednesday]), 3);
+    expect(repo.getByWeekday(DateTime.tuesday).map((e) => e.title), ['วิ่ง', 'ประชุม']);
+    expect(repo.getByWeekday(DateTime.wednesday).map((e) => e.title), ['วิ่ง', 'ประชุม']);
+    expect(repo.getByWeekday(DateTime.monday), hasLength(2));
+  });
+
+  test('ScheduleEvent keeps seriesId through toMap/fromMap', () {
+    const e = ScheduleEvent(id: 'c', time: '06:00', weekday: 3, title: 'วิ่ง', category: LifeCategory.exercise, seriesId: 'run');
+    final back = ScheduleEvent.fromMap(e.toMap());
+    expect(back.seriesId, 'run');
+    expect(back.seriesKey, 'run');
+    expect(const ScheduleEvent(id: 'solo', time: '06:00', title: 'x', category: LifeCategory.work).seriesKey, 'solo');
+  });
+
   test('ScheduleEvent saved before the weekly view falls back to Monday', () {
     final legacy = ScheduleEvent.fromMap(const {
       'id': 'legacy',
