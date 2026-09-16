@@ -5,6 +5,7 @@ import '../models/life_category.dart';
 import '../models/meal_entry.dart';
 import '../models/schedule_event.dart';
 import '../models/skill_track.dart';
+import '../models/sleep_entry.dart';
 import '../models/water_log.dart';
 import '../models/weekly_report.dart';
 import '../models/work_task.dart';
@@ -15,6 +16,7 @@ import 'repositories/finance_repository.dart';
 import 'repositories/meal_repository.dart';
 import 'repositories/schedule_repository.dart';
 import 'repositories/skill_track_repository.dart';
+import 'repositories/sleep_repository.dart';
 import 'repositories/water_repository.dart';
 import 'repositories/weekly_report_repository.dart';
 import 'repositories/work_task_repository.dart';
@@ -32,6 +34,7 @@ class SeedData {
 
     await _seedExercise();
     await _seedNutrition();
+    await _seedSleep();
     await _seedWork();
     await _seedClients();
     await _seedWeeklyReports();
@@ -111,6 +114,35 @@ class SeedData {
     final waterRepo = WaterRepository();
     if (waterRepo.getAll().isEmpty) {
       await waterRepo.put(WaterLog(date: DateTime.now(), milliliters: 4 * WaterLog.glassMl));
+    }
+  }
+
+  static Future<void> _seedSleep() async {
+    final repo = SleepRepository();
+    if (repo.getAll().isNotEmpty) return;
+
+    // 7 คืนล่าสุดแบบที่คนทำงานจริงเป็น — มีคืนที่ดี คืนที่นอนดึกเพราะงาน
+    // และคืนที่ตื่นกลางดึก เพื่อให้กราฟ/คำแนะนำมีอะไรให้ดูตั้งแต่เปิดแอปครั้งแรก
+    const nights = [
+      (0, '23:10', '06:30', SleepQuality.good, 0, <SleepFactor>[]),
+      (1, '00:40', '06:30', SleepQuality.poor, 2, [SleepFactor.screen, SleepFactor.stress]),
+      (2, '22:50', '06:20', SleepQuality.excellent, 0, <SleepFactor>[]),
+      (3, '23:45', '06:15', SleepQuality.fair, 1, [SleepFactor.lateMeal]),
+      (4, '23:20', '07:00', SleepQuality.good, 0, <SleepFactor>[]),
+      (5, '01:10', '07:30', SleepQuality.poor, 1, [SleepFactor.caffeine, SleepFactor.screen]),
+      (6, '22:40', '06:40', SleepQuality.good, 1, [SleepFactor.noise]),
+    ];
+
+    final today = DateTime.now();
+    for (final (daysAgo, bed, wake, quality, awakenings, factors) in nights) {
+      await repo.put(SleepEntry(
+        date: today.subtract(Duration(days: daysAgo)),
+        bedTime: bed,
+        wakeTime: wake,
+        quality: quality,
+        awakenings: awakenings,
+        factors: factors,
+      ));
     }
   }
 
@@ -214,6 +246,8 @@ class SeedData {
       ScheduleEvent(id: 's10', time: '07:00', weekday: today, title: 'มื้อเช้า', subtitle: 'โปรตีน + แป้งเชิงซ้อน • บันทึกโภชนาการ', category: LifeCategory.nutrition),
       ScheduleEvent(id: 's11', time: '12:00', weekday: today, title: 'มื้อกลางวัน', subtitle: 'เน้นผักและโปรตีน • เลี่ยงน้ำหวาน', category: LifeCategory.nutrition),
       ScheduleEvent(id: 's12', time: '18:30', weekday: today, title: 'มื้อเย็น', subtitle: 'มื้อเบา • ดื่มน้ำให้ครบ 2,000 มล.', category: LifeCategory.nutrition),
+      ScheduleEvent(id: 's13', time: '22:30', weekday: today, title: 'เตรียมตัวเข้านอน', subtitle: 'วางมือถือ • หรี่ไฟ • เข้านอน 23:00', category: LifeCategory.sleep),
+      ScheduleEvent(id: 's14', time: '06:30', weekday: today, title: 'บันทึกการนอนเมื่อคืน', subtitle: 'ใช้เวลาไม่ถึงนาที • ดูคะแนนคุณภาพการนอน', category: LifeCategory.sleep),
     ];
     for (final i in items) {
       await repo.put(i);

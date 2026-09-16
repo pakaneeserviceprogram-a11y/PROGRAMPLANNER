@@ -1,12 +1,32 @@
 # LifePlan — Handoff / เอกสารต่องาน
 
-อัปเดตล่าสุด: 2026-09-16 (เพิ่มรายงานผลงานประจำสัปดาห์ P-A-S-R-F-N-T ในโมดูลลูกค้า & ขายประกัน) — ใช้ไฟล์นี้เพื่อกลับมาทำงานต่อได้เร็ว ไม่ต้องไล่อ่านทั้งบทสนทนาใหม่
+อัปเดตล่าสุด: 2026-09-16 (ป๊อปอัป+เสียงแจ้งเตือน และโมดูลคุณภาพการนอน) — ใช้ไฟล์นี้เพื่อกลับมาทำงานต่อได้เร็ว ไม่ต้องไล่อ่านทั้งบทสนทนาใหม่
 
 ดูภาพรวมโปรเจกต์/ฟีเจอร์ที่ `README.md`, โครงสร้างข้อมูลที่ `DATA_MODEL.md` — ไฟล์นี้เน้นเฉพาะ "จะทำต่อยังไง"
 
 ---
 
 ## 0. สรุปงานรอบล่าสุด
+
+### รอบ 2026-09-16 (ต่อ) — โมดูลคุณภาพการนอน
+
+โมดูลที่ 7 ของแอป เข้าจากการ์ดเต็มความกว้างบนหน้าหลัก (`lib/screens/sleep_screen.dart`)
+
+- **`SleepEntry`** (`lib/models/sleep_entry.dart`) — คืนละหนึ่งรายการ โดยใช้ **วันที่ตื่น** เป็น id (`yyyy-MM-dd`) แบบเดียวกับ `WaterLog` บันทึกซ้ำจึงทับของเดิมเสมอ
+  - `durationMinutes` วนข้ามเที่ยงคืนด้วย `(wake - bed + 1440) % 1440` — อย่าลบตรง ๆ
+  - `nightDate` = วันที่เข้านอน (เข้านอนตั้งแต่เที่ยงวันขึ้นไป = คืนของวันก่อนหน้า) ใช้แสดงว่า "คืนวันอังคาร"
+  - `SleepStats.of()` สรุป 7 คืน: เวลานอน/คุณภาพ/การตื่นกลางดึกเฉลี่ย + **ความสม่ำเสมอของเวลาเข้านอน** + ปัจจัยรบกวนที่เจอบ่อย
+  - **จุดที่พลาดง่าย**: เวลาเข้านอนหลังเที่ยงคืน (01:00) ต้อง +24 ชม. ก่อนหาค่าเฉลี่ย ไม่งั้น 23:00 กับ 01:00 จะถูกมองว่าห่างกัน 22 ชั่วโมงแทนที่จะเป็น 2 — มี test คุมไว้
+- **`Insights.scoreOfNight()`** — เฉลี่ย 3 ส่วน: เวลานอน/เป้า, น้ำหนักคุณภาพที่ผู้ใช้ให้, และคะแนนการตื่นกลางดึก (ครั้งละ −15% พื้น 40%) และ `Insights.sleepScore()` ป้อนคะแนนเข้า `categoryScores()`
+- **`LifeCategory.sleep`** ถูกเพิ่มเข้า enum (ระหว่าง `nutrition` กับ `work`) → หน้าตารางเวลาเลือกหมวดนี้ได้ทันที จึงตั้งเตือน "เตรียมตัวเข้านอน" แล้วได้ป๊อปอัป+เสียงจากรอบที่แล้วฟรี ๆ
+  - เพิ่มค่าใน enum ปลอดภัยเพราะทุก `fromMap` ใช้ `firstWhere(..., orElse:)` และเก็บเป็นชื่อสตริง
+- box ใหม่ `sleep_entries` — เพิ่มแล้วทั้งใน `HiveBoxes.init()`, `BackupService._boxNames` (อยู่ในไฟล์สำรอง) และ `recordBoxNames` (โดนล้างตอน "ล้างประวัติทั้งหมด")
+  - **ข้อควรจำ**: เทสต์ทุกไฟล์ที่เปิด box เองต้องเพิ่ม `HiveBoxes.sleepEntries` ด้วย ไม่งั้น `Box not found` (แก้ `backup_test` / `repository_test` / `widget_test` / `dashboard_screen_test` ไปแล้ว)
+- เป้าหมายใหม่ `GoalSettings.sleepTargetMinutes` (ค่าเริ่มต้น 480 = 8 ชม.) กรอกเป็น **ชั่วโมง** ในหน้าตั้งค่าเป้าหมาย แต่เก็บเป็นนาที
+- `SleepScreen.tipsFor()` เป็น static ล้วน (รับ `SleepStats` + `GoalSettings`) จึงเทสต์คำแนะนำได้โดยไม่ต้อง pump หน้าจอ
+- test ใหม่: `test/sleep_test.dart` + `test/sleep_screen_test.dart` — รวมชุดทดสอบเป็น **86 tests**
+  - เทสต์ที่ใช้ memory box (`bytes: Uint8List(0)`) ต้อง `await Hive.close()` ก่อน `tearDownTestHive()` ไม่งั้นได้ `Unsupported operation ... for memory boxes`
+  - รายการในหน้าจอถูกสร้างแบบ lazy ตามที่เลื่อนถึง — ต้อง `scrollUntilVisible` / `ensureVisible` ก่อน tap (ทั้งในหน้าและในบอตทอมชีต)
 
 ### รอบ 2026-09-16 (ต่อ) — ล้างข้อมูลเพื่อเริ่มเก็บประวัติใหม่
 
@@ -179,7 +199,7 @@ test/
 
 11. **Gradle แก้ชื่อ `repo.maven.apache.org` ไม่ได้ → build ล้มตอนโหลด dependency ใหม่** — อาการ: `Could not resolve org.jetbrains.kotlinx:kotlinx-coroutines-android` / "Got socket exception during request. It might be caused by SSL misconfiguration" สาเหตุจริงคือ **DNS ของเครือข่ายนี้แก้ชื่อ repo.maven.apache.org ไม่ได้** (`nslookup` ผ่าน 8.8.8.8 ได้ปกติ แต่ resolver ของเครื่องไม่ได้) วิธีแก้ที่ใช้: เพิ่ม mirror ของ Maven Central ที่ Google โฮสต์ (`https://maven-central.storage-download.googleapis.com/maven2/`) เป็น repository ตัวแรกใน `android/build.gradle.kts` และ `android/settings.gradle.kts` — ถ้าเจออาการนี้อีกให้เช็ค DNS ก่อน อย่าเพิ่งโทษ Gradle/SSL
 
-12. **แจ้งเตือนไม่ขึ้นเฉพาะบน release build (debug ปกติ)** — สาเหตุ: `isShrinkResources = true` ลบ `drawable/ic_notification` ทิ้ง เพราะไอคอนถูกอ้างชื่อจากฝั่ง Dart เท่านั้น Gradle จึงมองไม่เห็นการใช้งาน วิธีแก้: `android/app/src/main/res/raw/keep.xml` ที่ระบุ `tools:keep="@drawable/ic_notification"` ตรวจว่าไอคอนรอดด้วย `aapt2 dump resources <apk> | grep ic_notification`
+12. **แจ้งเตือนไม่ขึ้น/ไม่มีเสียงเฉพาะบน release build (debug ปกติ)** — สาเหตุ: `isShrinkResources = true` ลบ `drawable/ic_notification` ทิ้ง เพราะไอคอนถูกอ้างชื่อจากฝั่ง Dart เท่านั้น Gradle จึงมองไม่เห็นการใช้งาน วิธีแก้: `android/app/src/main/res/raw/keep.xml` ที่ระบุ `tools:keep="@drawable/ic_notification,@raw/alarm_chime"` (เสียงเตือนโดนลบด้วยเหตุผลเดียวกัน) ตรวจว่าไอคอนรอดด้วย `aapt2 dump resources <apk> | grep ic_notification`
 
 13. **`adb install -r` ขึ้น INSTALL_FAILED_VERSION_DOWNGRADE** — APK จาก `--split-per-abi` มี versionCode บวก 1000×ABI (x86_64 = 4001) ส่วน APK รวมเป็น 1 การสลับไปมาระหว่างสองแบบต้อง `adb uninstall` ก่อน
 
@@ -212,6 +232,18 @@ test/
   - `test/notification_schedule_test.dart` คุมการคำนวณเวลาเตือน (รวมเคสเตือนล่วงหน้าข้ามเที่ยงคืน)
   - เพิ่มเก็บค่าใน box `app_settings` (อยู่ในไฟล์สำรองด้วยแล้ว)
 
+- [x] **ป๊อปอัป + เสียงแจ้งเตือนเมื่อถึงเวลา** — ทำแล้ว (2026-09-16)
+  - **เสียง**: `android/app/src/main/res/raw/alarm_chime.wav` (ระฆัง 3 โน้ต A–C#–E สร้างด้วยสคริปต์ ไม่ได้ดึงจากที่อื่น) ตั้งเป็นเสียงของช่องแจ้งเตือน
+  - เสียง/สั่นบน Android ผูกกับ *channel* และแก้ไม่ได้หลังสร้างช่องแล้ว — `NotificationService` จึงใช้ id ช่องต่างกันตามรูปแบบ (`schedule_reminders_s{0,1}_v{0,1}`) แล้วลบช่องที่ไม่ได้ใช้ทิ้งทุกครั้งที่ sync (รวมช่องเก่า `schedule_reminders`) ไม่งั้นปิดเสียงแล้วจะไม่มีผลจนกว่าจะถอนแอป
+  - ต้องเพิ่ม `@raw/alarm_chime` ใน `res/raw/keep.xml` ด้วย ไม่งั้น `shrinkResources` ลบทิ้งแล้ว release build จะเงียบ (ปัญหาเดียวกับ `ic_notification` ข้อ 12) — ตรวจแล้วว่ารอด: `unzip -l app-release.apk | grep .wav`
+  - **ป๊อปอัปกลางจอ**: `lib/widgets/reminder_popup.dart` — `ReminderHost` ครอบทั้งแอปผ่าน `MaterialApp.builder` + `navigatorKey` (ใช้ context ของตัวเองไม่ได้ เพราะ builder อยู่เหนือ Navigator)
+  - `lib/data/reminder_watcher.dart` เป็นตัวจับเวลาฝั่งแอป (ตรวจทุก 20 วินาที) ให้ป๊อปอัปเด้ง *ตรงเวลา* ไม่ต้องรอ Android ปลุกแบบ inexact; หยุดทำงานเมื่อแอปอยู่เบื้องหลังหรือผู้ใช้ปิดการเตือน (จึงไม่มี Timer ค้างตอนรัน `flutter test`)
+  - กันเด้งซ้ำด้วย `occurrenceKey` = `eventId@remindAt` — รอบสัปดาห์หน้าได้คีย์ใหม่จึงยังเด้งได้ปกติ
+  - กดการแจ้งเตือนจากแถบสถานะ → เปิดป๊อปอัปของกิจกรรมนั้น (payload = `event.id`, รองรับทั้งตอนแอปเปิดค้างและตอนแอปถูกปลุกขึ้นมาใหม่)
+  - ปุ่ม "เตือนอีกใน 5 นาที" ตั้งทั้ง Timer ในแอปและการแจ้งเตือนของระบบ (id 5000+) เผื่อผู้ใช้ปิดแอปไปก่อน
+  - **เจตนา**: เสียงมาจากการแจ้งเตือนของระบบทางเดียว ป๊อปอัปสั่นอย่างเดียวไม่เล่นเสียงเอง — ไม่งั้นจะดังซ้อนกันสองที
+  - test ใหม่: `test/reminder_watcher_test.dart`, `test/reminder_popup_test.dart` (รวมชุดทดสอบเป็น 60 tests)
+
 - [ ] **Sync ข้ามอุปกรณ์** — Hive เก็บในเครื่องเท่านั้น ถ้าต้องการ sync ต้องมี backend (Firestore เข้ากับโครงสร้างที่ออกแบบไว้ใน `DATA_MODEL.md` ได้ทันที เพราะแต่ละ entity มี `userId` เป็น partition key อยู่แล้ว)
 - [ ] **iOS build** — โค้ด Dart เดียวกันนี้พร้อมสำหรับ iOS แต่ต้องมี Mac + Xcode มา build/test จริง
 - [x] **มุมมองตารางเวลารายสัปดาห์** — ทำแล้ว (2026-09-15): `ScheduleEvent` มีฟิลด์ `weekday` (1–7), `ScheduleRepository.getByWeekday()/getWeek()`, `ScheduleScreen` เป็น StatefulWidget สลับ "วัน / สัปดาห์" ได้ — มุมมองสัปดาห์เป็นตาราง 7 คอลัมน์เลื่อนแนวนอน, แถบ 7 วันกดเลือกวันได้และมีจุดบอกว่าวันไหนมีกิจกรรม, ฟอร์มเพิ่มกิจกรรมเลือกวันได้
@@ -219,6 +251,9 @@ test/
   - Dashboard "ตารางวันนี้" กรองเฉพาะ weekday ของวันนี้แล้ว (เดิมโชว์รวมทุกวัน)
   - test หน้าจอ: `test/schedule_screen_test.dart` (ใช้ Hive box แบบ in-memory เพื่อเลี่ยงปัญหา FakeAsync ข้อ 4/16)
 - [x] **แก้ไข/ลบกิจกรรมในตารางเวลา** — ทำแล้ว (2026-09-15 ค่ำ) ดูข้อ 0
+- [x] **โมดูลคุณภาพการนอน** — ทำแล้ว (2026-09-16) ดูข้อ 0
+  - บันทึก/แก้ไข/ลบการนอนรายคืน, กราฟ 7 คืน, ค่าเฉลี่ย + ความสม่ำเสมอของเวลาเข้านอน, คำแนะนำจากข้อมูลจริง, เป้าเวลานอนตั้งเองได้
+  - ต่อยอดได้: เตือน "ถึงเวลาเข้านอน" อัตโนมัติจาก `sleepTargetMinutes` + เวลาตื่นที่ตั้งไว้ (ตอนนี้ต้องสร้างกิจกรรมในตารางเวลาเอง), จับคู่คุณภาพการนอนกับคาเฟอีน/มื้อดึกที่บันทึกในโมดูลโภชนาการโดยอัตโนมัติ, กราฟย้อนหลังเป็นเดือน
 - [x] **โมดูลทานอาหาร & โภชนาการ** — ทำแล้ว (2026-09-16) ดูข้อ 0
   - บันทึก/แก้ไข/ลบมื้ออาหารพร้อมสารอาหารและวิตามิน, กดเพิ่ม-ลดน้ำดื่มทีละแก้ว, เป้าหมายโภชนาการตั้งเองได้
   - ต่อยอดได้: กราฟย้อนหลังหลายวัน (ตอนนี้หน้าจอโฟกัสเฉพาะ "วันนี้" แม้ข้อมูลจะเก็บแยกตามวันอยู่แล้ว), ฐานข้อมูลเมนูอาหารไทยสำเร็จรูปเพื่อไม่ต้องกรอกกรัมเอง, แจ้งเตือนมื้ออาหาร/ดื่มน้ำแยกจากตารางเวลา

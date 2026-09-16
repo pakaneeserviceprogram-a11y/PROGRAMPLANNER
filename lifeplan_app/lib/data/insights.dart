@@ -2,6 +2,7 @@ import '../models/client.dart';
 import '../models/finance_transaction.dart';
 import '../models/goal_settings.dart';
 import '../models/life_category.dart';
+import '../models/sleep_entry.dart';
 import '../models/work_task.dart';
 import 'repositories/client_repository.dart';
 import 'repositories/exercise_repository.dart';
@@ -9,6 +10,7 @@ import 'repositories/finance_repository.dart';
 import 'repositories/goal_settings_repository.dart';
 import 'repositories/meal_repository.dart';
 import 'repositories/skill_track_repository.dart';
+import 'repositories/sleep_repository.dart';
 import 'repositories/water_repository.dart';
 import 'repositories/work_task_repository.dart';
 
@@ -39,6 +41,7 @@ class Insights {
     final financeScore = ((savings / goals.savingTarget) * 100).clamp(0, 100).round();
 
     final nutrition = nutritionScore(goals: goals);
+    final sleep = sleepScore(goals: goals);
 
     final skills = SkillTrackRepository().getAll();
     final learningScore = skills.isEmpty ? 0 : (skills.fold<int>(0, (s, t) => s + t.progressPercent) / skills.length).round();
@@ -46,6 +49,7 @@ class Insights {
     return {
       LifeCategory.exercise: exerciseScore,
       LifeCategory.nutrition: nutrition,
+      LifeCategory.sleep: sleep,
       LifeCategory.work: workScore,
       LifeCategory.crm: crmScore,
       LifeCategory.finance: financeScore,
@@ -72,6 +76,28 @@ class Insights {
       sugarRatio,
     ];
 
+    return ((parts.reduce((a, b) => a + b) / parts.length) * 100).round();
+  }
+
+  /// คะแนนคุณภาพการนอนของคืนล่าสุด — เฉลี่ยจาก 3 ด้าน:
+  /// นอนได้ครบเป้าไหม, ผู้ใช้ให้คะแนนคุณภาพเท่าไร และตื่นกลางดึกบ่อยแค่ไหน
+  ///
+  /// ยังไม่ได้บันทึกการนอนของคืนนั้น = 0 (เหมือนโมดูลอื่นที่ยังไม่มีข้อมูล)
+  static int sleepScore({GoalSettings? goals, DateTime? day}) {
+    final entry = SleepRepository().getForDay(day ?? DateTime.now());
+    if (entry == null) return 0;
+    return scoreOfNight(entry, (goals ?? GoalSettingsRepository().get()).sleepTargetMinutes);
+  }
+
+  /// แยกออกมาให้คำนวณคะแนนของคืนใด ๆ ได้โดยไม่ต้องแตะ Hive (หน้าจอ/เทสเรียกตรง ๆ)
+  static int scoreOfNight(SleepEntry entry, int targetMinutes) {
+    // ตื่นกลางดึกครั้งละ -15% แต่ไม่ให้ต่ำกว่า 40% เพราะยังนับว่าได้นอน
+    final awakeningRatio = (1 - 0.15 * entry.awakenings).clamp(0.4, 1.0).toDouble();
+    final parts = [
+      _ratio(entry.durationMinutes.toDouble(), targetMinutes.toDouble()),
+      entry.quality.weight,
+      awakeningRatio,
+    ];
     return ((parts.reduce((a, b) => a + b) / parts.length) * 100).round();
   }
 

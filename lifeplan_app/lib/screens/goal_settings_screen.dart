@@ -28,6 +28,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
   late final TextEditingController _fatController;
   late final TextEditingController _sugarController;
   late final TextEditingController _waterController;
+  late final TextEditingController _sleepHoursController;
 
   @override
   void initState() {
@@ -42,6 +43,8 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     _fatController = TextEditingController(text: goals.fatTarget.toStringAsFixed(0));
     _sugarController = TextEditingController(text: goals.sugarLimit.toStringAsFixed(0));
     _waterController = TextEditingController(text: '${goals.waterTargetMl}');
+    _sleepHoursController =
+        TextEditingController(text: _hoursText(goals.sleepTargetMinutes));
   }
 
   @override
@@ -55,7 +58,14 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     _fatController.dispose();
     _sugarController.dispose();
     _waterController.dispose();
+    _sleepHoursController.dispose();
     super.dispose();
+  }
+
+  /// เก็บเป็นนาทีแต่ให้ผู้ใช้กรอกเป็นชั่วโมง — 480 นาที ต้องโชว์ว่า "8" ไม่ใช่ "8.0"
+  static String _hoursText(int minutes) {
+    final hours = minutes / 60;
+    return hours == hours.roundToDouble() ? hours.toStringAsFixed(0) : hours.toStringAsFixed(1);
   }
 
   double? _parsePositive(String text) {
@@ -78,6 +88,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     final fat = _parsePositive(_fatController.text);
     final sugar = _parsePositive(_sugarController.text);
     final water = _parsePositive(_waterController.text);
+    final sleepHours = _parsePositive(_sleepHoursController.text);
 
     if (saving == null || sales == null) {
       _showMessage('กรุณากรอกเป้าหมายเงินเป็นตัวเลขที่มากกว่า 0');
@@ -91,6 +102,10 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       _showMessage('เป้าหมายโภชนาการทุกช่องต้องเป็นตัวเลขที่มากกว่า 0');
       return;
     }
+    if (sleepHours == null || sleepHours < 3 || sleepHours > 14) {
+      _showMessage('เป้าหมายการนอนต้องอยู่ระหว่าง 3–14 ชั่วโมงต่อคืน');
+      return;
+    }
 
     await _repo.save(GoalSettings(
       savingTarget: saving,
@@ -102,6 +117,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       fatTarget: fat,
       sugarLimit: sugar,
       waterTargetMl: water.round(),
+      sleepTargetMinutes: (sleepHours * 60).round(),
     ));
     if (!mounted) return;
     _showMessage('บันทึกเป้าหมายแล้ว');
@@ -119,6 +135,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       _fatController.text = GoalSettings.defaultFatTarget.toStringAsFixed(0);
       _sugarController.text = GoalSettings.defaultSugarLimit.toStringAsFixed(0);
       _waterController.text = '${GoalSettings.defaultWaterTargetMl}';
+      _sleepHoursController.text = _hoursText(GoalSettings.defaultSleepTargetMinutes);
     });
   }
 
@@ -233,6 +250,16 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
                     keyboardType: TextInputType.number,
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _GoalCard(
+              category: LifeCategory.sleep,
+              child: AuthField(
+                label: 'เวลานอนต่อคืน (ชั่วโมง)',
+                hint: 'เช่น 8',
+                controller: _sleepHoursController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
               ),
             ),
             const SizedBox(height: 24),

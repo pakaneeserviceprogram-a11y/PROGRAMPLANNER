@@ -14,6 +14,9 @@ class GoalSettings {
   static const defaultSugarLimit = 25.0; // กรัม — เพดานตามคำแนะนำ WHO
   static const defaultWaterTargetMl = 2000; // มล. (8 แก้ว)
 
+  /// เป้าเวลานอนต่อคืนเป็นนาที — 8 ชั่วโมงตามคำแนะนำผู้ใหญ่ทั่วไป (7–9 ชม.)
+  static const defaultSleepTargetMinutes = 480;
+
   final double savingTarget;
   final double salesTarget;
   final int exerciseWeeklyTarget;
@@ -23,6 +26,7 @@ class GoalSettings {
   final double fatTarget;
   final double sugarLimit;
   final int waterTargetMl;
+  final int sleepTargetMinutes;
 
   const GoalSettings({
     this.savingTarget = defaultSavingTarget,
@@ -34,6 +38,7 @@ class GoalSettings {
     this.fatTarget = defaultFatTarget,
     this.sugarLimit = defaultSugarLimit,
     this.waterTargetMl = defaultWaterTargetMl,
+    this.sleepTargetMinutes = defaultSleepTargetMinutes,
   });
 
   GoalSettings copyWith({
@@ -46,6 +51,7 @@ class GoalSettings {
     double? fatTarget,
     double? sugarLimit,
     int? waterTargetMl,
+    int? sleepTargetMinutes,
   }) =>
       GoalSettings(
         savingTarget: savingTarget ?? this.savingTarget,
@@ -57,6 +63,7 @@ class GoalSettings {
         fatTarget: fatTarget ?? this.fatTarget,
         sugarLimit: sugarLimit ?? this.sugarLimit,
         waterTargetMl: waterTargetMl ?? this.waterTargetMl,
+        sleepTargetMinutes: sleepTargetMinutes ?? this.sleepTargetMinutes,
       );
 
   Map<String, dynamic> toMap() => {
@@ -69,6 +76,7 @@ class GoalSettings {
         'fatTarget': fatTarget,
         'sugarLimit': sugarLimit,
         'waterTargetMl': waterTargetMl,
+        'sleepTargetMinutes': sleepTargetMinutes,
       };
 
   factory GoalSettings.fromMap(Map<String, dynamic> map) => GoalSettings(
@@ -81,5 +89,7 @@ class GoalSettings {
         fatTarget: (map['fatTarget'] as num?)?.toDouble() ?? defaultFatTarget,
         sugarLimit: (map['sugarLimit'] as num?)?.toDouble() ?? defaultSugarLimit,
         waterTargetMl: (map['waterTargetMl'] as num?)?.toInt() ?? defaultWaterTargetMl,
+        sleepTargetMinutes:
+            (map['sleepTargetMinutes'] as num?)?.toInt() ?? defaultSleepTargetMinutes,
       );
 }

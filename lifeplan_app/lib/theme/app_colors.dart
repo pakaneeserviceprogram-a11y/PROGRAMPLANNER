@@ -24,6 +24,9 @@ class AppColors {
   static const nutrition = Color(0xFFD9506B);
   static const nutritionSoft = Color(0xFFFBE4EA);
 
+  static const sleep = Color(0xFF3F4A73);
+  static const sleepSoft = Color(0xFFE7EAF3);
+
   static const work = Color(0xFF4C6FEF);
   static const workSoft = Color(0xFFE7ECFE);
 

@@ -8,12 +8,14 @@ import '../data/repositories/goal_settings_repository.dart';
 import '../data/repositories/meal_repository.dart';
 import '../data/repositories/schedule_repository.dart';
 import '../data/repositories/skill_track_repository.dart';
+import '../data/repositories/sleep_repository.dart';
 import '../data/repositories/user_repository.dart';
 import '../data/repositories/water_repository.dart';
 import '../data/repositories/work_task_repository.dart';
 import '../models/client.dart';
 import '../models/life_category.dart';
 import '../models/meal_entry.dart';
+import '../models/sleep_entry.dart';
 import '../models/water_log.dart';
 import '../models/work_task.dart';
 import '../theme/app_colors.dart';
@@ -26,6 +28,7 @@ import 'exercise_screen.dart';
 import 'finance_screen.dart';
 import 'learning_screen.dart';
 import 'nutrition_screen.dart';
+import 'sleep_screen.dart';
 import 'work_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -40,6 +43,10 @@ class DashboardScreen extends StatelessWidget {
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
   ];
+
+  /// "7.3 ชม." — สั้นพอให้อยู่ในบรรทัดเดียวของการ์ดบนหน้าหลัก
+  static String _sleepHours(SleepEntry entry) =>
+      '${(entry.durationMinutes / 60).toStringAsFixed(1)} ชม.';
 
   String _thaiDateLabel() {
     final now = DateTime.now();
@@ -56,6 +63,7 @@ class DashboardScreen extends StatelessWidget {
     final scheduleRepo = ScheduleRepository();
     final mealRepo = MealRepository();
     final waterRepo = WaterRepository();
+    final sleepRepo = SleepRepository();
     final userRepo = UserRepository();
     final goalsRepo = GoalSettingsRepository();
 
@@ -70,6 +78,7 @@ class DashboardScreen extends StatelessWidget {
           scheduleRepo.listenable(),
           mealRepo.listenable(),
           waterRepo.listenable(),
+          sleepRepo.listenable(),
           userRepo.listenable(),
           goalsRepo.listenable(),
         ]),
@@ -91,6 +100,8 @@ class DashboardScreen extends StatelessWidget {
           final waterToday = waterRepo.getToday();
           final calorieTarget = goalsRepo.get().calorieTarget;
           final waterGlassTarget = (goalsRepo.get().waterTargetMl / WaterLog.glassMl).round();
+
+          final lastNight = sleepRepo.getLastNight();
 
           final skills = skillRepo.getAll();
           final primarySkill = skills.isNotEmpty ? skills.first : null;
@@ -233,6 +244,14 @@ class DashboardScreen extends StatelessWidget {
                 category: LifeCategory.nutrition,
                 subtitle: '${mealTotals.calories} / $calorieTarget kcal • น้ำ ${waterToday.glasses}/$waterGlassTarget แก้ว',
                 onTap: () => _open(context, const NutritionScreen()),
+              ),
+              const SizedBox(height: 12),
+              _WideModuleCard(
+                category: LifeCategory.sleep,
+                subtitle: lastNight == null
+                    ? 'ยังไม่ได้บันทึกการนอนเมื่อคืน'
+                    : '${_sleepHours(lastNight)} • ${lastNight.quality.label} • ${scores[LifeCategory.sleep]}%',
+                onTap: () => _open(context, const SleepScreen()),
               ),
               const SizedBox(height: 12),
               _WideModuleCard(

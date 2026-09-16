@@ -23,6 +23,7 @@ void main() {
         HiveBoxes.exerciseItems,
         HiveBoxes.mealEntries,
         HiveBoxes.waterLogs,
+        HiveBoxes.sleepEntries,
         HiveBoxes.clients,
         HiveBoxes.weeklyReports,
         HiveBoxes.financeTransactions,

@@ -42,6 +42,7 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.exerciseItems),
       Hive.openBox<Map>(HiveBoxes.mealEntries),
       Hive.openBox<Map>(HiveBoxes.waterLogs),
+      Hive.openBox<Map>(HiveBoxes.sleepEntries),
       Hive.openBox<Map>(HiveBoxes.clients),
       Hive.openBox<Map>(HiveBoxes.weeklyReports),
       Hive.openBox<Map>(HiveBoxes.financeTransactions),

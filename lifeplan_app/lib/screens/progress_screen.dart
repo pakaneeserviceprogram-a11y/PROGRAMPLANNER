@@ -7,6 +7,7 @@ import '../data/repositories/finance_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
 import '../data/repositories/meal_repository.dart';
 import '../data/repositories/skill_track_repository.dart';
+import '../data/repositories/sleep_repository.dart';
 import '../data/repositories/water_repository.dart';
 import '../data/repositories/work_task_repository.dart';
 import '../models/life_category.dart';
@@ -28,6 +29,7 @@ class ProgressScreen extends StatelessWidget {
     final goalsRepo = GoalSettingsRepository();
     final mealRepo = MealRepository();
     final waterRepo = WaterRepository();
+    final sleepRepo = SleepRepository();
 
     return SafeArea(
       child: AnimatedBuilder(
@@ -40,6 +42,7 @@ class ProgressScreen extends StatelessWidget {
           goalsRepo.listenable(),
           mealRepo.listenable(),
           waterRepo.listenable(),
+          sleepRepo.listenable(),
         ]),
         builder: (context, _) {
           final scores = Insights.categoryScores();
@@ -140,6 +143,7 @@ class ProgressScreen extends StatelessWidget {
                         _Badge(icon: Icons.directions_run_rounded, color: AppColors.exercise, label: '${exerciseRepo.getAll().where((e) => e.isDone).length}\nครั้งออกกำลังกาย'),
                         _Badge(icon: Icons.check_circle_rounded, color: AppColors.work, label: '${workRepo.getAll().where((t) => t.status.name == 'done').length}\nงานเสร็จแล้ว'),
                         _Badge(icon: Icons.groups_rounded, color: AppColors.crm, label: '${clientRepo.getAll().where((c) => c.stage.name == 'closedWon').length}\nปิดการขาย'),
+                        _Badge(icon: Icons.bedtime_rounded, color: AppColors.sleep, label: '${sleepRepo.getAll().length}\nคืนที่บันทึก'),
                         _Badge(icon: Icons.menu_book_rounded, color: AppColors.learning, label: '${skillRepo.getAll().length}\nเส้นทางเรียนรู้'),
                       ],
                     ),
