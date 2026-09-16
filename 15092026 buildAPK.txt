@@ -168,3 +168,58 @@ Also worth knowing
 Nothing is committed yet: both the popup/alarm-sound work and the sleep module are still uncommitted local changes. Should I commit them and push to GitHub, as one commit or two?
 
 ✻ Cooked for 23m 38s · done 9:07 PM
+
+
+ build และขึ้น  github
+
+  Ran 4 shell commands
+
+Building split-per-ABI APKs (the project's usual format):
+
+  Ran 2 shell commands
+
+Build done. Committing in logical pieces and pushing:
+
+  Pushed to main
+
+Build เสร็จและ push ขึ้น GitHub แล้วครับ (main อัปเดตจาก 8db40e7 เป็น 3de4506)
+
+APK (เวอร์ชัน 1.3.0+4)
+
+ไฟล์อยู่ที่ lifeplan_app\build\app\outputs\flutter-apk\
+
+┌─────────────────────────────┬─────────┬─────────────────────────┐
+│             ไฟล์             │  ขนาด   │          ใช้กับ           │
+├─────────────────────────────┼─────────┼─────────────────────────┤
+│ app-arm64-v8a-release.apk   │ 19.3 MB │ มือถือ Android ทั่วไป ใช้ตัวนี้ │
+├─────────────────────────────┼─────────┼─────────────────────────┤
+│ app-armeabi-v7a-release.apk │ 17.0 MB │ มือถือรุ่นเก่า (32-bit)      │
+├─────────────────────────────┼─────────┼─────────────────────────┤
+│ app-x86_64-release.apk      │ 20.8 MB │ Emulator บนคอม          │
+└─────────────────────────────┴─────────┴─────────────────────────┘
+
+ก่อน build ได้รัน flutter analyze (ไม่มีปัญหา) และ flutter test (ผ่านทั้ง 86 tests)
+
+⚠️ APK ชุดนี้เซ็นด้วย debug key เพราะเครื่องนี้ไม่มีไฟล์ lifeplan-release.jks / key.properties (อยู่บนเครื่องเดิม)
+- ใช้ติดตั้งทดสอบได้ แต่ไม่ควรแจกจ่าย
+- ถ้ามือถือมีแอปตัวที่เซ็นด้วย release key อยู่แล้ว จะติดตั้งทับไม่ได้ ต้องถอนตัวเก่าก่อน และข้อมูลในแอปจะหาย
+
+Commit ที่ขึ้น GitHub
+
+1. bc0e917 เพิ่มป๊อปอัปและเสียงแจ้งเตือนเมื่อถึงเวลากิจกรรม
+2. 26919ab เพิ่มโมดูลคุณภาพการนอน รวม README / HANDOFF / DATA_MODEL และเลขเวอร์ชัน
+3. 3de4506 อัปเดตบันทึก 15092026 buildAPK.txt (ไฟล์บันทึกที่คุณแก้ไว้ ผมเช็คแล้วไม่มีรหัสผ่านหรือ key อยู่ในนั้น)
+
+ตอน commit Git ขึ้นเตือนเรื่องการแปลง LF เป็น CRLF เป็นแค่เรื่องการขึ้นบรรทัดใหม่ของไฟล์บน Windows ไม่กระทบโค้ด
+
+ถ้าจะเอาไปแจกจริง ต้อง build ใหม่บนเครื่องที่มี keystore ครับ
+
+✻ Baked for 1m 59s · done 9:13 PM
+
+※ recap: เพิ่มป๊อปอัปพร้อมเสียงแจ้งเตือนและโมดูลคุณภาพการนอนใน LifePlan แล้ว build APK 1.3.0+4 และ push ขึ้น GitHub เรียบร้อย ขั้นต่อไปคือลองติดตั้งบนมือถือจริง และถ้าจะแจกจ่ายต้อง build ใหม่บนเครื่องที่มี release keystore (disable recaps in /config)
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  Opus 5  |  Context: 31%  |  $20.98
+  ⏵⏵ auto mode on (shift+tab to cycle) · ← for agents
