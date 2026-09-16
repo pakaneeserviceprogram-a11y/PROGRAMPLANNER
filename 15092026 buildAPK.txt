@@ -68,7 +68,41 @@ lutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-plugin-author
 
 Build APK ใหม่ผ่านแล้ว และ push ขึ้น GitHub เรียบร้อย (commit 7fb005f)
 
-APK ตัวใหม่มีฟีเจอร์แก้ไข/ลบในหน้าตารางเวลาแล้ว สำหรับมือถือ Android ทั่วไปใช้ไฟล์นี้:
+APK ตัวใหม่มีฟีเจอร์แก้ไข/ลบในหน้าตาราง
+เสร็จแล้วครับ — ทำทั้งป๊อปอัปและเสียงแจ้งเตือน โดยไม่เพิ่ม package ใหม่ (ใช้ flutter_local_notifications ที่มีอยู่)
+
+สิ่งที่ได้
+
+1. เสียงแจ้งเตือน — android/app/src/main/res/raw/alarm_chime.wav
+เสียงระฆัง 3 โน้ต (A–C#–E) 2.7 วินาที สร้างขึ้นเองด้วยสคริปต์ lifeplan_app/tool/gen_alarm_chime.dart (แก้เสียงแล้วสั่งสร้างใหม่ได้) ตั้งเป็นเสียงประจำช่องแจ้งเตือน พร้อมรูปแบบการสั่น
+
+2. ป๊อปอัปกลางจอ — lib/widgets/reminder_popup.dart
+เด้งหน้าต่างเตือนทับหน้าที่ใช้อยู่ บอกชื่อกิจกรรม เวลา หมวด สีตามหมวด มีปุ่ม รับทราบ กับ เตือนอีกใน 5 นาที แตะนอกกรอบไม่ปิด (กันแตะพลาด) และกดการแจ้งเตือนจากแถบสถานะก็เปิดป๊อปอัปของกิจกรรมนั้นได้ ทั้งตอนแอปเปิดค้างและตอนแอปถูกปลุกขึ้นมาใหม่
+
+3. ตัวจับเวลาในแอป — lib/data/reminder_watcher.dart
+ตรวจทุก 20 วินาที ให้ป๊อปอัปเด้งตรงเวลา ไม่ต้องรอ Android ปลุก (การแจ้งเตือนของระบบตั้งแบบ inexact จึงคลาดได้ไม่กี่นาที) หยุดทำงานเองเมื่อแอปอยู่เบื้องหลังหรือปิดการเตือนไว้
+
+4. หน้าตั้งค่า (โปรไฟล์ → การแจ้งเตือน) — เพิ่มสวิตช์ เสียงแจ้งเตือน / สั่นเตือน / ป๊อปอัปกลางจอ แยกกันได้ + ปุ่ม "ทดสอบเสียงและการแจ้งเตือน" และ "ลองดูหน้าตาป๊อปอัป"
+
+จุดที่ต้องรู้
+
+- เสียงมาจากการแจ้งเตือนของระบบทางเดียว ป๊อปอัปแค่สั่น ไม่เล่นเสียงเอง — ตั้งใจแบบนี้เพื่อไม่ให้ดังซ้อนกันสองที
+- Android ล็อกค่าเสียง/สั่นไว้กับ notification channel แก้ไม่ได้หลังสร้าง — โค้ดจึงใช้ id ช่องต่างกันตามรูปแบบแล้วลบช่องที่ไม่ใช้ทิ้ง ไม่งั้นกดปิดเสียงแล้วจะไม่มีผลจนกว่าจะถอนแอป
+- เพิ่ม @raw/alarm_chime ใน res/raw/keep.xml แล้ว (ปัญหาเดียวกับ ic_notification — shrinkResources จะลบทิ้งแล้ว release build จะเงียบ) ตรวจในไฟล์ APK แล้วว่ารอด
+- การเตือนยังปิดอยู่เป็นค่าเริ่มต้น ต้องไปเปิดที่ โปรไฟล์ → การแจ้งเตือน ก่อน (พฤติกรรมเดิม)
+
+ตรวจแล้ว
+
+- flutter analyze — ไม่มีปัญหา
+- flutter test — ผ่าน 60 tests (เพิ่มใหม่ reminder_watcher_test.dart 10 เคส, reminder_popup_test.dart 4 เคส)
+- flutter build apk --release — build ผ่าน 54.0MB และยืนยันว่าไฟล์เสียงอยู่ใน APK จริง
+
+ยังไม่ได้ลองบนเครื่องจริง/emulator ครับ — ต้องติดตั้ง APK แล้วกดปุ่มทดสอบในหน้าตั้งค่าถึงจะยืนยันเรื่องเสียงได้จริง ๆ อัปเดต README/HANDOFF ให้แล้ว แต่ยังไม่ได้ commit ให้ commit แล้ว push ขึ้น GitHub เลยไหมครับ
+
+✻ Worked for 25m 13s · done 6:52 PM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ commit แล้ว push ขึ้น GitHub เลยเวลาแล้ว สำหรับมือถือ Android ทั่วไปใช้ไฟล์นี้:
 D:\WORK\PROGRAMPLANNER\lifeplan_app\build\app\outputs\flutter-apk\app-arm64-v8a-release.apk (18.7 MB)
 
 APK นี้ยังเซ็นด้วย debug key เหมือนรอบก่อน จึงใช้ติดตั้งทดสอบได้เท่านั้น ถ้าติดตั้งตัวก่อนหน้าไว้แล้ว ติดตั้งทับได้เลย
@@ -98,3 +132,39 @@ APK นี้ยังเซ็นด้วย debug key เหมือนร�
 ตอนนี้ branch main ตรงกับ origin/main แล้ว ถ้าจะรันต่อแนะนำ flutter pub get ในโฟลเดอร์ lifeplan_app ก่อน เพราะมี model ใหม่เพิ่มเข้ามา
 
 ✻ Baked for 48s · done 12:20 PM
+
+I added the sleep quality (คุณภาพการนอน) module and hooked it into every screen that shows data from the other modules. flutter analyze finds no issues, flutter test passes all 86 tests (60 before, 26 new), and the release APK builds (54.7MB). I haven't run it on a real phone or emulator yet.
+
+What the new screen does (lib/screens/sleep_screen.dart)
+
+Open it from the full-width card on the home screen.
+- Recording a night:
+  - Bedtime and wake time, with duration worked out across midnight automatically (23:00 → 06:30 = 7 hrs 30 min).
+  - How it felt: แย่ / พอใช้ / ดี / ดีมาก, plus how many times you woke in the night and a note.
+  - ปัจจัยรบกวน (disturbances): caffeine, late meal, screens before bed, alcohol, stress, noise/light, late exercise. You can tick several.
+  - One entry per night. Saving the same night again replaces the old entry, and tapping an entry opens it for editing or deletion (deletion asks first).
+- Top card: last night's duration, the % of your target as a ring, bedtime, wake time and quality.
+- Chart of the last 7 nights: each bar's colour shows that night's score.
+- 7-night averages: sleep time, quality, and ความสม่ำเสมอของเวลาเข้านอน (how consistent your bedtime is).
+- Tips from your own data, for example "sleeping 45 min less than target on average", waking often in the night, an irregular bedtime, or disturbances that keep coming up.
+
+Nightly score is the average of three parts: sleep time against the target, the quality rating, and night wakings (−15% each, never below 40%).
+
+Where it connects to the rest of the app
+
+- Home screen: new sleep card (last night's hours, quality, score).
+- Progress screen: sleep added to the overall score and bar chart, plus a "nights recorded" badge.
+- Goal settings: new sleep target per night, entered in hours (default 8).
+- Schedule: "คุณภาพการนอน" is now a category you can pick. A "เตรียมตัวเข้านอน" event will get the popup and alarm sound from the previous round.
+- Backup/restore: sleep records are included in backup files and are wiped by "ล้างประวัติทั้งหมด".
+- Sample data: a fresh install gets 7 nights of sleep records plus two sleep events in the schedule.
+
+Also worth knowing
+
+- One thing that's easy to get wrong in the bedtime-consistency calculation: a bedtime after midnight (01:00) has 24 hrs added before averaging. Otherwise 23:00 and 01:00 would count as 22 hours apart instead of 2. There's a test covering this.
+- I bumped the version to 1.3.0+4.
+- I updated README, HANDOFF and DATA_MODEL. HANDOFF also lists next ideas, such as an automatic "time for bed" reminder based on the target and wake time.
+
+Nothing is committed yet: both the popup/alarm-sound work and the sleep module are still uncommitted local changes. Should I commit them and push to GitHub, as one commit or two?
+
+✻ Cooked for 23m 38s · done 9:07 PM
