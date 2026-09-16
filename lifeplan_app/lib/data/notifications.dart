@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -5,24 +7,33 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../models/app_settings.dart';
 import '../models/schedule_event.dart';
 import 'repositories/app_settings_repository.dart';
 import 'repositories/schedule_repository.dart';
 
 /// แจ้งเตือนกิจกรรมในตารางเวลา — ตั้งเป็นการเตือนรายสัปดาห์ซ้ำทุกสัปดาห์
 /// ให้ตรงกับตารางที่เป็นแบบ "ประจำสัปดาห์" (ดู ScheduleEvent.weekday)
+///
+/// เสียงและการสั่นบน Android ผูกกับ "ช่อง" (channel) และแก้ไม่ได้หลังสร้างช่องแล้ว
+/// จึงใช้หนึ่งช่องต่อหนึ่งรูปแบบ (เสียง/สั่น เปิด-ปิด) แล้วลบช่องที่ไม่ได้ใช้ทิ้ง
+/// เวลาผู้ใช้สลับสวิตช์ — ไม่งั้นการปิดเสียงจะไม่มีผลจนกว่าจะถอนแอปติดตั้งใหม่
 class NotificationService {
   NotificationService._();
 
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false;
 
-  static const _channel = AndroidNotificationChannel(
-    'schedule_reminders',
-    'เตือนกิจกรรมในตารางเวลา',
-    description: 'แจ้งเตือนก่อนถึงเวลากิจกรรมที่บันทึกไว้ในตารางเวลา',
-    importance: Importance.high,
-  );
+  /// ไฟล์เสียงใน android/app/src/main/res/raw/alarm_chime.wav
+  static const _soundResource = RawResourceAndroidNotificationSound('alarm_chime');
+  static final _vibrationPattern = Int64List.fromList([0, 400, 200, 400, 200, 600]);
+
+  /// ช่องรุ่นแรกที่ยังไม่รองรับเสียง/สั่นแยกกัน — ลบทิ้งตอน sync
+  static const _legacyChannelId = 'schedule_reminders';
+
+  /// id ของกิจกรรมที่ผู้ใช้กดจากแถบแจ้งเตือน — หน้าจอหลักคอยฟังเพื่อเปิดป๊อปอัปให้
+  static final _tapped = StreamController<String>.broadcast();
+  static Stream<String> get tappedEventIds => _tapped.stream;
 
   /// เรียกครั้งเดียวตอนแอปเริ่ม ก่อนใช้งานฟังก์ชันอื่น
   static Future<void> init() async {
@@ -39,12 +50,24 @@ class NotificationService {
 
     await _plugin.initialize(
       settings: const InitializationSettings(android: AndroidInitializationSettings('ic_notification')),
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
+        if (payload != null && payload.isNotEmpty) _tapped.add(payload);
+      },
     );
-    await _plugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
 
     _ready = true;
+  }
+
+  /// ถ้าแอปถูกเปิดขึ้นมาด้วยการกดแจ้งเตือน จะคืน id ของกิจกรรมนั้น (ไม่งั้นคืน null)
+  ///
+  /// ต่างจาก [tappedEventIds] ตรงที่กรณีนี้แอปยังไม่ทันรันตอนผู้ใช้กด จึงยังไม่มีใครฟัง stream
+  static Future<String?> launchEventId() async {
+    await init();
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    if (details?.didNotificationLaunchApp != true) return null;
+    final payload = details?.notificationResponse?.payload;
+    return (payload == null || payload.isEmpty) ? null : payload;
   }
 
   /// ขอสิทธิ์แจ้งเตือน (Android 13+) — คืน true เมื่อผู้ใช้อนุญาต
@@ -57,18 +80,71 @@ class NotificationService {
     return await android.requestNotificationsPermission() ?? false;
   }
 
-  static const _details = NotificationDetails(
-    android: AndroidNotificationDetails(
-      'schedule_reminders',
-      'เตือนกิจกรรมในตารางเวลา',
-      channelDescription: 'แจ้งเตือนก่อนถึงเวลากิจกรรมที่บันทึกไว้ในตารางเวลา',
+  /// ชื่อช่องแจ้งเตือนของรูปแบบเสียง/สั่นหนึ่ง ๆ — ต้องไม่ซ้ำกันข้ามรูปแบบ
+  @visibleForTesting
+  static String channelIdFor(AppSettings settings) =>
+      'schedule_reminders_s${settings.soundEnabled ? 1 : 0}_v${settings.vibrationEnabled ? 1 : 0}';
+
+  /// ทุกช่องที่แอปนี้เคยสร้างได้ (ใช้ไล่ลบช่องที่ไม่ได้ใช้แล้ว)
+  static Iterable<String> get _allChannelIds sync* {
+    yield _legacyChannelId;
+    for (final sound in [true, false]) {
+      for (final vibration in [true, false]) {
+        yield channelIdFor(AppSettings(soundEnabled: sound, vibrationEnabled: vibration));
+      }
+    }
+  }
+
+  static String _channelName(AppSettings settings) {
+    final sound = settings.soundEnabled ? 'มีเสียง' : 'ไม่มีเสียง';
+    final vibration = settings.vibrationEnabled ? 'สั่น' : 'ไม่สั่น';
+    return 'เตือนกิจกรรมในตารางเวลา ($sound/$vibration)';
+  }
+
+  static const _channelDescription = 'แจ้งเตือนก่อนถึงเวลากิจกรรมที่บันทึกไว้ในตารางเวลา';
+
+  /// สร้างช่องของรูปแบบที่ใช้อยู่ แล้วลบช่องอื่นทิ้งเพื่อไม่ให้รกหน้าตั้งค่าของระบบ
+  static Future<void> _prepareChannel(AppSettings settings) async {
+    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (android == null) return;
+
+    final activeId = channelIdFor(settings);
+    for (final id in _allChannelIds) {
+      if (id != activeId) await android.deleteNotificationChannel(channelId: id);
+    }
+
+    await android.createNotificationChannel(AndroidNotificationChannel(
+      activeId,
+      _channelName(settings),
+      description: _channelDescription,
+      // สูงพอให้เด้งเป็นป๊อปอัป (heads-up) ทับหน้าจอที่ผู้ใช้เปิดอยู่
       importance: Importance.high,
-      priority: Priority.high,
-      // ไอคอนแถบสถานะต้องเป็นภาพขาวล้วนโปร่งใส ไม่ใช่ไอคอนแอปสี (Android จะตัดเป็นเงา)
-      icon: 'ic_notification',
-      color: Color(0xFF5B57E8),
-    ),
-  );
+      playSound: settings.soundEnabled,
+      sound: settings.soundEnabled ? _soundResource : null,
+      enableVibration: settings.vibrationEnabled,
+      vibrationPattern: settings.vibrationEnabled ? _vibrationPattern : null,
+    ));
+  }
+
+  static NotificationDetails _detailsFor(AppSettings settings) => NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelIdFor(settings),
+          _channelName(settings),
+          channelDescription: _channelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+          playSound: settings.soundEnabled,
+          sound: settings.soundEnabled ? _soundResource : null,
+          enableVibration: settings.vibrationEnabled,
+          vibrationPattern: settings.vibrationEnabled ? _vibrationPattern : null,
+          // บอกระบบว่านี่คือการเตือนตามเวลา เพื่อให้จัดลำดับและแสดงบนหน้าจอล็อกได้ถูกต้อง
+          category: AndroidNotificationCategory.reminder,
+          visibility: NotificationVisibility.public,
+          // ไอคอนแถบสถานะต้องเป็นภาพขาวล้วนโปร่งใส ไม่ใช่ไอคอนแอปสี (Android จะตัดเป็นเงา)
+          icon: 'ic_notification',
+          color: const Color(0xFF5B57E8),
+        ),
+      );
 
   /// ล้างการเตือนเดิมทั้งหมดแล้วตั้งใหม่จากตารางเวลาปัจจุบัน
   ///
@@ -79,8 +155,10 @@ class NotificationService {
     await _plugin.cancelAll();
 
     final settings = AppSettingsRepository().get();
+    await _prepareChannel(settings);
     if (!settings.scheduleRemindersEnabled) return 0;
 
+    final details = _detailsFor(settings);
     final events = ScheduleRepository().getAll();
     var scheduled = 0;
     for (var i = 0; i < events.length; i++) {
@@ -91,8 +169,9 @@ class NotificationService {
         id: i,
         scheduledDate: when,
         title: events[i].title,
-        body: _bodyFor(events[i], settings.remindMinutesBefore),
-        notificationDetails: _details,
+        body: bodyFor(events[i], settings.remindMinutesBefore),
+        payload: events[i].id, // กดแล้วเปิดป๊อปอัปของกิจกรรมนี้
+        notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         // ซ้ำทุกสัปดาห์ในวัน+เวลาเดียวกัน
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
@@ -102,7 +181,30 @@ class NotificationService {
     return scheduled;
   }
 
-  static String _bodyFor(ScheduleEvent event, int minutesBefore) {
+  /// ช่วง id ของการเตือนซ้ำ — ต้องไม่ชนกับ id ของตารางประจำสัปดาห์ (0..จำนวนกิจกรรม)
+  /// และไม่ชนกับการแจ้งเตือนทดสอบ (9999)
+  static const _snoozeIdBase = 5000;
+
+  /// เลื่อนเตือนกิจกรรมนี้ออกไปอีก [delay] — ตั้งเป็นการแจ้งเตือนของระบบ
+  /// เพื่อให้ยังดังแม้ผู้ใช้ปิดแอปไปก่อนครบเวลา
+  static Future<void> snooze(ScheduleEvent event, Duration delay) async {
+    await init();
+    final settings = AppSettingsRepository().get();
+    await _prepareChannel(settings);
+
+    await _plugin.zonedSchedule(
+      id: _snoozeIdBase + event.id.hashCode.abs() % 1000,
+      scheduledDate: tz.TZDateTime.now(tz.local).add(delay),
+      title: event.title,
+      body: 'เตือนอีกครั้ง — ${event.time}${event.subtitle == null ? '' : ' • ${event.subtitle}'}',
+      payload: event.id,
+      notificationDetails: _detailsFor(settings),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  @visibleForTesting
+  static String bodyFor(ScheduleEvent event, int minutesBefore) {
     final head = minutesBefore == 0 ? 'ถึงเวลา ${event.time}' : 'อีก $minutesBefore นาที (${event.time})';
     return event.subtitle == null ? head : '$head • ${event.subtitle}';
   }
@@ -131,14 +233,18 @@ class NotificationService {
     return remindAt;
   }
 
-  /// แจ้งเตือนทดสอบทันที เพื่อให้ผู้ใช้เห็นว่าสิทธิ์ผ่านแล้วจริง
+  /// แจ้งเตือนทดสอบทันที เพื่อให้ผู้ใช้เห็น (และได้ยิน) ว่าตั้งค่าไว้ถูกแล้วจริง
   static Future<void> showTestNotification() async {
     await init();
+    final settings = AppSettingsRepository().get();
+    await _prepareChannel(settings);
     await _plugin.show(
       id: 9999,
       title: 'LifePlan พร้อมเตือนคุณแล้ว',
-      body: 'ถ้าเห็นข้อความนี้ แปลว่าการแจ้งเตือนทำงานปกติ',
-      notificationDetails: _details,
+      body: settings.soundEnabled
+          ? 'ถ้าได้ยินเสียงนี้ แปลว่าการแจ้งเตือนทำงานปกติ'
+          : 'ถ้าเห็นข้อความนี้ แปลว่าการแจ้งเตือนทำงานปกติ (ตอนนี้ปิดเสียงไว้)',
+      notificationDetails: _detailsFor(settings),
     );
   }
 

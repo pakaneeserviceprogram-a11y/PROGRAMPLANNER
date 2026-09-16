@@ -9,6 +9,7 @@ import 'data/seed_data.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/root_shell.dart';
 import 'theme/app_theme.dart';
+import 'widgets/reminder_popup.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +21,7 @@ void main() async {
   runApp(const LifePlanApp());
 }
 
-class LifePlanApp extends StatelessWidget {
+class LifePlanApp extends StatefulWidget {
   /// Overridable so widget tests can skip the network-fetched Google Fonts
   /// theme (see test/widget_test.dart) — the real app always uses the
   /// default (AppTheme.light).
@@ -29,12 +30,25 @@ class LifePlanApp extends StatelessWidget {
   const LifePlanApp({super.key, this.theme});
 
   @override
+  State<LifePlanApp> createState() => _LifePlanAppState();
+}
+
+class _LifePlanAppState extends State<LifePlanApp> {
+  /// ป๊อปอัปเตือนต้องเปิดได้จากทุกหน้า รวมถึงตอนที่ไม่มี context ของหน้าไหนอยู่ในมือ
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
   Widget build(BuildContext context) {
     final loggedIn = UserRepository().getCurrent() != null;
     return MaterialApp(
       title: 'LifePlan',
       debugShowCheckedModeBanner: false,
-      theme: theme ?? AppTheme.light,
+      navigatorKey: _navigatorKey,
+      theme: widget.theme ?? AppTheme.light,
+      builder: (context, child) => ReminderHost(
+        navigatorKey: _navigatorKey,
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: loggedIn ? const RootShell() : const LoginScreen(),
     );
   }
