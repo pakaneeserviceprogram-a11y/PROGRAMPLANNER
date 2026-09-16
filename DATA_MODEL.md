@@ -124,6 +124,21 @@
 | source | enum: `referral`, `coldCall`, `event`, `online`, `other` | ที่มาของลูกค้า |
 | notes | String? | |
 
+### WeeklyReport (รายงานผลงานประจำสัปดาห์ P-A-S-R-F-N-T)
+รายงานที่เอเจนต์ส่งให้หัวหน้าทุกสัปดาห์ — หนึ่งรายการต่อหนึ่งสัปดาห์ (เริ่มวันจันทร์)
+
+| ฟิลด์ | ชนิด | คำอธิบาย |
+|---|---|---|
+| id | String | = `weekStart` รูปแบบ `yyyy-MM-dd` ของวันจันทร์ ทำให้บันทึกซ้ำทับสัปดาห์เดิมเสมอ |
+| weekStart | DateTime | วันจันทร์ของสัปดาห์นั้น |
+| ownerName | String | ชื่อที่ขึ้นหัวรายงาน เช่น "ตารางทำงานเอ๋ ประจำสัปดาห์ที่ 29/4/67-5/5/67" |
+| activities | Map<ActivityCode, WeeklyActivity> | ตัวเลขของแต่ละตัวย่อ |
+| salesPremium | double | เบี้ยประกันโดยประมาณของยอดขาย (S) ในสัปดาห์นั้น (บาท) |
+
+`ActivityCode`: `prospect` (P) • `appointment` (A) • `sales` (S) • `referral` (R) • `followUp` (F) • `newMarket` (N) • `team` (T)
+
+`WeeklyActivity`: `count` (int) + `note` (String — หมายเหตุที่ต่อท้ายบรรทัดในรายงาน เช่น "ลูกค้าใหม่ 3")
+
 ### SalesGoal
 | ฟิลด์ | ชนิด | คำอธิบาย |
 |---|---|---|

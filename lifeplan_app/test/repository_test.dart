@@ -15,6 +15,7 @@ import 'package:lifeplan_app/data/repositories/schedule_repository.dart';
 import 'package:lifeplan_app/data/repositories/skill_track_repository.dart';
 import 'package:lifeplan_app/data/repositories/user_repository.dart';
 import 'package:lifeplan_app/data/repositories/water_repository.dart';
+import 'package:lifeplan_app/data/repositories/weekly_report_repository.dart';
 import 'package:lifeplan_app/data/repositories/work_task_repository.dart';
 import 'package:lifeplan_app/models/client.dart';
 import 'package:lifeplan_app/models/exercise_item.dart';
@@ -26,6 +27,7 @@ import 'package:lifeplan_app/models/schedule_event.dart';
 import 'package:lifeplan_app/models/skill_track.dart';
 import 'package:lifeplan_app/models/user_profile.dart';
 import 'package:lifeplan_app/models/water_log.dart';
+import 'package:lifeplan_app/models/weekly_report.dart';
 import 'package:lifeplan_app/models/work_task.dart';
 
 // Plain `test()` (not `testWidgets()`) so real Hive file I/O runs on the
@@ -41,6 +43,7 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.mealEntries),
       Hive.openBox<Map>(HiveBoxes.waterLogs),
       Hive.openBox<Map>(HiveBoxes.clients),
+      Hive.openBox<Map>(HiveBoxes.weeklyReports),
       Hive.openBox<Map>(HiveBoxes.financeTransactions),
       Hive.openBox<Map>(HiveBoxes.skillTracks),
       Hive.openBox<Map>(HiveBoxes.scheduleEvents),
@@ -104,6 +107,73 @@ void main() {
     await repo.put(c.copyWith(stage: c.stage.next));
     c = repo.getAll().first;
     expect(c.stage, ClientStage.contacted);
+  });
+
+  test('WeeklyReportRepository เก็บรายงานรายสัปดาห์ทับคีย์เดิมของสัปดาห์เดียวกัน', () async {
+    final repo = WeeklyReportRepository();
+
+    // 29/4/2567 = 2024-04-29 (วันจันทร์) ถึง 5/5/2567
+    final report = WeeklyReport(
+      weekStart: DateTime(2024, 4, 29),
+      ownerName: 'เอ๋',
+      salesPremium: 60000,
+      activities: const {
+        ActivityCode.prospect: WeeklyActivity(count: 5),
+        ActivityCode.appointment: WeeklyActivity(count: 3, note: 'ลูกค้าใหม่ 3'),
+        ActivityCode.sales: WeeklyActivity(count: 2, note: 'ขาย Offline'),
+        ActivityCode.referral: WeeklyActivity(count: 1),
+        ActivityCode.followUp: WeeklyActivity(count: 2, note: 'ติดต่อทางไลน์ค่ะ'),
+        ActivityCode.newMarket: WeeklyActivity(count: 1, note: 'ทักลูกค้าจากเพื่อนแนะนำค่ะ'),
+        ActivityCode.team: WeeklyActivity(count: 0),
+      },
+    );
+    await repo.put(report);
+
+    // บันทึกวันไหนของสัปดาห์ก็อ่านเจอรายงานเดียวกัน
+    final loaded = repo.getForWeek(DateTime(2024, 5, 3));
+    expect(loaded.ownerName, 'เอ๋');
+    expect(loaded.countOf(ActivityCode.prospect), 5);
+    expect(loaded.noteOf(ActivityCode.followUp), 'ติดต่อทางไลน์ค่ะ');
+    expect(loaded.salesPremium, 60000);
+
+    // แก้ไขวันอื่นในสัปดาห์เดิมต้องทับรายการเดิม ไม่ใช่เพิ่มรายการใหม่
+    await repo.put(repo
+        .getForWeek(DateTime(2024, 5, 1))
+        .withActivity(ActivityCode.team, const WeeklyActivity(count: 1, note: 'ชวนเพื่อนร่วมทีม')));
+    expect(repo.getAll().length, 1);
+    expect(repo.getForWeek(DateTime(2024, 4, 29)).countOf(ActivityCode.team), 1);
+
+    // สัปดาห์ที่ยังไม่ได้บันทึก = รายงานเปล่า (ไม่ใช่ null)
+    final blank = repo.getForWeek(DateTime(2024, 5, 6));
+    expect(blank.isBlank, isTrue);
+    expect(blank.weekRangeLabel, '6/5/67-12/5/67');
+  });
+
+  test('WeeklyReport สร้างข้อความรายงานตามรูปแบบที่ส่งหัวหน้า', () {
+    final report = WeeklyReport(
+      weekStart: DateTime(2024, 4, 29),
+      ownerName: 'เอ๋',
+      salesPremium: 60000,
+      activities: const {
+        ActivityCode.prospect: WeeklyActivity(count: 5),
+        ActivityCode.appointment: WeeklyActivity(count: 3, note: 'ลูกค้าใหม่ 3'),
+        ActivityCode.sales: WeeklyActivity(count: 2, note: 'ขาย Offline'),
+        ActivityCode.referral: WeeklyActivity(count: 1),
+        ActivityCode.followUp: WeeklyActivity(count: 2, note: 'ติดต่อทางไลน์ค่ะ'),
+        ActivityCode.newMarket: WeeklyActivity(count: 1, note: 'ทักลูกค้าจากเพื่อนแนะนำค่ะ'),
+        ActivityCode.team: WeeklyActivity(count: 0),
+      },
+    );
+
+    final text = report.toReportText();
+    expect(text, contains('ตารางทำงานเอ๋ ประจำสัปดาห์ที่ 29/4/67-5/5/67'));
+    expect(text, contains('P = 5'));
+    expect(text, contains('A = 3 (ลูกค้าใหม่ 3)'));
+    expect(text, contains('S = 2 ราย เบี้ยประมาณ 60,000 บาท (ขาย Offline)'));
+    expect(text, contains('R = 1'));
+    expect(text, contains('F = 2 (ติดต่อทางไลน์ค่ะ)'));
+    expect(text, contains('N = 1 (ทักลูกค้าจากเพื่อนแนะนำค่ะ)'));
+    expect(text, contains('T = 0'));
   });
 
   test('FinanceRepository stores income/expense with the right sign', () async {

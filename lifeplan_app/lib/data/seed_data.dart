@@ -6,7 +6,9 @@ import '../models/meal_entry.dart';
 import '../models/schedule_event.dart';
 import '../models/skill_track.dart';
 import '../models/water_log.dart';
+import '../models/weekly_report.dart';
 import '../models/work_task.dart';
+import 'repositories/app_settings_repository.dart';
 import 'repositories/client_repository.dart';
 import 'repositories/exercise_repository.dart';
 import 'repositories/finance_repository.dart';
@@ -14,6 +16,7 @@ import 'repositories/meal_repository.dart';
 import 'repositories/schedule_repository.dart';
 import 'repositories/skill_track_repository.dart';
 import 'repositories/water_repository.dart';
+import 'repositories/weekly_report_repository.dart';
 import 'repositories/work_task_repository.dart';
 
 /// Populates every box with sample data the first time the app runs, so a
@@ -24,10 +27,14 @@ class SeedData {
   SeedData._();
 
   static Future<void> seedIfEmpty() async {
+    // ผู้ใช้กด "ล้างข้อมูล" เพื่อเริ่มเก็บประวัติใหม่แล้ว — ปล่อยให้แอปว่างตามนั้น
+    if (AppSettingsRepository().get().sampleDataDisabled) return;
+
     await _seedExercise();
     await _seedNutrition();
     await _seedWork();
     await _seedClients();
+    await _seedWeeklyReports();
     await _seedFinance();
     await _seedSkills();
     await _seedSchedule();
@@ -134,6 +141,27 @@ class SeedData {
     for (final i in items) {
       await repo.put(i);
     }
+  }
+
+  /// รายงานผลงานประจำสัปดาห์ตัวอย่าง (สัปดาห์ที่ 29/4/67-5/5/67) เพื่อให้เห็น
+  /// รูปแบบ P-A-S-R-F-N-T ที่ต้องส่งหัวหน้าตั้งแต่เปิดแอปครั้งแรก
+  static Future<void> _seedWeeklyReports() async {
+    final repo = WeeklyReportRepository();
+    if (repo.getAll().isNotEmpty) return;
+    await repo.put(WeeklyReport(
+      weekStart: DateTime(2024, 4, 29), // = 29/4/2567
+      ownerName: 'เอ๋',
+      salesPremium: 60000,
+      activities: const {
+        ActivityCode.prospect: WeeklyActivity(count: 5),
+        ActivityCode.appointment: WeeklyActivity(count: 3, note: 'ลูกค้าใหม่ 3'),
+        ActivityCode.sales: WeeklyActivity(count: 2, note: 'ขาย Offline'),
+        ActivityCode.referral: WeeklyActivity(count: 1),
+        ActivityCode.followUp: WeeklyActivity(count: 2, note: 'ติดต่อทางไลน์ค่ะ'),
+        ActivityCode.newMarket: WeeklyActivity(count: 1, note: 'ทักลูกค้าจากเพื่อนแนะนำค่ะ'),
+        ActivityCode.team: WeeklyActivity(count: 0),
+      },
+    ));
   }
 
   static Future<void> _seedFinance() async {

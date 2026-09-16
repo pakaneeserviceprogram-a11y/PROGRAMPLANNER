@@ -24,6 +24,7 @@ void main() {
         HiveBoxes.mealEntries,
         HiveBoxes.waterLogs,
         HiveBoxes.clients,
+        HiveBoxes.weeklyReports,
         HiveBoxes.financeTransactions,
         HiveBoxes.skillTracks,
         HiveBoxes.scheduleEvents,

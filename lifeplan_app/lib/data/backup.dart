@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'hive_boxes.dart';
+import 'repositories/app_settings_repository.dart';
 
 /// รูปแบบไฟล์สำรองข้อมูล — ขึ้นเลขเวอร์ชันเมื่อโครงสร้างเปลี่ยนจนอ่านของเก่าไม่ได้
 const int backupFormatVersion = 1;
@@ -31,6 +32,7 @@ class BackupService {
     HiveBoxes.mealEntries,
     HiveBoxes.waterLogs,
     HiveBoxes.clients,
+    HiveBoxes.weeklyReports,
     HiveBoxes.financeTransactions,
     HiveBoxes.skillTracks,
     HiveBoxes.scheduleEvents,
@@ -38,6 +40,63 @@ class BackupService {
     HiveBoxes.goalSettings,
     HiveBoxes.appSettings,
   ];
+
+  /// ทุก box ที่อยู่ในไฟล์สำรอง = ข้อมูลทั้งหมดของแอป
+  static List<String> get allBoxNames => List.unmodifiable(_boxNames);
+
+  /// box ที่เก็บ "ประวัติ" ที่ผู้ใช้บันทึกเอง — ล้างชุดนี้ = เริ่มเก็บใหม่
+  /// โดยยังคงบัญชีผู้ใช้ เป้าหมาย และการตั้งค่าแจ้งเตือนไว้
+  static const List<String> recordBoxNames = [
+    HiveBoxes.workTasks,
+    HiveBoxes.exerciseItems,
+    HiveBoxes.mealEntries,
+    HiveBoxes.waterLogs,
+    HiveBoxes.clients,
+    HiveBoxes.weeklyReports,
+    HiveBoxes.financeTransactions,
+    HiveBoxes.skillTracks,
+    HiveBoxes.scheduleEvents,
+    HiveBoxes.learningStreak,
+  ];
+
+  /// จำนวนรายการที่มีอยู่จริงในเครื่องตอนนี้ — ใช้โชว์ให้ผู้ใช้เห็นก่อนกดล้าง
+  static Map<String, int> currentCounts() => {
+        for (final name in _boxNames) name: Hive.box<Map>(name).length,
+      };
+
+  /// ล้างเฉพาะประวัติที่บันทึกไว้ทุกโมดูล — บัญชีผู้ใช้ เป้าหมาย และการตั้งค่า
+  /// ยังอยู่ครบ ใช้ตอนอยากเริ่มนับ/เก็บสถิติใหม่ตั้งแต่ศูนย์
+  ///
+  /// คืนค่าจำนวนรายการที่ลบไปทั้งหมด
+  static Future<int> clearRecords() async {
+    var removed = 0;
+    for (final name in recordBoxNames) {
+      final box = Hive.box<Map>(name);
+      removed += box.length;
+      await box.clear();
+    }
+    await _disableSampleData();
+    return removed;
+  }
+
+  /// ล้างทุกอย่างรวมบัญชีผู้ใช้ เป้าหมาย และการตั้งค่า = แอปกลับไปเหมือนเพิ่งลง
+  /// (แต่ยังไม่ใส่ข้อมูลตัวอย่างกลับมา เพราะผู้ใช้ตั้งใจเริ่มจากศูนย์)
+  static Future<int> clearEverything() async {
+    var removed = 0;
+    for (final name in _boxNames) {
+      final box = Hive.box<Map>(name);
+      removed += box.length;
+      await box.clear();
+    }
+    await _disableSampleData();
+    return removed;
+  }
+
+  /// ปักธงไว้ว่าห้าม `SeedData` ใส่ข้อมูลตัวอย่างกลับมาตอนเปิดแอปครั้งหน้า
+  static Future<void> _disableSampleData() async {
+    final repo = AppSettingsRepository();
+    await repo.save(repo.get().copyWith(sampleDataDisabled: true));
+  }
 
   /// ชื่อไฟล์ที่แนะนำ เช่น `lifeplan-backup-2026-09-15-1433.json`
   static String suggestedFileName([DateTime? at]) {

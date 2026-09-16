@@ -13,6 +13,7 @@ class HiveBoxes {
   static const mealEntries = 'meal_entries';
   static const waterLogs = 'water_logs';
   static const clients = 'clients';
+  static const weeklyReports = 'weekly_reports';
   static const financeTransactions = 'finance_transactions';
   static const skillTracks = 'skill_tracks';
   static const scheduleEvents = 'schedule_events';
@@ -29,6 +30,7 @@ class HiveBoxes {
       Hive.openBox<Map>(mealEntries),
       Hive.openBox<Map>(waterLogs),
       Hive.openBox<Map>(clients),
+      Hive.openBox<Map>(weeklyReports),
       Hive.openBox<Map>(financeTransactions),
       Hive.openBox<Map>(skillTracks),
       Hive.openBox<Map>(scheduleEvents),

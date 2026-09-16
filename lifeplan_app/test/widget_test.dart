@@ -21,11 +21,13 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.mealEntries),
       Hive.openBox<Map>(HiveBoxes.waterLogs),
       Hive.openBox<Map>(HiveBoxes.clients),
+      Hive.openBox<Map>(HiveBoxes.weeklyReports),
       Hive.openBox<Map>(HiveBoxes.financeTransactions),
       Hive.openBox<Map>(HiveBoxes.skillTracks),
       Hive.openBox<Map>(HiveBoxes.scheduleEvents),
       Hive.openBox<Map>(HiveBoxes.learningStreak),
       Hive.openBox<Map>(HiveBoxes.goalSettings),
+      Hive.openBox<Map>(HiveBoxes.appSettings),
     ]);
     await SeedData.seedIfEmpty();
   });

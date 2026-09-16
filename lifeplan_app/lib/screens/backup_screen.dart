@@ -7,8 +7,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../data/backup.dart';
+import '../data/notifications.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_card.dart';
+import 'auth/login_screen.dart';
 
 /// หน้าสำรอง/กู้คืนข้อมูล — ข้อมูลทั้งหมดเก็บในเครื่องอย่างเดียว
 /// ไฟล์ JSON ก้อนนี้จึงเป็นทางเดียวที่จะย้ายเครื่องหรือกู้ข้อมูลคืนได้
@@ -20,6 +22,8 @@ class BackupScreen extends StatefulWidget {
 }
 
 class _BackupScreenState extends State<BackupScreen> {
+  static const _dangerColor = Color(0xFFB3401E);
+
   bool _busy = false;
 
   void _toast(String message) {
@@ -96,14 +100,128 @@ class _BackupScreenState extends State<BackupScreen> {
     }
   }
 
+  /// ยืนยันก่อนล้าง — โชว์ให้เห็นก่อนว่ากำลังจะลบอะไรไปบ้างกี่รายการ
+  Future<bool> _confirmClear({
+    required String title,
+    required String warning,
+    required List<String> boxNames,
+    required String confirmLabel,
+  }) async {
+    final counts = BackupService.currentCounts();
+    final summary = _summaryLabel({
+      for (final name in boxNames) name: counts[name] ?? 0,
+    });
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(warning, style: const TextStyle(fontSize: 13, height: 1.5)),
+            const SizedBox(height: 12),
+            Text('จะถูกลบ: $summary',
+                style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.5)),
+            const SizedBox(height: 12),
+            const Text('ถ้ายังไม่ได้ส่งออกไฟล์สำรอง กดยกเลิกแล้วส่งออกเก็บไว้ก่อนได้',
+                style: TextStyle(fontSize: 12, color: AppColors.textFaint, height: 1.5)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('ยกเลิก')),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: _dangerColor),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
+  /// ล้างเฉพาะประวัติ — บัญชีผู้ใช้/เป้าหมาย/การตั้งค่ายังอยู่ครบ
+  Future<void> _clearRecords() async {
+    final ok = await _confirmClear(
+      title: 'ล้างประวัติทั้งหมด?',
+      warning: 'ข้อมูลที่บันทึกไว้ทุกโมดูลจะถูกลบและย้อนกลับไม่ได้ '
+          'บัญชีผู้ใช้ เป้าหมาย และการตั้งค่าแจ้งเตือนยังอยู่เหมือนเดิม',
+      boxNames: BackupService.recordBoxNames,
+      confirmLabel: 'ล้างประวัติ',
+    );
+    if (!ok) return;
+
+    setState(() => _busy = true);
+    try {
+      final removed = await BackupService.clearRecords();
+      // ตารางเวลาว่างแล้ว ต้องยกเลิกการแจ้งเตือนที่ตั้งค้างไว้ด้วย
+      await NotificationService.syncScheduleReminders();
+      _toast('ล้างประวัติแล้ว $removed รายการ — เริ่มเก็บใหม่ได้เลย');
+    } catch (e) {
+      _toast('ล้างข้อมูลไม่สำเร็จ: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// รีเซ็ตทั้งแอป — ยืนยันสองชั้นเพราะบัญชีผู้ใช้หายไปด้วย
+  Future<void> _clearEverything() async {
+    final ok = await _confirmClear(
+      title: 'ล้างทุกอย่าง?',
+      warning: 'ลบข้อมูลทุกอย่างรวมบัญชีผู้ใช้ เป้าหมาย และการตั้งค่า '
+          'แอปจะกลับไปเหมือนเพิ่งติดตั้งใหม่ และย้อนกลับไม่ได้',
+      boxNames: BackupService.allBoxNames,
+      confirmLabel: 'ล้างทุกอย่าง',
+    );
+    if (!ok || !mounted) return;
+
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('แน่ใจอีกครั้ง'),
+        content: const Text('กดยืนยันแล้วจะออกจากระบบทันที และข้อมูลทั้งหมดในเครื่องนี้จะหายถาวร',
+            style: TextStyle(fontSize: 13, height: 1.5)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('ยกเลิก')),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: _dangerColor),
+            child: const Text('ยืนยันล้างทุกอย่าง'),
+          ),
+        ],
+      ),
+    );
+    if (sure != true) return;
+
+    setState(() => _busy = true);
+    try {
+      await BackupService.clearEverything();
+      await NotificationService.syncScheduleReminders();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      _toast('ล้างข้อมูลไม่สำเร็จ: $e');
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   static const _boxLabels = {
     'user_profile': 'โปรไฟล์',
     'work_tasks': 'งาน',
     'exercise_items': 'ออกกำลังกาย',
+    'meal_entries': 'มื้ออาหาร',
+    'water_logs': 'บันทึกน้ำดื่ม',
     'clients': 'ลูกค้า',
+    'weekly_reports': 'รายงานสัปดาห์',
     'finance_transactions': 'รายการเงิน',
     'skill_tracks': 'การเรียนรู้',
     'schedule_events': 'ตารางเวลา',
+    'learning_streak': 'สตรีคการเรียนรู้',
     'goal_settings': 'เป้าหมาย',
   };
 
@@ -161,6 +279,33 @@ class _BackupScreenState extends State<BackupScreen> {
               danger: true,
               onTap: _import,
             ),
+            const SizedBox(height: 28),
+            const Text('เริ่มเก็บประวัติใหม่',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: _dangerColor)),
+            const SizedBox(height: 6),
+            const Text(
+              'ล้างข้อมูลเก่าทิ้งเพื่อเริ่มบันทึกใหม่ตั้งแต่ศูนย์ '
+              'ข้อมูลตัวอย่างจะไม่กลับมาอีกหลังล้าง',
+              style: TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            _ActionCard(
+              icon: Icons.delete_sweep_rounded,
+              title: 'ล้างประวัติทั้งหมด',
+              subtitle: 'ลบข้อมูลที่บันทึกไว้ทุกโมดูล แต่ยังคงบัญชีผู้ใช้ เป้าหมาย และการตั้งค่าไว้',
+              enabled: !_busy,
+              danger: true,
+              onTap: _clearRecords,
+            ),
+            const SizedBox(height: 12),
+            _ActionCard(
+              icon: Icons.restart_alt_rounded,
+              title: 'ล้างทุกอย่าง (รีเซ็ตแอป)',
+              subtitle: 'ลบทุกอย่างรวมบัญชีผู้ใช้ แล้วกลับไปหน้าเข้าสู่ระบบ',
+              enabled: !_busy,
+              danger: true,
+              onTap: _clearEverything,
+            ),
             if (_busy) ...[
               const SizedBox(height: 20),
               const Center(child: CircularProgressIndicator()),
@@ -191,7 +336,7 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? const Color(0xFFB3401E) : AppColors.primary;
+    final color = danger ? _BackupScreenState._dangerColor : AppColors.primary;
     return Opacity(
       opacity: enabled ? 1 : 0.5,
       child: GestureDetector(

@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data/id_gen.dart';
 import '../data/repositories/client_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
+import '../data/repositories/user_repository.dart';
+import '../data/repositories/weekly_report_repository.dart';
 import '../models/client.dart';
+import '../models/weekly_report.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_card.dart';
 import '../widgets/auth_widgets.dart';
 import '../widgets/back_button_circle.dart';
 import '../widgets/form_sheet.dart';
 import '../widgets/progress_track.dart';
+import '../widgets/section_heading.dart';
 
 class CrmScreen extends StatelessWidget {
   const CrmScreen({super.key});
@@ -132,6 +138,8 @@ class CrmScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
+                const WeeklyReportSection(),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -246,6 +254,384 @@ class _ClientRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// รายงานผลงานประจำสัปดาห์ P-A-S-R-F-N-T
+/// (Prospect • Appointment • Sales • Referal • Follow • New Market • Team)
+///
+/// ใช้สรุปงานขายของแต่ละสัปดาห์เพื่อส่งให้หัวหน้า และย้อนดูสัปดาห์เก่าเพื่อ
+/// ตามความคืบหน้าของตัวเองได้ — ปุ่ม “คัดลอกส่งหัวหน้า” ให้ข้อความพร้อมวางในไลน์
+class WeeklyReportSection extends StatefulWidget {
+  const WeeklyReportSection({super.key});
+
+  @override
+  State<WeeklyReportSection> createState() => _WeeklyReportSectionState();
+}
+
+class _WeeklyReportSectionState extends State<WeeklyReportSection> {
+  final WeeklyReportRepository _repo = WeeklyReportRepository();
+
+  late DateTime _weekStart = WeeklyReport.startOfWeek(DateTime.now());
+
+  DateTime get _currentWeekStart => WeeklyReport.startOfWeek(DateTime.now());
+
+  /// ไม่ให้เลื่อนไปกรอกรายงานของสัปดาห์ที่ยังมาไม่ถึง
+  bool get _canGoForward => _weekStart.isBefore(_currentWeekStart);
+
+  void _shiftWeek(int weeks) =>
+      setState(() => _weekStart = _weekStart.add(Duration(days: 7 * weeks)));
+
+  Future<void> _copyToClipboard(WeeklyReport report) async {
+    await Clipboard.setData(ClipboardData(text: report.toReportText()));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('คัดลอกรายงานแล้ว — วางส่งหัวหน้าได้เลย')),
+    );
+  }
+
+  Future<void> _openHistory() async {
+    final reports = _repo.getAllSorted();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.bg,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(999)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('รายงานที่บันทึกไว้', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 4),
+              const Text('แตะเพื่อเปิดดูรายงานของสัปดาห์นั้น',
+                  style: TextStyle(fontSize: 12, color: AppColors.textFaint)),
+              const SizedBox(height: 8),
+              if (reports.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Text('ยังไม่มีรายงานที่บันทึกไว้', style: TextStyle(fontSize: 12.5, color: AppColors.textFaint)),
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: reports.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
+                    itemBuilder: (_, i) {
+                      final r = reports[i];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('สัปดาห์ที่ ${r.weekRangeLabel}',
+                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                        subtitle: Text(
+                          ActivityCode.values.map((c) => '${c.letter} ${r.countOf(c)}').join(' • '),
+                          style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+                        onTap: () {
+                          Navigator.of(ctx).pop();
+                          setState(() => _weekStart = r.weekStart);
+                        },
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openEditForm(WeeklyReport report) async {
+    final fallbackOwner = UserRepository().getCurrent()?.name ?? '';
+    final ownerController =
+        TextEditingController(text: report.ownerName.isEmpty ? fallbackOwner : report.ownerName);
+    final premiumController = TextEditingController(
+        text: report.salesPremium > 0 ? report.salesPremium.toStringAsFixed(0) : '');
+    final countControllers = {
+      for (final c in ActivityCode.values)
+        c: TextEditingController(text: report.countOf(c) == 0 ? '' : '${report.countOf(c)}'),
+    };
+    final noteControllers = {
+      for (final c in ActivityCode.values) c: TextEditingController(text: report.noteOf(c)),
+    };
+
+    await showAppFormSheet(
+      context: context,
+      title: 'รายงานสัปดาห์ที่ ${report.weekRangeLabel}',
+      submitLabel: 'บันทึกรายงาน',
+      bodyBuilder: (ctx) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AuthField(label: 'ชื่อที่ขึ้นหัวรายงาน', hint: 'เช่น เอ๋', controller: ownerController),
+          const SizedBox(height: 16),
+          for (final code in ActivityCode.values) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 78,
+                  child: AuthField(
+                    label: code.letter,
+                    hint: '0',
+                    controller: countControllers[code],
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AuthField(
+                    label: '${code.label} (${code.englishLabel})',
+                    hint: code.noteHint,
+                    controller: noteControllers[code],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            if (code == ActivityCode.sales) ...[
+              AuthField(
+                label: 'เบี้ยประกันโดยประมาณของ S (บาท)',
+                hint: '0',
+                controller: premiumController,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 14),
+            ],
+          ],
+        ],
+      ),
+      onSubmit: () async {
+        await _repo.put(report.copyWith(
+          ownerName: ownerController.text.trim(),
+          salesPremium: double.tryParse(premiumController.text.replaceAll(',', '').trim()) ?? 0,
+          activities: {
+            for (final code in ActivityCode.values)
+              code: WeeklyActivity(
+                count: int.tryParse(countControllers[code]!.text.trim()) ?? 0,
+                note: noteControllers[code]!.text.trim(),
+              ),
+          },
+        ));
+        if (mounted) Navigator.of(context).pop();
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _repo.listenable(),
+      builder: (context, _) {
+        final report = _repo.getForWeek(_weekStart);
+        final isCurrentWeek = _weekStart == _currentWeekStart;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SectionHeading(
+              title: 'รายงานผลงานประจำสัปดาห์',
+              action: 'แก้ไข',
+              onAction: () => _openEditForm(report),
+            ),
+            const SizedBox(height: 4),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Text(
+                'P = Prospect, A = Appointment, S = Sales, R = Referal, F = Follow, N = New Market, T = Team',
+                style: TextStyle(fontSize: 11.5, color: AppColors.textFaint, height: 1.5),
+              ),
+            ),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      _WeekArrow(icon: Icons.chevron_left_rounded, onTap: () => _shiftWeek(-1)),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text('สัปดาห์ที่ ${report.weekRangeLabel}',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 2),
+                            Text(
+                              report.isBlank
+                                  ? (isCurrentWeek ? 'สัปดาห์นี้ • ยังไม่ได้บันทึก' : 'ยังไม่ได้บันทึก')
+                                  : (isCurrentWeek ? 'สัปดาห์นี้ • บันทึกแล้ว' : 'บันทึกแล้ว'),
+                              style: const TextStyle(fontSize: 11.5, color: AppColors.textFaint),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _WeekArrow(
+                        icon: Icons.chevron_right_rounded,
+                        onTap: _canGoForward ? () => _shiftWeek(1) : null,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      const spacing = 8.0;
+                      final tileWidth = (constraints.maxWidth - spacing * 3) / 4;
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: spacing,
+                        children: [
+                          for (final code in ActivityCode.values)
+                            SizedBox(
+                              width: tileWidth,
+                              child: _ActivityTile(code: code, count: report.countOf(code)),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  if (report.salesPremium > 0) ...[
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('เบี้ยประกันโดยประมาณ',
+                            style: TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
+                        Text('฿${WeeklyReport.formatMoney(report.salesPremium)}',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.crm)),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  if (report.isBlank)
+                    const Text('ยังไม่ได้กรอกรายงานของสัปดาห์นี้ — กด “แก้ไข” เพื่อบันทึก P-A-S-R-F-N-T',
+                        style: TextStyle(fontSize: 12, color: AppColors.textFaint, height: 1.5))
+                  else
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface2,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        report.toReportText(),
+                        style: const TextStyle(fontSize: 12, color: AppColors.text, height: 1.7),
+                      ),
+                    ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _copyToClipboard(report),
+                          child: Container(
+                            height: 44,
+                            decoration: BoxDecoration(color: AppColors.crm, borderRadius: BorderRadius.circular(14)),
+                            alignment: Alignment.center,
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.copy_rounded, size: 16, color: Colors.white),
+                                SizedBox(width: 8),
+                                Text('คัดลอกส่งหัวหน้า',
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: _openHistory,
+                        child: Container(
+                          height: 44,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface2,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Row(
+                            children: [
+                              Icon(Icons.history_rounded, size: 16, color: AppColors.text),
+                              SizedBox(width: 6),
+                              Text('ย้อนหลัง',
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _WeekArrow extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _WeekArrow({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(color: AppColors.surface2, borderRadius: BorderRadius.circular(10)),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 20, color: onTap == null ? AppColors.textFaint : AppColors.text),
+      ),
+    );
+  }
+}
+
+class _ActivityTile extends StatelessWidget {
+  final ActivityCode code;
+  final int count;
+
+  const _ActivityTile({required this.code, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      decoration: BoxDecoration(color: AppColors.crmSoft, borderRadius: BorderRadius.circular(14)),
+      child: Column(
+        children: [
+          Text(code.letter,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.crm)),
+          const SizedBox(height: 2),
+          Text('$count', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.text)),
+          const SizedBox(height: 2),
+          Text(
+            code.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 9.5, color: AppColors.textMuted),
+          ),
+        ],
       ),
     );
   }

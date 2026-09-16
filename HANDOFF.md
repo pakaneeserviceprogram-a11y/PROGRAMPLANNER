@@ -1,12 +1,40 @@
 # LifePlan — Handoff / เอกสารต่องาน
 
-อัปเดตล่าสุด: 2026-09-16 (เพิ่มโมดูลทานอาหาร & โภชนาการ บนเครื่องที่ใช้ `D:\WORK\PROGRAMPLANNER`) — ใช้ไฟล์นี้เพื่อกลับมาทำงานต่อได้เร็ว ไม่ต้องไล่อ่านทั้งบทสนทนาใหม่
+อัปเดตล่าสุด: 2026-09-16 (เพิ่มรายงานผลงานประจำสัปดาห์ P-A-S-R-F-N-T ในโมดูลลูกค้า & ขายประกัน) — ใช้ไฟล์นี้เพื่อกลับมาทำงานต่อได้เร็ว ไม่ต้องไล่อ่านทั้งบทสนทนาใหม่
 
 ดูภาพรวมโปรเจกต์/ฟีเจอร์ที่ `README.md`, โครงสร้างข้อมูลที่ `DATA_MODEL.md` — ไฟล์นี้เน้นเฉพาะ "จะทำต่อยังไง"
 
 ---
 
 ## 0. สรุปงานรอบล่าสุด
+
+### รอบ 2026-09-16 (ต่อ) — ล้างข้อมูลเพื่อเริ่มเก็บประวัติใหม่
+
+เพิ่มในหน้า `lib/screens/backup_screen.dart` (โปรไฟล์ → สำรอง & กู้คืนข้อมูล) ส่วนล่างสุด "เริ่มเก็บประวัติใหม่"
+
+- `BackupService.clearRecords()` — ล้างเฉพาะ `recordBoxNames` (งาน, ออกกำลังกาย, มื้ออาหาร, น้ำดื่ม, ลูกค้า, รายงานสัปดาห์, การเงิน, การเรียนรู้, ตารางเวลา, สตรีค) คืนค่าจำนวนรายการที่ลบ — บัญชีผู้ใช้/เป้าหมาย/การตั้งค่ายังอยู่
+- `BackupService.clearEverything()` — ล้างทุก box แล้วเด้งกลับหน้า Login (ยืนยัน 2 ชั้น)
+- `BackupService.currentCounts()` — ใช้โชว์ในกล่องยืนยันว่ากำลังจะลบอะไรไปกี่รายการ
+- **กันข้อมูลตัวอย่างกลับมา**: `AppSettings.sampleDataDisabled` ถูกตั้งเป็น true หลังล้างทุกครั้ง และ `SeedData.seedIfEmpty()` เช็คธงนี้เป็นอย่างแรกแล้ว return ทันที — ถ้าไม่มีธงนี้ ข้อมูลตัวอย่าง (ลูกค้าสมมติ ฯลฯ) จะโผล่กลับมาตอนเปิดแอปครั้งถัดไปเพราะ box ว่าง
+  - `clearEverything()` ล้าง `app_settings` ไปด้วย จึงต้องเขียนธงกลับลงไป **หลัง** ล้างเสร็จ (ดู `_disableSampleData()`)
+- หลังล้างต้องเรียก `NotificationService.syncScheduleReminders()` เพื่อยกเลิกการแจ้งเตือนของกิจกรรมที่ถูกลบไปแล้ว
+- `flutter test` ผ่าน **46 tests** (เพิ่ม 4 เคสใน `test/backup_test.dart`)
+- **ข้อควรจำ**: `seedIfEmpty()` อ่าน box `app_settings` แล้ว เทสต์ไหนที่เรียก `SeedData.seedIfEmpty()` ต้องเปิด box นี้ด้วย (แก้ `widget_test.dart` ไปแล้ว)
+
+### รอบ 2026-09-16 (ต่อ) — รายงานผลงานประจำสัปดาห์ P-A-S-R-F-N-T ในโมดูลลูกค้า & ขายประกัน
+
+ส่วนใหม่ในหน้า `lib/screens/crm_screen.dart` (คลาส `WeeklyReportSection` อยู่ท้ายไฟล์เดียวกัน) สำหรับสรุปงานขายรายสัปดาห์ส่งหัวหน้า
+
+- **ข้อมูล**: `WeeklyReport` (`lib/models/weekly_report.dart`) — 1 รายการต่อ 1 สัปดาห์ คีย์ = `yyyy-MM-dd` ของวันจันทร์ (`WeeklyReport.weekKeyOf`) จึงบันทึกซ้ำทับสัปดาห์เดิมเสมอ เก็บ `ownerName`, `activities` (Map ของ `ActivityCode` → `WeeklyActivity{count, note}`) และ `salesPremium` → box ใหม่ `weekly_reports` (อยู่ในไฟล์สำรองแล้ว, `backupFormatVersion` ยังเป็น 1)
+- **ตัวย่อ** `ActivityCode`: P=Prospect, A=Appointment, S=Sales, R=Referal, F=Follow, N=New Market, T=Team
+- **ข้อความรายงาน** `WeeklyReport.toReportText()` ประกอบหัวเรื่อง + คำอธิบายตัวย่อ + บรรทัดของทุกตัวย่อ เช่น `A = 3 (ลูกค้าใหม่ 3)` และบรรทัด S พ่วงเบี้ยประกันให้เอง (`S = 2 ราย เบี้ยประมาณ 60,000 บาท (ขาย Offline)`) — ปุ่ม "คัดลอกส่งหัวหน้า" ยัดข้อความนี้ลงคลิปบอร์ด
+- **วันที่แบบไทย** `WeeklyReport.thaiShortDate()` = `29/4/67` (พ.ศ. 2 หลักท้าย) ใช้ทั้งบนการ์ดและในข้อความ
+- เลื่อนสัปดาห์ด้วยลูกศร ‹ › (ล็อกไม่ให้เลยสัปดาห์ปัจจุบัน) และปุ่ม "ย้อนหลัง" เปิด bottom sheet รายการรายงานที่บันทึกไว้ทั้งหมด
+- `seed_data.dart` ใส่รายงานตัวอย่างของสัปดาห์ 29/4/67-5/5/67 ไว้ให้ตั้งแต่เปิดแอปครั้งแรก
+- `flutter analyze` ไม่มีปัญหา, `flutter test` ผ่าน **42 tests** (เพิ่ม 2 unit test ใน `repository_test.dart` + `test/crm_screen_test.dart` 3 เคส)
+- **ข้อควรจำ**: เพิ่ม box ใหม่แล้วต้องไปเปิด box นั้นใน `setUp` ของ `backup_test.dart`, `widget_test.dart`, `dashboard_screen_test.dart` ด้วย ไม่งั้นเทสต์เดิมพังเพราะ seed หา box ไม่เจอ
+- **APK**: build แล้วที่ `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` (18.8 MB) เซ็นด้วย release key จริง (SHA-256 `249a7ed3…`) และ bump `pubspec.yaml` เป็น `1.1.0+2` → ติดตั้งทับตัวก่อน (1.0.0+1) ได้โดยข้อมูลไม่หาย
+- **กฎการอัปเดต APK**: ทุกครั้งที่จะแจก APK ใหม่ต้อง **bump build number ใน `pubspec.yaml`** (เลขหลัง `+`) ไม่งั้น Android ปฏิเสธการติดตั้งทับ — และต้องใช้ keystore เดิมเสมอ (`android/lifeplan-release.jks`) ห้ามปล่อยให้ fallback ไป debug key เพราะจะลงทับของเดิมไม่ได้
 
 ### รอบ 2026-09-16 — โมดูลทานอาหาร & โภชนาการ (บันทึกละเอียดที่ `16092026 โภชนาการ.md`)
 
@@ -101,6 +129,7 @@ lib/
     repositories/goal_settings_repository.dart ← เป้าหมาย (ออม/ยอดขาย/ครั้งออกกำลังกาย) ที่ผู้ใช้แก้ได้ในหน้า GoalSettingsScreen
   screens/                      ← 1 ไฟล์ต่อ 1 หน้าจอ, ชื่อไฟล์ตรงกับหน้าจอ
     nutrition_screen.dart       ← ทานอาหาร & โภชนาการ (มื้ออาหาร, สารอาหาร, วิตามิน, น้ำดื่ม, มื้อรอบออกกำลังกาย)
+    crm_screen.dart             ← ลูกค้า & ขายประกัน (รายชื่อลูกค้า + รายงานผลงานประจำสัปดาห์ P-A-S-R-F-N-T)
   widgets/                      ← component ใช้ร่วม (การ์ด, ปุ่ม, ฟอร์ม, progress bar)
 
 test/
@@ -108,6 +137,7 @@ test/
   widget_test.dart              ← smoke test หน้า Login เท่านั้น (ดูข้อ 5 ว่าทำไมไม่มี test แบบ tap-through)
   nutrition_screen_test.dart    ← test หน้าโภชนาการ (box in-memory แบบเดียวกับ schedule_screen_test)
   dashboard_screen_test.dart    ← test การ์ดโภชนาการบนหน้าหลัก
+  crm_screen_test.dart          ← test รายงานสัปดาห์ P-A-S-R-F-N-T (แสดงผล, เลื่อนสัปดาห์, คัดลอกส่งหัวหน้า)
 ```
 
 **เพิ่มโมดูลใหม่**: เพิ่ม model → เพิ่ม box name ใน `hive_boxes.dart` → สร้าง repository ต่อยอดจาก `HiveRepository<T>` → ใช้ `ValueListenableBuilder`/`AnimatedBuilder(animation: Listenable.merge([...repo.listenable()]))` ในหน้าจอเพื่อ auto-rebuild เมื่อข้อมูลเปลี่ยน
