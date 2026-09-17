@@ -33,6 +33,9 @@ String _weekdayList(Iterable<int> weekdays) {
 
 enum _ScheduleView { day, week, month, year }
 
+/// กิจกรรมทั้งหมดที่เกิดขึ้นในวันที่หนึ่ง (ประจำสัปดาห์ + นัดหมายเฉพาะวันที่) เรียงตามเวลา
+typedef _EventsOn = List<ScheduleEvent> Function(DateTime date);
+
 enum _DeleteChoice { cancel, single, series }
 
 class ScheduleScreen extends StatefulWidget {
@@ -76,7 +79,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('ลบกิจกรรม?'),
         content: Text(
-          '“${e.title}” วัน${_weekdayFullLabels[e.weekday - 1]} เวลา ${e.time} '
+          '“${e.title}” ${e.isOneOff ? 'วันที่ ${CalendarUtils.thaiDate(e.date!)}' : 'วัน${_weekdayFullLabels[e.weekday - 1]}'} เวลา ${e.time} '
           'จะถูกลบออกจากตารางและการแจ้งเตือน',
         ),
         actions: [
@@ -143,12 +146,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   ///
   /// เพิ่มใหม่: เลือกได้หลายวัน → สร้างเป็นรายการแยกของแต่ละวันในชุดเดียวกัน
   /// แก้ไข: ย้ายวัน / คัดลอกไปวันอื่นเพิ่ม / นำการแก้ไขไปใช้กับทุกวันในชุด
+  /// ทั้งสองแบบสลับเป็น "เฉพาะวันที่" ได้ = นัดหมายครั้งเดียว ไม่ซ้ำทุกสัปดาห์
   Future<void> _openEventForm(BuildContext context, {ScheduleEvent? existing}) async {
     final titleController = TextEditingController(text: existing?.title);
     final subtitleController = TextEditingController(text: existing?.subtitle);
     LifeCategory selectedCategory = existing?.category ?? LifeCategory.work;
     int selectedWeekday = existing?.weekday ?? _selectedWeekday;
     TimeOfDay selectedTime = existing != null ? _parseTime(existing.time) : TimeOfDay.now();
+
+    // เพิ่มจากมุมมองเดือน (แตะวันที่ในปฏิทินมาแล้ว) ส่วนใหญ่คือนัดหมายเฉพาะวันนั้น
+    var oneOff = existing?.isOneOff ?? _view == _ScheduleView.month;
+    var selectedDate = existing?.date ?? _selectedDate;
 
     // เพิ่มใหม่: วันที่เลือก (หลายวันได้) / แก้ไข: วันที่จะคัดลอกไปเพิ่ม
     final newDays = <int>{_selectedWeekday};
@@ -204,7 +212,40 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               onChanged: (v) => setState(() => selectedCategory = v!),
             ),
             const SizedBox(height: 14),
-            if (existing == null) ...[
+            _RepeatToggle(
+              oneOff: oneOff,
+              onChanged: (v) => setState(() {
+                oneOff = v;
+                // เปลี่ยนนัดเฉพาะวันเป็นประจำสัปดาห์ → เริ่มจากวันในสัปดาห์ของวันที่เดิม
+                if (!v) {
+                  selectedWeekday = selectedDate.weekday;
+                  newDays
+                    ..clear()
+                    ..add(selectedDate.weekday);
+                }
+              }),
+            ),
+            const SizedBox(height: 14),
+            if (oneOff) ...[
+              const _FieldLabel('วันที่'),
+              const SizedBox(height: 7),
+              _PickerBox(
+                key: const ValueKey('event-date-field'),
+                text: 'วัน${_weekdayFullLabels[selectedDate.weekday - 1]}ที่ ${CalendarUtils.thaiDate(selectedDate)}',
+                icon: Icons.event_rounded,
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: ctx,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) setState(() => selectedDate = CalendarUtils.dateOnly(picked));
+                },
+              ),
+              const SizedBox(height: 6),
+              const _Hint('นัดหมายครั้งเดียว ไม่ซ้ำทุกสัปดาห์ — เช่น นัดหมอ หรือนัดลูกค้าวันที่ 25'),
+            ] else if (existing == null) ...[
               const _FieldLabel('วัน (เลือกได้หลายวัน)'),
               const SizedBox(height: 8),
               _WeekdayPicker(
@@ -234,25 +275,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             const SizedBox(height: 14),
             const _FieldLabel('เวลา'),
             const SizedBox(height: 7),
-            GestureDetector(
+            _PickerBox(
+              text: _formatTime(selectedTime),
               onTap: () async {
                 final picked = await showTimePicker(context: ctx, initialTime: selectedTime);
                 if (picked != null) setState(() => selectedTime = picked);
               },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.border, width: 1.5),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Text(_formatTime(selectedTime), style: const TextStyle(fontSize: 14, color: AppColors.text)),
-              ),
             ),
             const SizedBox(height: 14),
             AuthField(label: 'รายละเอียด (ไม่บังคับ)', hint: 'เช่น สถานที่ / ระยะเวลา', controller: subtitleController),
-            if (existing != null) ...[
-              if (siblingDays.isNotEmpty) ...[
+            if (existing != null && !oneOff) ...[
+              if (siblingDays.isNotEmpty && !existing.isOneOff) ...[
                 const SizedBox(height: 14),
                 _SeriesSwitch(
                   value: applyToSeries,
@@ -286,14 +319,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         if (title.isEmpty) return;
         final subtitle = subtitleController.text.trim().isEmpty ? null : subtitleController.text.trim();
 
-        int firstDay;
-        if (existing == null) {
+        DateTime jumpTo;
+        if (oneOff) {
+          // แปลงจากกิจกรรมในชุดประจำสัปดาห์ก็หลุดจากชุดไปเลย (ไม่มี seriesId) — วันอื่นในชุดยังอยู่ครบ
+          await _repo.put(ScheduleEvent.oneOff(
+            id: existing?.id ?? newId(),
+            time: _formatTime(selectedTime),
+            date: selectedDate,
+            title: title,
+            subtitle: subtitle,
+            category: selectedCategory,
+          ));
+          jumpTo = selectedDate;
+        } else if (existing == null) {
           final days = newDays.toList()..sort();
-          firstDay = days.first;
+          jumpTo = _dateOfWeekday(days.first);
           final base = ScheduleEvent(
             id: newId(),
             time: _formatTime(selectedTime),
-            weekday: firstDay,
+            weekday: days.first,
             title: title,
             subtitle: subtitle,
             category: selectedCategory,
@@ -302,7 +346,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           final copies = await _repo.copyToWeekdays(base, days.skip(1));
           if (days.length > 1) _toast('เพิ่ม “$title” ${copies + 1} วัน (${_weekdayList(days)})');
         } else {
-          firstDay = selectedWeekday;
+          jumpTo = _dateOfWeekday(selectedWeekday);
           final updated = ScheduleEvent(
             id: existing.id,
             time: _formatTime(selectedTime),
@@ -310,10 +354,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             title: title,
             subtitle: subtitle,
             category: selectedCategory,
-            seriesId: existing.seriesId,
+            seriesId: existing.isOneOff ? null : existing.seriesId,
           );
           await _repo.put(updated);
-          final updatedCount = applyToSeries ? await _repo.updateSeries(updated) : 1;
+          final updatedCount = applyToSeries && !existing.isOneOff ? await _repo.updateSeries(updated) : 1;
           final copies = copyDays.isEmpty ? 0 : await _repo.copyToWeekdays(updated, copyDays);
           if (updatedCount > 1 || copies > 0) {
             _toast([if (updatedCount > 1) 'แก้ไขทั้งชุด $updatedCount วัน', if (copies > 0) 'คัดลอกไปอีก $copies วัน'].join(' • '));
@@ -323,7 +367,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         _syncReminders();
         // เด้งไปวันที่เพิ่งบันทึก เพื่อให้เห็นกิจกรรมทันที (กรณีแก้ไขแล้วย้ายวันด้วย)
         if (mounted) {
-          _selectDate(_dateOfWeekday(firstDay), view: _view == _ScheduleView.week ? _ScheduleView.day : null);
+          _selectDate(jumpTo, view: _view == _ScheduleView.week ? _ScheduleView.day : null);
         }
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -358,7 +402,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               }),
             ),
             const SizedBox(height: 6),
-            const _Hint('กิจกรรมที่มีชื่อและเวลาเดียวกันอยู่แล้วในวันปลายทางจะถูกข้าม ไม่สร้างซ้ำ'),
+            const _Hint('คัดลอกเฉพาะกิจกรรมประจำสัปดาห์ (นัดหมายเฉพาะวันที่ไม่ถูกคัดลอก) • กิจกรรมที่มีชื่อและเวลาเดียวกันอยู่แล้วในวันปลายทางจะถูกข้าม'),
           ],
         ),
       ),
@@ -382,7 +426,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       child: ValueListenableBuilder(
         valueListenable: _repo.listenable(),
         builder: (context, _, _) {
-          final week = _repo.getWeek();
+          final all = _repo.getAll();
+          List<ScheduleEvent> eventsOn(DateTime date) => ScheduleRepository.eventsOn(all, date);
 
           return Column(
             children: [
@@ -422,14 +467,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         weekStart: weekStart,
                         now: now,
                         selectedDate: _view == _ScheduleView.day ? _selectedDate : null,
-                        week: week,
+                        eventsOn: eventsOn,
                         onTap: _selectDay,
                       ),
                     ],
                   ],
                 ),
               ),
-              Expanded(child: _buildBody(context, week, weekStart, now)),
+              Expanded(child: _buildBody(context, eventsOn, weekStart, now)),
             ],
           );
         },
@@ -437,16 +482,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _buildBody(BuildContext context, List<List<ScheduleEvent>> week, DateTime weekStart, DateTime now) {
+  Widget _buildBody(BuildContext context, _EventsOn eventsOn, DateTime weekStart, DateTime now) {
     switch (_view) {
       case _ScheduleView.day:
-        final events = week[_selectedWeekday - 1];
+        final events = eventsOn(_selectedDate);
         return Column(
           children: [
             _DayHeader(
               date: _selectedDate,
               count: events.length,
-              onCopyDay: events.isEmpty ? null : () => _openCopyDaySheet(context, _selectedWeekday),
+              // คัดลอกทั้งวันใช้ได้กับกิจกรรมประจำสัปดาห์เท่านั้น
+              onCopyDay: events.any((e) => !e.isOneOff) ? () => _openCopyDaySheet(context, _selectedWeekday) : null,
             ),
             Expanded(
               child: _DayTimeline(
@@ -461,7 +507,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         );
       case _ScheduleView.week:
         return _WeekGrid(
-          week: week,
+          eventsOn: eventsOn,
           weekStart: weekStart,
           now: now,
           onDayTap: _selectDay,
@@ -472,7 +518,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           month: _visibleMonth,
           selectedDate: _selectedDate,
           now: now,
-          week: week,
+          eventsOn: eventsOn,
           onPrev: () => setState(() => _visibleMonth = CalendarUtils.addMonths(_visibleMonth, -1)),
           onNext: () => setState(() => _visibleMonth = CalendarUtils.addMonths(_visibleMonth, 1)),
           onToday: _goToday,
@@ -486,7 +532,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         return _YearView(
           year: _visibleMonth.year,
           now: now,
-          week: week,
+          eventsOn: eventsOn,
           onPrev: () => setState(() => _visibleMonth = DateTime(_visibleMonth.year - 1, _visibleMonth.month)),
           onNext: () => setState(() => _visibleMonth = DateTime(_visibleMonth.year + 1, _visibleMonth.month)),
           onToday: now.year == _visibleMonth.year ? null : _goToday,
@@ -527,6 +573,108 @@ class _Hint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(text, style: const TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textFaint));
+}
+
+/// ช่องกดเลือกค่า (เวลา/วันที่) หน้าตาเดียวกับช่องกรอกข้อความ
+class _PickerBox extends StatelessWidget {
+  const _PickerBox({super.key, required this.text, required this.onTap, this.icon});
+
+  final String text;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.border, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Expanded(child: Text(text, style: const TextStyle(fontSize: 14, color: AppColors.text))),
+            if (icon != null) Icon(icon, size: 18, color: AppColors.textFaint),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// สลับ "ทุกสัปดาห์" (ตารางประจำ) กับ "เฉพาะวันที่" (นัดหมายครั้งเดียว)
+class _RepeatToggle extends StatelessWidget {
+  const _RepeatToggle({required this.oneOff, required this.onChanged});
+
+  final bool oneOff;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget option(String label, IconData icon, bool value) {
+      final selected = oneOff == value;
+      return Expanded(
+        child: GestureDetector(
+          key: ValueKey('repeat-${value ? 'one-off' : 'weekly'}'),
+          behavior: HitTestBehavior.opaque,
+          onTap: () => onChanged(value),
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? AppColors.surface : Colors.transparent,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 16, color: selected ? AppColors.primary : AppColors.textFaint),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: selected ? AppColors.text : AppColors.textFaint),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: AppColors.surface2, borderRadius: BorderRadius.circular(12)),
+      child: Row(
+        children: [
+          option('ทุกสัปดาห์', Icons.repeat_rounded, false),
+          option('เฉพาะวันที่', Icons.event_rounded, true),
+        ],
+      ),
+    );
+  }
+}
+
+/// ป้ายเล็ก ๆ บอกว่าเป็นนัดหมายเฉพาะวันที่ ไม่ใช่กิจกรรมประจำสัปดาห์
+class _OneOffTag extends StatelessWidget {
+  const _OneOffTag();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(top: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.event_rounded, size: 13, color: AppColors.textMuted),
+          SizedBox(width: 4),
+          Text('นัดหมายเฉพาะวันนี้', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+        ],
+      ),
+    );
+  }
 }
 
 /// เลือกวันในสัปดาห์ได้หลายวัน พร้อมปุ่มลัด ทุกวัน / จ–ศ / ส–อา
@@ -786,14 +934,14 @@ class _NavArrow extends StatelessWidget {
 
 /// แถบ 7 วันของสัปดาห์ที่เลือก
 class _WeekStrip extends StatelessWidget {
-  const _WeekStrip({required this.weekStart, required this.now, required this.selectedDate, required this.week, required this.onTap});
+  const _WeekStrip({required this.weekStart, required this.now, required this.selectedDate, required this.eventsOn, required this.onTap});
 
   final DateTime weekStart;
   final DateTime now;
 
   /// null = ไม่ไฮไลต์วันใด (มุมมองสัปดาห์)
   final DateTime? selectedDate;
-  final List<List<ScheduleEvent>> week;
+  final _EventsOn eventsOn;
   final ValueChanged<int> onTap;
 
   @override
@@ -803,7 +951,7 @@ class _WeekStrip extends StatelessWidget {
         final date = CalendarUtils.addDays(weekStart, i);
         final selected = selectedDate != null && CalendarUtils.isSameDay(date, selectedDate!);
         final isToday = CalendarUtils.isSameDay(date, now);
-        final hasEvents = week[i].isNotEmpty;
+        final hasEvents = eventsOn(date).isNotEmpty;
         return Expanded(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -887,9 +1035,9 @@ class _DayHeader extends StatelessWidget {
 
 /// ตาราง 7 คอลัมน์ (จันทร์–อาทิตย์) เลื่อนแนวนอนได้ แต่ละคอลัมน์เรียงกิจกรรมตามเวลา
 class _WeekGrid extends StatelessWidget {
-  const _WeekGrid({required this.week, required this.weekStart, required this.now, required this.onDayTap, required this.onEventTap});
+  const _WeekGrid({required this.eventsOn, required this.weekStart, required this.now, required this.onDayTap, required this.onEventTap});
 
-  final List<List<ScheduleEvent>> week;
+  final _EventsOn eventsOn;
   final DateTime weekStart;
   final DateTime now;
   final ValueChanged<int> onDayTap;
@@ -905,8 +1053,8 @@ class _WeekGrid extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: List.generate(7, (i) {
-            final events = week[i];
             final date = CalendarUtils.addDays(weekStart, i);
+            final events = eventsOn(date);
             final isToday = CalendarUtils.isSameDay(date, now);
             return Container(
               width: 150,
@@ -981,9 +1129,17 @@ class _WeekGrid extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      e.time,
-                                      style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.textMuted),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          e.time,
+                                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.textMuted),
+                                        ),
+                                        if (e.isOneOff) ...[
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.event_rounded, size: 11, color: AppColors.textMuted),
+                                        ],
+                                      ],
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -1011,13 +1167,13 @@ class _WeekGrid extends StatelessWidget {
 
 /// ปฏิทินรายเดือน — แต่ละช่องมีจุดสีตามหมวดของกิจกรรมวันนั้น แตะเพื่อดูรายการด้านล่าง
 ///
-/// ตารางเป็นแบบ "ประจำสัปดาห์" ทุกวันจันทร์ในเดือนจึงมีกิจกรรมชุดเดียวกัน
+/// กิจกรรมประจำสัปดาห์ขึ้นทุกสัปดาห์ ส่วนนัดหมายเฉพาะวันที่ขึ้นแค่วันนั้น
 class _MonthView extends StatelessWidget {
   const _MonthView({
     required this.month,
     required this.selectedDate,
     required this.now,
-    required this.week,
+    required this.eventsOn,
     required this.onPrev,
     required this.onNext,
     required this.onToday,
@@ -1031,7 +1187,7 @@ class _MonthView extends StatelessWidget {
   final DateTime month;
   final DateTime selectedDate;
   final DateTime now;
-  final List<List<ScheduleEvent>> week;
+  final _EventsOn eventsOn;
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final VoidCallback onToday;
@@ -1045,7 +1201,7 @@ class _MonthView extends StatelessWidget {
   Widget build(BuildContext context) {
     final days = CalendarUtils.monthGrid(month.year, month.month);
     final isCurrentMonth = month.year == now.year && month.month == now.month;
-    final events = week[selectedDate.weekday - 1];
+    final events = eventsOn(selectedDate);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -1094,7 +1250,7 @@ class _MonthView extends StatelessWidget {
                           inMonth: date.month == month.month,
                           isToday: CalendarUtils.isSameDay(date, now),
                           isSelected: CalendarUtils.isSameDay(date, selectedDate),
-                          events: week[date.weekday - 1],
+                          events: eventsOn(date),
                           onTap: () => onDateTap(date),
                         ),
                       ),
@@ -1112,7 +1268,7 @@ class _MonthView extends StatelessWidget {
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
               ),
             ),
-            if (events.isNotEmpty)
+            if (events.any((e) => !e.isOneOff))
               IconButton(
                 tooltip: 'คัดลอกทั้งวัน',
                 onPressed: onCopyDay,
@@ -1252,6 +1408,7 @@ class _EventRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(event.subtitle!, style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted)),
                   ],
+                  if (event.isOneOff) const _OneOffTag(),
                 ],
               ),
             ),
@@ -1268,7 +1425,7 @@ class _YearView extends StatelessWidget {
   const _YearView({
     required this.year,
     required this.now,
-    required this.week,
+    required this.eventsOn,
     required this.onPrev,
     required this.onNext,
     required this.onToday,
@@ -1277,17 +1434,17 @@ class _YearView extends StatelessWidget {
 
   final int year;
   final DateTime now;
-  final List<List<ScheduleEvent>> week;
+  final _EventsOn eventsOn;
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final VoidCallback? onToday;
   final ValueChanged<DateTime> onMonthTap;
 
-  /// จำนวนกิจกรรมทั้งเดือน = ผลรวมกิจกรรมของทุกวันในเดือน ตามวันในสัปดาห์
+  /// จำนวนกิจกรรมทั้งเดือน = ผลรวมกิจกรรมของทุกวันในเดือน (ประจำสัปดาห์ + นัดเฉพาะวัน)
   int _monthEventCount(int month) {
     var total = 0;
     for (var d = 1; d <= CalendarUtils.daysInMonth(year, month); d++) {
-      total += week[DateTime(year, month, d).weekday - 1].length;
+      total += eventsOn(DateTime(year, month, d)).length;
     }
     return total;
   }
@@ -1502,6 +1659,7 @@ class _DayTimeline extends StatelessWidget {
                                   const SizedBox(height: 3),
                                   Text(e.subtitle!, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
                                 ],
+                                if (e.isOneOff) const _OneOffTag(),
                               ],
                             ),
                           ),

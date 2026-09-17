@@ -12,8 +12,8 @@ import '../models/schedule_event.dart';
 import 'repositories/app_settings_repository.dart';
 import 'repositories/schedule_repository.dart';
 
-/// แจ้งเตือนกิจกรรมในตารางเวลา — ตั้งเป็นการเตือนรายสัปดาห์ซ้ำทุกสัปดาห์
-/// ให้ตรงกับตารางที่เป็นแบบ "ประจำสัปดาห์" (ดู ScheduleEvent.weekday)
+/// แจ้งเตือนกิจกรรมในตารางเวลา — กิจกรรมประจำสัปดาห์ตั้งเป็นการเตือนซ้ำทุกสัปดาห์
+/// (ดู ScheduleEvent.weekday) ส่วนนัดหมายเฉพาะวันที่ (ScheduleEvent.date) เตือนครั้งเดียว
 ///
 /// เสียงและการสั่นบน Android ผูกกับ "ช่อง" (channel) และแก้ไม่ได้หลังสร้างช่องแล้ว
 /// จึงใช้หนึ่งช่องต่อหนึ่งรูปแบบ (เสียง/สั่น เปิด-ปิด) แล้วลบช่องที่ไม่ได้ใช้ทิ้ง
@@ -173,8 +173,8 @@ class NotificationService {
         payload: events[i].id, // กดแล้วเปิดป๊อปอัปของกิจกรรมนี้
         notificationDetails: details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        // ซ้ำทุกสัปดาห์ในวัน+เวลาเดียวกัน
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        // ประจำสัปดาห์ = ซ้ำทุกสัปดาห์ในวัน+เวลาเดียวกัน / เฉพาะวันที่ = ครั้งเดียว
+        matchDateTimeComponents: events[i].isOneOff ? null : DateTimeComponents.dayOfWeekAndTime,
       );
       scheduled++;
     }
@@ -209,7 +209,7 @@ class NotificationService {
     return event.subtitle == null ? head : '$head • ${event.subtitle}';
   }
 
-  /// เวลาที่จะเตือนครั้งถัดไปของกิจกรรมนี้ (ในอนาคตเสมอ)
+  /// เวลาที่จะเตือนครั้งถัดไปของกิจกรรมนี้ (ในอนาคตเสมอ) — นัดหมายเฉพาะวันที่ที่เลยไปแล้วได้ null
   @visibleForTesting
   static tz.TZDateTime? nextOccurrenceOf(ScheduleEvent event, int minutesBefore, {tz.TZDateTime? now}) =>
       _nextOccurrence(event, minutesBefore, now: now);
@@ -222,6 +222,13 @@ class NotificationService {
     if (hour == null || minute == null) return null;
 
     final current = now ?? tz.TZDateTime.now(tz.local);
+
+    final date = event.date;
+    if (date != null) {
+      final remindAt = tz.TZDateTime(tz.local, date.year, date.month, date.day, hour, minute)
+          .subtract(Duration(minutes: minutesBefore));
+      return remindAt.isAfter(current) ? remindAt : null;
+    }
 
     // หาเวลา "เริ่มกิจกรรม" ครั้งถัดไปก่อน แล้วค่อยลบเวลาเตือนล่วงหน้าทีหลัง
     // (ลบก่อนจะเพี้ยนเมื่อการเตือนข้ามเที่ยงคืนไปอยู่คนละวันกับตัวกิจกรรม)

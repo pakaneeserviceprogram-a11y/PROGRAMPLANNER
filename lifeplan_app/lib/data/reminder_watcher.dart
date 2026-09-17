@@ -117,6 +117,13 @@ class ReminderWatcher {
     final minute = int.tryParse(parts[1]);
     if (hour == null || minute == null) return null;
 
+    // นัดหมายเฉพาะวันที่มีรอบเดียว — ยังไม่ถึงเวลาเตือนก็ไม่มีรอบให้ย้อนไปหา
+    final date = event.date;
+    if (date != null) {
+      final remindAt = DateTime(date.year, date.month, date.day, hour, minute).subtract(Duration(minutes: minutesBefore));
+      return remindAt.isAfter(at) ? null : remindAt;
+    }
+
     // หาเวลา "เริ่มกิจกรรม" ของรอบล่าสุดก่อน แล้วค่อยลบเวลาเตือนล่วงหน้าทีหลัง
     // (ลบก่อนจะเพี้ยนเมื่อการเตือนข้ามเที่ยงคืนไปอยู่คนละวันกับตัวกิจกรรม)
     var start = DateTime(at.year, at.month, at.day, hour, minute);

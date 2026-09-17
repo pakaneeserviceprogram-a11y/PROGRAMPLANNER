@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../data/calendar_utils.dart';
 import '../data/notifications.dart';
 import '../data/reminder_watcher.dart';
 import '../data/repositories/app_settings_repository.dart';
@@ -67,7 +68,10 @@ class ReminderPopup extends StatelessWidget {
                       Text(_headline,
                           style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: category.color)),
                       const SizedBox(height: 2),
-                      Text('วัน${_weekdayFullLabels[event.weekday - 1]} ${event.time} น.',
+                      Text(
+                          event.date == null
+                              ? 'วัน${_weekdayFullLabels[event.weekday - 1]} ${event.time} น.'
+                              : 'วัน${_weekdayFullLabels[event.weekday - 1]}ที่ ${CalendarUtils.thaiDate(event.date!)} ${event.time} น.',
                           style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
                     ],
                   ),

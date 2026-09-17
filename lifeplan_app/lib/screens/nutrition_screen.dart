@@ -517,7 +517,7 @@ class NutritionScreen extends StatelessWidget {
                   exercise: todaysExercise,
                   burnedCalories: burnedCalories,
                   workoutTimes: scheduleRepo
-                      .getByWeekday(today.weekday)
+                      .getForDate(today)
                       .where((e) => e.category == LifeCategory.exercise)
                       .map((e) => '${e.time} ${e.title}')
                       .toList(),

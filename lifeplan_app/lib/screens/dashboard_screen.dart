@@ -109,7 +109,7 @@ class DashboardScreen extends StatelessWidget {
           final totalActivities = exerciseItems.length + tasks.length;
           final doneActivities = exerciseDone + tasks.where((t) => t.status == TaskStatus.done).length;
 
-          final events = scheduleRepo.getByWeekday(DateTime.now().weekday).take(3).toList();
+          final events = scheduleRepo.getForDate(DateTime.now()).take(3).toList();
           final user = userRepo.getCurrent();
 
           return ListView(
