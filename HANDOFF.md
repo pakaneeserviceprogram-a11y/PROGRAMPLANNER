@@ -1,12 +1,28 @@
 # LifePlan — Handoff / เอกสารต่องาน
 
-อัปเดตล่าสุด: 2026-09-17 (นัดหมายเฉพาะวันที่ + แก้ไข/ลบรายการในหน้างานประจำ ออกกำลังกาย การเงิน เรียนรู้ ลูกค้า) — ใช้ไฟล์นี้เพื่อกลับมาทำงานต่อได้เร็ว ไม่ต้องไล่อ่านทั้งบทสนทนาใหม่
+อัปเดตล่าสุด: 2026-09-18 (ชั้น AuthService เตรียมต่อระบบล็อกอินจริง) — ใช้ไฟล์นี้เพื่อกลับมาทำงานต่อได้เร็ว ไม่ต้องไล่อ่านทั้งบทสนทนาใหม่
 
 ดูภาพรวมโปรเจกต์/ฟีเจอร์ที่ `README.md`, โครงสร้างข้อมูลที่ `DATA_MODEL.md` — ไฟล์นี้เน้นเฉพาะ "จะทำต่อยังไง"
 
 ---
 
 ## 0. สรุปงานรอบล่าสุด
+
+### รอบ 2026-09-18 — ชั้น AuthService (เตรียมต่อระบบล็อกอินจริง)
+
+ยังไม่ได้ต่อ Firebase/Google/Apple จริง (ผู้ใช้เลือก "เตรียมโค้ดไว้ก่อน") — งานรอบนี้คือแยกการยืนยันตัวตนออกจากหน้าจอ
+เพื่อให้วันที่จะต่อของจริง แก้แค่ไฟล์เดียว
+
+- **`lib/data/auth/auth_service.dart`** — abstract `AuthService` (`currentUser`, `signInWithEmail`, `registerWithEmail`, `signInWithProvider`, `signOut`, `isReal`) + `AuthResult` (สำเร็จ/ข้อความ error ภาษาไทย) + `AuthValidation` (อีเมล/รหัสผ่าน/ยืนยันรหัสผ่าน)
+  - หัวไฟล์มี **ขั้นตอนต่อ Firebase Auth 5 ข้อ** เขียนไว้ครบ — เริ่มจากตรงนั้นได้เลย
+  - จุดสลับ: `AuthService.instance = FirebaseAuthService();` ใน `main()` ก่อน `runApp` (หน้าจอไม่ต้องแก้)
+- **`lib/data/auth/local_auth_service.dart`** — พฤติกรรมเดิม (บัญชีในเครื่องผ่าน Hive) แต่ย้ายมาอยู่หลัง interface
+  - **รหัสผ่านยังไม่ถูกเก็บ/ตรวจจริง** ตรวจแค่รูปแบบ (≥ 8 ตัว) ให้ UX เหมือนของจริง
+  - ล็อกอินด้วยอีเมลเดิม (ไม่สนตัวพิมพ์เล็ก-ใหญ่) = บัญชีเดิม ชื่อ/ข้อมูลไม่หาย — อีเมลใหม่ = บัญชีใหม่
+- **หน้าจอ**: `login_screen`/`register_screen`/`profile_screen`/`main.dart` เรียกผ่าน `AuthService.instance` ไม่แตะ `UserRepository` ตรง ๆ แล้ว
+  - หน้าเข้าสู่ระบบมีแถบ "โหมดทดลอง: บัญชีเก็บในเครื่องนี้เท่านั้น…" ซึ่ง **หายเองเมื่อ `isReal` เป็น true**
+  - กันกดปุ่มซ้ำระหว่างรอด้วย `_busy` (ของจริงมี network latency)
+- test ใหม่ `test/auth_service_test.dart` (9 tests) — `flutter test` ผ่าน **131 tests**
 
 ### รอบ 2026-09-17 (ต่อ) — นัดหมายเฉพาะวันที่
 
@@ -269,7 +285,10 @@ test/
 
 ## 5. สิ่งที่ยังไม่ได้ทำ (เรียงตามลำดับที่ควรทำ)
 
-- [ ] **Auth จริง** — ตอนนี้ Login/Register แค่สร้าง/บันทึก `UserProfile` ในเครื่อง ไม่มีการยืนยันตัวตนจริงกับ Google/Apple/อีเมลจริง ๆ ต้องเชื่อม Firebase Auth (หรือบริการอื่น) + ปุ่ม Google/Apple ของจริงต้องใช้ `google_sign_in` / `sign_in_with_apple` package และตั้งค่า OAuth credentials
+- [ ] **Auth จริง** — โครงพร้อมแล้ว (2026-09-18) เหลือขั้นตอนที่ต้องใช้บัญชีภายนอก:
+  - สมัคร Firebase, สร้างโปรเจกต์, เปิด Sign-in method (Email/Password + Google), วาง `android/app/google-services.json`, ลงทะเบียน SHA-1 ของ keystore ทั้ง debug และ release
+  - เพิ่ม `firebase_core`/`firebase_auth` (+ `google_sign_in`, `sign_in_with_apple`) แล้วเขียน `FirebaseAuthService implements AuthService` — ดูขั้นตอนเต็มที่หัวไฟล์ `lib/data/auth/auth_service.dart`
+  - ใช้ `uid` ของ Firebase เป็น `UserProfile.id` เพื่อให้ใช้เป็น `userId` ตอนทำ sync ข้อ 5 ได้เลย
 - [x] **สำรอง/กู้คืนข้อมูลเป็นไฟล์ JSON** — ทำแล้ว (2026-09-15): `lib/data/backup.dart` + หน้า `BackupScreen` (โปรไฟล์ → สำรอง & กู้คืนข้อมูล)
   - ส่งออก: รวมทุก box เป็น JSON แล้วส่งผ่านแผงแชร์ของระบบ (share_plus) เลือกเก็บที่ไดรฟ์/แชทได้
   - กู้คืน: เลือกไฟล์ด้วย file_picker → ยืนยัน (โชว์จำนวนรายการในไฟล์) → เขียนทับทั้งหมด

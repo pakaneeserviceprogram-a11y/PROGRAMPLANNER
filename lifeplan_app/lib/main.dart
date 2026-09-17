@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'data/hive_boxes.dart';
 import 'data/notifications.dart';
-import 'data/repositories/user_repository.dart';
+import 'data/auth/auth_service.dart';
 import 'data/seed_data.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/root_shell.dart';
@@ -39,7 +39,7 @@ class _LifePlanAppState extends State<LifePlanApp> {
 
   @override
   Widget build(BuildContext context) {
-    final loggedIn = UserRepository().getCurrent() != null;
+    final loggedIn = AuthService.instance.currentUser() != null;
     return MaterialApp(
       title: 'LifePlan',
       debugShowCheckedModeBanner: false,

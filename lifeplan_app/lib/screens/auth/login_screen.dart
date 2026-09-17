@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../data/id_gen.dart';
-import '../../data/repositories/user_repository.dart';
+import '../../data/auth/auth_service.dart';
 import '../../models/user_profile.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/auth_widgets.dart';
@@ -18,7 +17,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _userRepo = UserRepository();
+  final _auth = AuthService.instance;
+  bool _busy = false;
 
   @override
   void dispose() {
@@ -27,31 +27,28 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// การยืนยันตัวตนทั้งหมดอยู่หลัง [AuthService] — หน้าจอนี้ไม่รู้ว่าเป็นบัญชีในเครื่องหรือของจริง
   Future<void> _signIn(AuthProvider provider) async {
-    final email = _emailController.text.trim();
-    if (provider == AuthProvider.email && email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('กรุณากรอกอีเมล')));
-      return;
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final result = provider == AuthProvider.email
+          ? await _auth.signInWithEmail(email: _emailController.text, password: _passwordController.text)
+          : await _auth.signInWithProvider(provider);
+
+      if (!mounted) return;
+      if (!result.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.errorMessage!)));
+        return;
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const RootShell()),
+        (route) => false,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-
-    // Reuse an existing local account if this email already signed up,
-    // otherwise create one on the fly — this is an on-device prototype
-    // with no real backend auth yet (see README "แผนขั้นตอนถัดไป").
-    final existing = _userRepo.getCurrent();
-    final user = existing ??
-        UserProfile(
-          id: newId(),
-          name: provider == AuthProvider.email ? email.split('@').first : 'ผู้ใช้ LifePlan',
-          email: provider == AuthProvider.email ? email : 'you@example.com',
-          authProvider: provider,
-        );
-    await _userRepo.save(user);
-
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const RootShell()),
-      (route) => false,
-    );
   }
 
   @override
@@ -86,7 +83,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textFaint),
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: 24),
+              if (!_auth.isReal) const _PrototypeNotice(),
+              const SizedBox(height: 12),
               AuthField(label: 'อีเมล', hint: 'you@example.com', controller: _emailController, keyboardType: TextInputType.emailAddress),
               const SizedBox(height: 18),
               AuthField(label: 'รหัสผ่าน', hint: '••••••••', controller: _passwordController, obscureText: true),
@@ -119,6 +118,35 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// บอกตรง ๆ ว่าบัญชียังอยู่ในเครื่อง — ซ่อนอัตโนมัติเมื่อต่อ AuthService ตัวจริง (isReal = true)
+class _PrototypeNotice extends StatelessWidget {
+  const _PrototypeNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.info_outline_rounded, size: 16, color: AppColors.textMuted),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'โหมดทดลอง: บัญชีเก็บในเครื่องนี้เท่านั้น ยังไม่ได้ยืนยันตัวตนกับเซิร์ฟเวอร์จริง',
+              style: TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textMuted),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/auth/auth_service.dart';
 import '../data/repositories/user_repository.dart';
 import '../models/user_profile.dart';
 import '../theme/app_colors.dart';
@@ -90,7 +91,7 @@ class ProfileScreen extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () async {
-                    await userRepo.signOut();
+                    await AuthService.instance.signOut();
                     if (!context.mounted) return;
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (_) => const LoginScreen()),

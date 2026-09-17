@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../data/id_gen.dart';
-import '../../data/repositories/user_repository.dart';
+import '../../data/auth/auth_service.dart';
 import '../../models/user_profile.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/auth_widgets.dart';
@@ -20,8 +19,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
-  final _userRepo = UserRepository();
+  final _auth = AuthService.instance;
   bool _agreed = false;
+  bool _busy = false;
 
   @override
   void dispose() {
@@ -32,41 +32,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  void _toast(String message) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+
   Future<void> _createAccount(AuthProvider provider) async {
+    if (_busy) return;
     if (!_agreed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณายอมรับข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัว')),
-      );
+      _toast('กรุณายอมรับข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัว');
       return;
     }
+    // ยืนยันรหัสผ่านเป็นเรื่องของฟอร์ม (AuthService ไม่รู้จักช่องนี้) ที่เหลือให้ service ตรวจ
     if (provider == AuthProvider.email) {
-      if (_nameController.text.trim().isEmpty || _emailController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('กรุณากรอกชื่อและอีเมล')));
-        return;
-      }
-      if (_passwordController.text.length < 8) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')));
-        return;
-      }
-      if (_passwordController.text != _confirmController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('รหัสผ่านไม่ตรงกัน')));
+      final mismatch = AuthValidation.passwordConfirm(_passwordController.text, _confirmController.text);
+      if (mismatch != null) {
+        _toast(mismatch);
         return;
       }
     }
 
-    final user = UserProfile(
-      id: newId(),
-      name: provider == AuthProvider.email ? _nameController.text.trim() : 'ผู้ใช้ LifePlan',
-      email: provider == AuthProvider.email ? _emailController.text.trim() : 'you@example.com',
-      authProvider: provider,
-    );
-    await _userRepo.save(user);
+    setState(() => _busy = true);
+    try {
+      final result = provider == AuthProvider.email
+          ? await _auth.registerWithEmail(
+              name: _nameController.text,
+              email: _emailController.text,
+              password: _passwordController.text,
+            )
+          : await _auth.signInWithProvider(provider);
 
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const RootShell()),
-      (route) => false,
-    );
+      if (!mounted) return;
+      if (!result.isSuccess) {
+        _toast(result.errorMessage!);
+        return;
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const RootShell()),
+        (route) => false,
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
