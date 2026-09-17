@@ -234,6 +234,9 @@ void main() {
 
     // เลื่อนไปเดือนถัดไป
     final next = CalendarUtils.addMonths(DateTime(now.year, now.month), 1);
+    // ensureVisible ข้างบนอาจเลื่อนหัวปฏิทินพ้นจอ (ขึ้นกับวันที่รันเทสต์) — เลื่อนกลับมาก่อนแตะ
+    await tester.ensureVisible(find.byTooltip('ถัดไป'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('ถัดไป'));
     await tester.pumpAndSettle();
     expect(find.text(CalendarUtils.thaiMonthYear(next)), findsOneWidget);

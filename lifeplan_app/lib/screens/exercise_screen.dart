@@ -13,16 +13,35 @@ import '../widgets/form_sheet.dart';
 class ExerciseScreen extends StatelessWidget {
   const ExerciseScreen({super.key});
 
-  Future<void> _openAddForm(BuildContext context, ExerciseRepository repo) async {
-    final titleController = TextEditingController();
-    final durationController = TextEditingController(text: '30');
-    ExerciseType selectedType = ExerciseType.run;
-    String selectedDay = 'จันทร์';
+  static const _days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+
+  /// ชื่อที่บันทึกไว้เป็น "วัน • ชื่อกิจกรรม" — ตัดคำนำหน้าวันออกก่อนใส่ในช่องแก้ไข
+  static String plainTitle(ExercisePlanItem item) {
+    final prefix = '${item.dayLabel} • ';
+    return item.title.startsWith(prefix) ? item.title.substring(prefix.length) : item.title;
+  }
+
+  /// ฟอร์มเดียวใช้ทั้งเพิ่มกิจกรรมใหม่ (existing = null) และแก้ไขกิจกรรมเดิม
+  Future<void> _openItemForm(BuildContext context, ExerciseRepository repo, {ExercisePlanItem? existing}) async {
+    final titleController = TextEditingController(text: existing != null ? plainTitle(existing) : null);
+    final durationController = TextEditingController(text: '${existing?.durationMinutes ?? 30}');
+    ExerciseType selectedType = existing?.type ?? ExerciseType.run;
+    String selectedDay = existing != null && _days.contains(existing.dayLabel) ? existing.dayLabel : 'จันทร์';
 
     await showAppFormSheet(
       context: context,
-      title: 'เพิ่มกิจกรรมออกกำลังกาย',
+      title: existing == null ? 'เพิ่มกิจกรรมออกกำลังกาย' : 'แก้ไขกิจกรรมออกกำลังกาย',
       submitLabel: 'บันทึก',
+      footerBuilder: existing == null
+          ? null
+          : (sheetCtx) => FormDeleteButton(
+                pageContext: context,
+                label: 'ลบกิจกรรมนี้',
+                confirmTitle: 'ลบกิจกรรมนี้?',
+                confirmMessage: '“${existing.title}” จะถูกลบออกจากแผนออกกำลังกาย',
+                doneMessage: 'ลบ “${existing.title}” แล้ว',
+                onDelete: () => repo.delete(existing.id),
+              ),
       bodyBuilder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,7 +51,7 @@ class ExerciseScreen extends StatelessWidget {
             LabeledDropdown<String>(
               label: 'วัน',
               value: selectedDay,
-              options: const ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'],
+              options: _days,
               display: (v) => v,
               onChanged: (v) => setState(() => selectedDay = v!),
             ),
@@ -54,11 +73,13 @@ class ExerciseScreen extends StatelessWidget {
         if (title.isEmpty) return;
         final duration = int.tryParse(durationController.text.trim()) ?? 30;
         await repo.put(ExercisePlanItem(
-          id: newId(),
+          id: existing?.id ?? newId(),
           title: '$selectedDay • $title',
           type: selectedType,
           dayLabel: selectedDay,
           durationMinutes: duration,
+          isDone: existing?.isDone ?? false,
+          isToday: existing?.isToday ?? false,
         ));
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -201,6 +222,8 @@ class ExerciseScreen extends StatelessWidget {
                               decoration: BoxDecoration(color: category.color, borderRadius: BorderRadius.circular(999)),
                               child: const Text('วันนี้', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
                             ),
+                          const SizedBox(width: 4),
+                          RowEditButton(onTap: () => _openItemForm(context, repo, existing: item)),
                         ],
                       ),
                     ),
@@ -208,7 +231,7 @@ class ExerciseScreen extends StatelessWidget {
                 ],
                 const SizedBox(height: 6),
                 GestureDetector(
-                  onTap: () => _openAddForm(context, repo),
+                  onTap: () => _openItemForm(context, repo),
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(

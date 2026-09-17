@@ -38,35 +38,72 @@ class CrmScreen extends StatelessWidget {
     return clean.isEmpty ? '?' : clean.characters.take(2).toString();
   }
 
-  Future<void> _openAddForm(BuildContext context, ClientRepository repo) async {
-    final nameController = TextEditingController();
-    final policyController = TextEditingController();
-    final premiumController = TextEditingController();
+  static String _moneyText(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+
+  /// ฟอร์มเดียวใช้ทั้งเพิ่มลูกค้าใหม่ (existing = null) และแก้ไขลูกค้าเดิม
+  ///
+  /// ตอนแก้ไขเลือกสถานะได้เอง — แตะที่รายชื่อเลื่อนไปข้างหน้าได้อย่างเดียว ถ้าแตะเกินจะย้อนกลับได้จากที่นี่
+  Future<void> _openClientForm(BuildContext context, ClientRepository repo, {Client? existing}) async {
+    final nameController = TextEditingController(text: existing?.name);
+    final policyController = TextEditingController(text: existing?.policyLabel);
+    final premiumController = TextEditingController(
+        text: existing != null && existing.premiumAmount > 0 ? _moneyText(existing.premiumAmount) : null);
+    ClientStage selectedStage = existing?.stage ?? ClientStage.newLead;
 
     await showAppFormSheet(
       context: context,
-      title: 'เพิ่มลูกค้า',
+      title: existing == null ? 'เพิ่มลูกค้า' : 'แก้ไขข้อมูลลูกค้า',
       submitLabel: 'บันทึก',
-      bodyBuilder: (ctx) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AuthField(label: 'ชื่อลูกค้า', hint: 'เช่น คุณสมชาย ใจดี', controller: nameController),
-          const SizedBox(height: 14),
-          AuthField(label: 'ความสนใจ', hint: 'เช่น ประกันสุขภาพ', controller: policyController),
-          const SizedBox(height: 14),
-          AuthField(label: 'มูลค่าเบี้ยประกันโดยประมาณ (บาท)', hint: '0', controller: premiumController, keyboardType: TextInputType.number),
-        ],
+      footerBuilder: existing == null
+          ? null
+          : (sheetCtx) => FormDeleteButton(
+                pageContext: context,
+                label: 'ลบลูกค้ารายนี้',
+                confirmTitle: 'ลบลูกค้ารายนี้?',
+                confirmMessage: '“${existing.name}” จะถูกลบออกจากรายชื่อ (รายงานประจำสัปดาห์ไม่หาย)',
+                doneMessage: 'ลบ “${existing.name}” แล้ว',
+                onDelete: () => repo.delete(existing.id),
+              ),
+      bodyBuilder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AuthField(label: 'ชื่อลูกค้า', hint: 'เช่น คุณสมชาย ใจดี', controller: nameController),
+            const SizedBox(height: 14),
+            AuthField(
+              label: existing == null ? 'ความสนใจ' : 'รายละเอียด',
+              hint: 'เช่น ประกันสุขภาพ',
+              controller: policyController,
+            ),
+            if (existing != null) ...[
+              const SizedBox(height: 14),
+              LabeledDropdown<ClientStage>(
+                label: 'สถานะ',
+                value: selectedStage,
+                options: ClientStage.values,
+                display: (s) => s.label,
+                onChanged: (v) => setState(() => selectedStage = v!),
+              ),
+            ],
+            const SizedBox(height: 14),
+            AuthField(label: 'มูลค่าเบี้ยประกันโดยประมาณ (บาท)', hint: '0', controller: premiumController, keyboardType: TextInputType.number),
+          ],
+        ),
       ),
       onSubmit: () async {
         final name = nameController.text.trim();
         if (name.isEmpty) return;
+        final policy = policyController.text.trim();
+        final premium = double.tryParse(premiumController.text.replaceAll(',', '').trim()) ?? 0;
         await repo.put(Client(
-          id: newId(),
+          id: existing?.id ?? newId(),
           name: name,
           initials: _initialsOf(name),
-          policyLabel: '${policyController.text.trim().isEmpty ? 'ลูกค้าใหม่' : policyController.text.trim()} • ลูกค้าใหม่',
-          stage: ClientStage.newLead,
-          premiumAmount: double.tryParse(premiumController.text.trim()) ?? 0,
+          policyLabel: existing == null
+              ? '${policy.isEmpty ? 'ลูกค้าใหม่' : policy} • ลูกค้าใหม่'
+              : (policy.isEmpty ? existing.policyLabel : policy),
+          stage: selectedStage,
+          premiumAmount: premium,
         ));
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -145,7 +182,7 @@ class CrmScreen extends StatelessWidget {
                   children: [
                     const Text('ลูกค้าที่ต้องติดตาม', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                     GestureDetector(
-                      onTap: () => _openAddForm(context, repo),
+                      onTap: () => _openClientForm(context, repo),
                       child: Container(
                         width: 34,
                         height: 34,
@@ -159,7 +196,7 @@ class CrmScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 const Padding(
                   padding: EdgeInsets.only(bottom: 8),
-                  child: Text('แตะที่รายชื่อเพื่อเลื่อนสถานะไปขั้นถัดไป', style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
+                  child: Text('แตะที่รายชื่อเพื่อเลื่อนสถานะไปขั้นถัดไป • กดรูปดินสอเพื่อแก้ไขหรือลบ', style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
                 ),
                 if (clients.isEmpty)
                   const Padding(
@@ -182,6 +219,7 @@ class CrmScreen extends StatelessWidget {
                             client: clients[i],
                             color: _avatarColor(clients[i].stage),
                             onTap: () => repo.put(clients[i].copyWith(stage: clients[i].stage.next)),
+                            onEdit: () => _openClientForm(context, repo, existing: clients[i]),
                           ),
                         ],
                       ],
@@ -218,8 +256,9 @@ class _ClientRow extends StatelessWidget {
   final Client client;
   final Color color;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
 
-  const _ClientRow({required this.client, required this.color, required this.onTap});
+  const _ClientRow({required this.client, required this.color, required this.onTap, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -252,6 +291,8 @@ class _ClientRow extends StatelessWidget {
               decoration: BoxDecoration(color: AppColors.crmSoft, borderRadius: BorderRadius.circular(999)),
               child: Text(client.statusLabel, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.crm)),
             ),
+            const SizedBox(width: 2),
+            RowEditButton(onTap: onEdit),
           ],
         ),
       ),

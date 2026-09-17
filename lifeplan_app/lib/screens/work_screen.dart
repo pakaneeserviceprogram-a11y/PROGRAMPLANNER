@@ -12,20 +12,41 @@ import '../widgets/progress_track.dart';
 class WorkScreen extends StatelessWidget {
   const WorkScreen({super.key});
 
-  Future<void> _openAddForm(BuildContext context, WorkTaskRepository repo) async {
-    final titleController = TextEditingController();
-    final dueController = TextEditingController();
-    TaskPriority selectedPriority = TaskPriority.normal;
+  /// ฟอร์มเดียวใช้ทั้งเพิ่มงานใหม่ (existing = null) และแก้ไขงานเดิม
+  Future<void> _openTaskForm(BuildContext context, WorkTaskRepository repo, {WorkTask? existing}) async {
+    final titleController = TextEditingController(text: existing?.title);
+    final dueController = TextEditingController(text: existing?.dueLabel);
+    final progressController = TextEditingController(text: existing?.progressPercent?.toString());
+    TaskPriority selectedPriority = existing?.priority ?? TaskPriority.normal;
+    TaskStatus selectedStatus = existing?.status ?? TaskStatus.todo;
 
     await showAppFormSheet(
       context: context,
-      title: 'เพิ่มงาน',
+      title: existing == null ? 'เพิ่มงาน' : 'แก้ไขงาน',
       submitLabel: 'บันทึก',
+      footerBuilder: existing == null
+          ? null
+          : (sheetCtx) => FormDeleteButton(
+                pageContext: context,
+                label: 'ลบงานนี้',
+                confirmTitle: 'ลบงานนี้?',
+                confirmMessage: '“${existing.title}” จะถูกลบออกจากรายการงาน',
+                doneMessage: 'ลบ “${existing.title}” แล้ว',
+                onDelete: () => repo.delete(existing.id),
+              ),
       bodyBuilder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AuthField(label: 'ชื่องาน', hint: 'เช่น เตรียมเอกสารประชุม', controller: titleController),
+            const SizedBox(height: 14),
+            LabeledDropdown<TaskStatus>(
+              label: 'สถานะ',
+              value: selectedStatus,
+              options: TaskStatus.values,
+              display: statusLabel,
+              onChanged: (v) => setState(() => selectedStatus = v!),
+            ),
             const SizedBox(height: 14),
             LabeledDropdown<TaskPriority>(
               label: 'ความสำคัญ',
@@ -36,23 +57,44 @@ class WorkScreen extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             AuthField(label: 'กำหนดส่ง (ไม่บังคับ)', hint: 'เช่น 17:00', controller: dueController),
+            if (selectedStatus == TaskStatus.inProgress) ...[
+              const SizedBox(height: 14),
+              AuthField(
+                label: 'ความคืบหน้า % (ไม่บังคับ)',
+                hint: 'เช่น 60',
+                controller: progressController,
+                keyboardType: TextInputType.number,
+              ),
+            ],
           ],
         ),
       ),
       onSubmit: () async {
         final title = titleController.text.trim();
         if (title.isEmpty) return;
+        final due = dueController.text.trim();
+        // ความคืบหน้ามีความหมายเฉพาะงานที่กำลังทำ — เปลี่ยนสถานะอื่นแล้วล้างทิ้ง
+        final progress = selectedStatus == TaskStatus.inProgress
+            ? int.tryParse(progressController.text.trim())?.clamp(0, 100)
+            : null;
         await repo.put(WorkTask(
-          id: newId(),
+          id: existing?.id ?? newId(),
           title: title,
-          status: TaskStatus.todo,
+          status: selectedStatus,
           priority: selectedPriority,
-          dueLabel: dueController.text.trim().isEmpty ? null : dueController.text.trim(),
+          dueLabel: due.isEmpty ? null : due,
+          progressPercent: progress,
         ));
         if (context.mounted) Navigator.of(context).pop();
       },
     );
   }
+
+  static String statusLabel(TaskStatus s) => switch (s) {
+        TaskStatus.todo => 'ต้องทำ',
+        TaskStatus.inProgress => 'กำลังทำ',
+        TaskStatus.done => 'เสร็จแล้ว',
+      };
 
   static String _priorityLabel(TaskPriority p) => switch (p) {
         TaskPriority.urgent => 'ด่วน',
@@ -84,7 +126,7 @@ class WorkScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     const Expanded(child: Text('งานประจำ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4))),
                     GestureDetector(
-                      onTap: () => _openAddForm(context, repo),
+                      onTap: () => _openTaskForm(context, repo),
                       child: Container(
                         width: 40,
                         height: 40,
@@ -110,18 +152,36 @@ class WorkScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 if (todo.isEmpty) const _EmptyHint('ยังไม่มีงานที่ต้องทำ'),
                 for (final t in todo)
-                  _TaskCard(task: t, onToggle: () => repo.put(t.copyWith(status: TaskStatus.done)), onDelete: () => repo.delete(t.id)),
+                  _TaskCard(
+                    task: t,
+                    onToggle: () => repo.put(t.copyWith(status: TaskStatus.done)),
+                    onEdit: () => _openTaskForm(context, repo, existing: t),
+                    onDelete: () => repo.delete(t.id),
+                  ),
                 const SizedBox(height: 12),
                 const _Label('กำลังดำเนินการ'),
                 const SizedBox(height: 10),
                 if (inProgress.isEmpty) const _EmptyHint('ไม่มีงานที่กำลังดำเนินการ'),
                 for (final t in inProgress)
-                  _TaskCard(task: t, highlighted: true, onToggle: () => repo.put(t.copyWith(status: TaskStatus.done)), onDelete: () => repo.delete(t.id)),
+                  _TaskCard(
+                    task: t,
+                    highlighted: true,
+                    onToggle: () => repo.put(t.copyWith(status: TaskStatus.done)),
+                    onEdit: () => _openTaskForm(context, repo, existing: t),
+                    onDelete: () => repo.delete(t.id),
+                  ),
                 const SizedBox(height: 12),
                 const _Label('เสร็จแล้ว'),
                 const SizedBox(height: 10),
                 if (done.isEmpty) const _EmptyHint('ยังไม่มีงานที่เสร็จ'),
-                for (final t in done) _TaskCard(task: t, done: true, onToggle: () => repo.put(t.copyWith(status: TaskStatus.todo)), onDelete: () => repo.delete(t.id)),
+                for (final t in done)
+                  _TaskCard(
+                    task: t,
+                    done: true,
+                    onToggle: () => repo.put(t.copyWith(status: TaskStatus.todo)),
+                    onEdit: () => _openTaskForm(context, repo, existing: t),
+                    onDelete: () => repo.delete(t.id),
+                  ),
               ],
             );
           },
@@ -187,6 +247,7 @@ class _TaskCard extends StatelessWidget {
   final bool highlighted;
   final bool done;
   final VoidCallback onToggle;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _TaskCard({
@@ -194,6 +255,7 @@ class _TaskCard extends StatelessWidget {
     this.highlighted = false,
     this.done = false,
     required this.onToggle,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -202,6 +264,11 @@ class _TaskCard extends StatelessWidget {
     return Dismissible(
       key: ValueKey(task.id),
       direction: DismissDirection.endToStart,
+      confirmDismiss: (_) => confirmDeleteDialog(
+        context,
+        title: 'ลบงานนี้?',
+        message: '“${task.title}” จะถูกลบออกจากรายการงาน',
+      ),
       onDismissed: (_) => onDelete(),
       background: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -272,6 +339,8 @@ class _TaskCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 4),
+                RowEditButton(onTap: onEdit),
               ],
             ),
           ),

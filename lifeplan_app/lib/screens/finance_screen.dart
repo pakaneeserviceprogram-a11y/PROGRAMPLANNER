@@ -15,16 +15,29 @@ import '../widgets/section_heading.dart';
 class FinanceScreen extends StatelessWidget {
   const FinanceScreen({super.key});
 
-  Future<void> _openAddForm(BuildContext context, FinanceRepository repo) async {
-    final titleController = TextEditingController();
-    final amountController = TextEditingController();
-    TransactionType selectedType = TransactionType.expense;
-    ExpenseCategory selectedCategory = ExpenseCategory.other;
+  static String _amountText(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+
+  /// ฟอร์มเดียวใช้ทั้งเพิ่มรายการใหม่ (existing = null) และแก้ไขรายการเดิม
+  Future<void> _openTransactionForm(BuildContext context, FinanceRepository repo, {FinanceTransaction? existing}) async {
+    final titleController = TextEditingController(text: existing?.title);
+    final amountController = TextEditingController(text: existing != null ? _amountText(existing.amount) : null);
+    TransactionType selectedType = existing?.type ?? TransactionType.expense;
+    ExpenseCategory selectedCategory = existing?.category ?? ExpenseCategory.other;
 
     await showAppFormSheet(
       context: context,
-      title: 'เพิ่มรายการ',
+      title: existing == null ? 'เพิ่มรายการ' : 'แก้ไขรายการ',
       submitLabel: 'บันทึก',
+      footerBuilder: existing == null
+          ? null
+          : (sheetCtx) => FormDeleteButton(
+                pageContext: context,
+                label: 'ลบรายการนี้',
+                confirmTitle: 'ลบรายการนี้?',
+                confirmMessage: '“${existing.title}” ฿${_amountText(existing.amount)} จะถูกลบออกจากบันทึกการเงิน',
+                doneMessage: 'ลบ “${existing.title}” แล้ว',
+                onDelete: () => repo.delete(existing.id),
+              ),
       bodyBuilder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,15 +68,16 @@ class FinanceScreen extends StatelessWidget {
       ),
       onSubmit: () async {
         final title = titleController.text.trim();
-        final amount = double.tryParse(amountController.text.trim()) ?? 0;
+        final amount = double.tryParse(amountController.text.replaceAll(',', '').trim()) ?? 0;
         if (title.isEmpty || amount <= 0) return;
         await repo.put(FinanceTransaction(
-          id: newId(),
+          id: existing?.id ?? newId(),
           title: title,
-          date: DateTime.now(),
+          // แก้ไขแล้วยังอยู่ที่วันเดิม ไม่เด้งขึ้นไปเป็น "วันนี้"
+          date: existing?.date ?? DateTime.now(),
           amount: amount,
           type: selectedType,
-          category: selectedCategory,
+          category: selectedType == TransactionType.income ? ExpenseCategory.other : selectedCategory,
         ));
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -107,7 +121,7 @@ class FinanceScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     const Expanded(child: Text('การเงิน', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4))),
                     GestureDetector(
-                      onTap: () => _openAddForm(context, repo),
+                      onTap: () => _openTransactionForm(context, repo),
                       child: Container(
                         width: 40,
                         height: 40,
@@ -209,6 +223,11 @@ class FinanceScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SectionHeading(title: 'รายการล่าสุด'),
+                      if (txs.isNotEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 4),
+                          child: Text('แตะรายการเพื่อแก้ไขหรือลบ', style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
+                        ),
                       const SizedBox(height: 6),
                       if (txs.isEmpty)
                         const Padding(
@@ -218,7 +237,7 @@ class FinanceScreen extends StatelessWidget {
                       else
                         for (final t in txs.take(10)) ...[
                           const Divider(height: 24, color: AppColors.border),
-                          _TransactionRow(tx: t),
+                          _TransactionRow(tx: t, onTap: () => _openTransactionForm(context, repo, existing: t)),
                         ],
                     ],
                   ),
@@ -268,44 +287,49 @@ class _BudgetRow extends StatelessWidget {
 
 class _TransactionRow extends StatelessWidget {
   final FinanceTransaction tx;
+  final VoidCallback onTap;
 
-  const _TransactionRow({required this.tx});
+  const _TransactionRow({required this.tx, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isIncome = tx.type == TransactionType.income;
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: isIncome ? AppColors.exerciseSoft : AppColors.crmSoft,
-            borderRadius: BorderRadius.circular(11),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isIncome ? AppColors.exerciseSoft : AppColors.crmSoft,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              isIncome ? Icons.trending_up_rounded : Icons.receipt_long_rounded,
+              size: 17,
+              color: isIncome ? AppColors.exercise : AppColors.crm,
+            ),
           ),
-          alignment: Alignment.center,
-          child: Icon(
-            isIncome ? Icons.trending_up_rounded : Icons.receipt_long_rounded,
-            size: 17,
-            color: isIncome ? AppColors.exercise : AppColors.crm,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(tx.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text(tx.dateLabel, style: const TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(tx.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 2),
-              Text(tx.dateLabel, style: const TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
-            ],
+          Text(
+            '${isIncome ? '+' : '-'}฿${tx.amount.toStringAsFixed(0)}',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isIncome ? const Color(0xFF2E8B4E) : const Color(0xFFC0432A)),
           ),
-        ),
-        Text(
-          '${isIncome ? '+' : '-'}฿${tx.amount.toStringAsFixed(0)}',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isIncome ? const Color(0xFF2E8B4E) : const Color(0xFFC0432A)),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

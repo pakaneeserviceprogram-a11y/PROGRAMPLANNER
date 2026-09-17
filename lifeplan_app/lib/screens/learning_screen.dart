@@ -23,30 +23,49 @@ class LearningScreen extends StatelessWidget {
     Icons.psychology_rounded,
   ];
 
-  Future<void> _openAddForm(BuildContext context, SkillTrackRepository repo) async {
-    final nameController = TextEditingController();
-    final subtitleController = TextEditingController();
+  /// ฟอร์มเดียวใช้ทั้งเพิ่มเส้นทางใหม่ (existing = null) และแก้ไขเส้นทางเดิม
+  Future<void> _openTrackForm(BuildContext context, SkillTrackRepository repo, {SkillTrack? existing}) async {
+    final nameController = TextEditingController(text: existing?.name);
+    final subtitleController = TextEditingController(text: existing?.subtitle);
+    final progressController = TextEditingController(text: existing != null ? '${existing.progressPercent}' : null);
 
     await showAppFormSheet(
       context: context,
-      title: 'เพิ่มเส้นทางการเรียนรู้',
+      title: existing == null ? 'เพิ่มเส้นทางการเรียนรู้' : 'แก้ไขเส้นทางการเรียนรู้',
       submitLabel: 'บันทึก',
+      footerBuilder: existing == null
+          ? null
+          : (sheetCtx) => FormDeleteButton(
+                pageContext: context,
+                label: 'ลบเส้นทางนี้',
+                confirmTitle: 'ลบเส้นทางการเรียนรู้นี้?',
+                confirmMessage: '“${existing.name}” และความคืบหน้าที่บันทึกไว้จะถูกลบ (สตรีคการเรียนรู้ไม่หาย)',
+                doneMessage: 'ลบ “${existing.name}” แล้ว',
+                onDelete: () => repo.delete(existing.id),
+              ),
       bodyBuilder: (ctx) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AuthField(label: 'ชื่อสกิล', hint: 'เช่น ภาษาญี่ปุ่น', controller: nameController),
           const SizedBox(height: 14),
           AuthField(label: 'รายละเอียด', hint: 'เช่น ระดับเริ่มต้น', controller: subtitleController),
+          if (existing != null) ...[
+            const SizedBox(height: 14),
+            AuthField(label: 'ความคืบหน้า (%)', hint: '0–100', controller: progressController, keyboardType: TextInputType.number),
+          ],
         ],
       ),
       onSubmit: () async {
         final name = nameController.text.trim();
         if (name.isEmpty) return;
+        final subtitle = subtitleController.text.trim();
+        final progress = int.tryParse(progressController.text.trim()) ?? existing?.progressPercent ?? 0;
         await repo.put(SkillTrack(
-          id: newId(),
+          id: existing?.id ?? newId(),
           name: name,
-          subtitle: subtitleController.text.trim().isEmpty ? 'เพิ่งเริ่มต้น' : subtitleController.text.trim(),
-          progressPercent: 0,
+          subtitle: subtitle.isEmpty ? 'เพิ่งเริ่มต้น' : subtitle,
+          progressPercent: progress.clamp(0, 100),
+          isPrimary: existing?.isPrimary ?? false,
         ));
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -123,7 +142,7 @@ class LearningScreen extends StatelessWidget {
                       children: [
                         const Text('เส้นทางการเรียนรู้ของฉัน', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                         GestureDetector(
-                          onTap: () => _openAddForm(context, skillRepo),
+                          onTap: () => _openTrackForm(context, skillRepo),
                           child: Container(
                             width: 34,
                             height: 34,
@@ -134,6 +153,11 @@ class LearningScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (tracks.isNotEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text('แตะการ์ดเพื่อแก้ไขหรือลบ', style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
+                      ),
                     const SizedBox(height: 12),
                     if (tracks.isEmpty)
                       const Padding(
@@ -145,6 +169,7 @@ class LearningScreen extends StatelessWidget {
                         _SkillCard(
                           track: tracks[i],
                           icon: _icons[i % _icons.length],
+                          onEdit: () => _openTrackForm(context, skillRepo, existing: tracks[i]),
                           onContinue: () async {
                             await skillRepo.put(tracks[i].copyWith(progressPercent: (tracks[i].progressPercent + 4).clamp(0, 100)));
                             await streakRepo.logSessionToday();
@@ -191,62 +216,67 @@ class _SkillCard extends StatelessWidget {
   final SkillTrack track;
   final IconData icon;
   final VoidCallback onContinue;
+  final VoidCallback onEdit;
 
-  const _SkillCard({required this.track, required this.icon, required this.onContinue});
+  const _SkillCard({required this.track, required this.icon, required this.onContinue, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: track.isPrimary ? AppColors.learningSoft : AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  IconTile(
-                    icon: icon,
-                    background: track.isPrimary ? AppColors.learning : AppColors.learningSoft,
-                    foreground: track.isPrimary ? Colors.white : AppColors.learning,
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(track.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
-                      Text(track.subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                    ],
-                  ),
-                ],
-              ),
-              GestureDetector(
-                onTap: track.progressPercent >= 100 ? null : onContinue,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: track.progressPercent >= 100 ? AppColors.surface2 : AppColors.learning,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    track.progressPercent >= 100 ? 'ครบแล้ว' : 'เรียนต่อ',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: track.progressPercent >= 100 ? AppColors.textMuted : Colors.white),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onEdit,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: track.isPrimary ? AppColors.learningSoft : AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    IconTile(
+                      icon: icon,
+                      background: track.isPrimary ? AppColors.learning : AppColors.learningSoft,
+                      foreground: track.isPrimary ? Colors.white : AppColors.learning,
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(track.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 2),
+                        Text(track.subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                      ],
+                    ),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: track.progressPercent >= 100 ? null : onContinue,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: track.progressPercent >= 100 ? AppColors.surface2 : AppColors.learning,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      track.progressPercent >= 100 ? 'ครบแล้ว' : 'เรียนต่อ',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: track.progressPercent >= 100 ? AppColors.textMuted : Colors.white),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ProgressTrack(value: track.progressPercent / 100, color: AppColors.learning),
-        ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            ProgressTrack(value: track.progressPercent / 100, color: AppColors.learning),
+          ],
+        ),
       ),
     );
   }
