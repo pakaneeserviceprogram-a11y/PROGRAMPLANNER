@@ -980,6 +980,8 @@ class _MonthChart extends StatelessWidget {
     final maxMinutes = history.maxMinutes > targetMinutes ? history.maxMinutes : targetMinutes;
     const chartHeight = 86.0;
     final targetRatio = maxMinutes == 0 ? 0.0 : targetMinutes / maxMinutes;
+    // เป้าอยู่สูงกว่าทุกคืน = เส้นไปทับขอบบนพอดี ซ่อนไปเลยดีกว่าให้ดูเหมือนขอบกราฟ
+    final showTargetLine = maxMinutes > targetMinutes;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -988,13 +990,15 @@ class _MonthChart extends StatelessWidget {
           height: chartHeight,
           child: Stack(
             children: [
-              // เส้นเป้าหมาย วางใต้แท่งเพื่อให้ยังอ่านแท่งได้ชัด
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: chartHeight * targetRatio,
-                child: Container(height: 1, color: AppColors.border),
-              ),
+              // เส้นเป้าหมาย วางใต้แท่งเพื่อให้ยังอ่านแท่งได้ชัด — ใช้สีหลักให้ต่างจาก
+              // ขีดจางของคืนที่ยังไม่ได้บันทึก ไม่งั้นจะดูเป็นเส้นเดียวกัน
+              if (showTargetLine)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: chartHeight * targetRatio,
+                  child: Container(height: 1, color: AppColors.primary.withValues(alpha: 0.45)),
+                ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: history.nights.map((n) {
@@ -1021,7 +1025,10 @@ class _MonthChart extends StatelessWidget {
           children: [
             Text(_dayLabel(history.nights.first.date),
                 style: const TextStyle(fontSize: 10, color: AppColors.textFaint)),
-            Text('เส้นแบ่ง = เป้า ${(targetMinutes / 60).toStringAsFixed(targetMinutes % 60 == 0 ? 0 : 1)} ชม.',
+            Text(
+                showTargetLine
+                    ? 'เส้นน้ำเงิน = เป้า ${(targetMinutes / 60).toStringAsFixed(targetMinutes % 60 == 0 ? 0 : 1)} ชม.'
+                    : 'ขีดจาง = คืนที่ยังไม่ได้บันทึก',
                 style: const TextStyle(fontSize: 10, color: AppColors.textFaint)),
             Text(_dayLabel(history.nights.last.date),
                 style: const TextStyle(fontSize: 10, color: AppColors.textFaint)),
