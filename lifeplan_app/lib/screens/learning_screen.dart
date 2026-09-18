@@ -12,6 +12,7 @@ import '../widgets/form_sheet.dart';
 import '../widgets/icon_tile.dart';
 import '../widgets/progress_track.dart';
 import '../widgets/section_heading.dart';
+import 'learning_videos_screen.dart';
 
 class LearningScreen extends StatelessWidget {
   const LearningScreen({super.key});
@@ -176,6 +177,44 @@ class LearningScreen extends StatelessWidget {
                           },
                         ),
                     const SizedBox(height: 4),
+                    GestureDetector(
+                      key: const ValueKey('open-video-search'),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const LearningVideosScreen()),
+                      ),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            IconTile(
+                              icon: Icons.smart_display_rounded,
+                              background: AppColors.learningSoft,
+                              foreground: AppColors.learning,
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('ค้นคลิปความรู้บน YouTube',
+                                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                                  SizedBox(height: 2),
+                                  Text('การเงิน • หุ้น • การออม • ประกัน • สุขภาพ',
+                                      style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+                          ],
+                        ),
+                      ),
+                    ),
                     AppCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
