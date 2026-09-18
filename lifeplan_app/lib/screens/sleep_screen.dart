@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'dart:async';
+
+import '../data/bedtime_reminder.dart';
 import '../data/insights.dart';
+import '../data/notifications.dart';
+import '../data/repositories/schedule_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
 import '../data/repositories/sleep_repository.dart';
 import '../models/goal_settings.dart';
@@ -292,6 +297,9 @@ class SleepScreen extends StatelessWidget {
                           style: TextStyle(fontSize: 12.5, color: AppColors.textFaint))
                       : _WeekChart(nights: recent, targetMinutes: goals.sleepTargetMinutes),
                 ),
+                const SizedBox(height: 16),
+
+                _BedtimeReminderCard(nights: recent, goals: goals),
                 const SizedBox(height: 16),
 
                 AppCard(
@@ -743,6 +751,118 @@ class _FactorChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// เปิด/ปิดการเตือน "ถึงเวลาเข้านอน" — เวลาแนะนำมาจากเวลาตื่นเฉลี่ยจริงลบเป้าเวลานอน
+///
+/// เบื้องหลังคือกิจกรรมประจำสัปดาห์ 7 รายการในตารางเวลา จึงใช้ระบบเตือนเดิมทั้งหมด
+class _BedtimeReminderCard extends StatefulWidget {
+  final List<SleepEntry> nights;
+  final GoalSettings goals;
+
+  const _BedtimeReminderCard({required this.nights, required this.goals});
+
+  @override
+  State<_BedtimeReminderCard> createState() => _BedtimeReminderCardState();
+}
+
+class _BedtimeReminderCardState extends State<_BedtimeReminderCard> {
+  final ScheduleRepository _schedule = ScheduleRepository();
+
+  void _syncReminders() {
+    // ตั้งเตือนใหม่ไม่สำเร็จไม่ควรทำให้การบันทึกล้ม — ข้อมูลลงตารางไปแล้ว
+    unawaited(NotificationService.syncScheduleReminders().catchError((Object e) {
+      debugPrint('ตั้งการแจ้งเตือนใหม่ไม่สำเร็จ: $e');
+      return 0;
+    }));
+  }
+
+  void _toast(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _turnOn(String time) async {
+    await BedtimeReminder.apply(_schedule, time);
+    _syncReminders();
+    _toast('ตั้งเตือนเข้านอน $time น. ทุกวันแล้ว');
+  }
+
+  Future<void> _turnOff() async {
+    await BedtimeReminder.remove(_schedule);
+    _syncReminders();
+    _toast('ปิดการเตือนเข้านอนแล้ว');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _schedule.listenable(),
+      builder: (context, _) {
+        final suggested = BedtimeReminder.suggestedTime(widget.nights, widget.goals);
+        final current = BedtimeReminder.currentTime(_schedule);
+        final on = current != null;
+        final targetHours = (widget.goals.sleepTargetMinutes / 60).toStringAsFixed(
+          widget.goals.sleepTargetMinutes % 60 == 0 ? 0 : 1,
+        );
+
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('เตือนให้เข้านอน',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 2),
+                        Text(
+                          on
+                              ? 'เตือนทุกวัน $current น. (เพิ่มในตารางเวลาให้แล้ว)'
+                              : suggested == null
+                                  ? 'บันทึกการนอนสักคืนก่อน เพื่อให้คำนวณเวลาจากเวลาตื่นจริงของคุณ'
+                                  : 'แนะนำ $suggested น. = ตื่นเฉลี่ยลบเป้า $targetHours ชม.',
+                          style: const TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: on,
+                    activeTrackColor: SleepScreen._category.color,
+                    onChanged: suggested == null && !on
+                        ? null
+                        : (v) => v ? _turnOn(suggested ?? current!) : _turnOff(),
+                  ),
+                ],
+              ),
+              // เวลาตื่นเฉลี่ยขยับเมื่อบันทึกคืนใหม่ — เสนอให้ปรับ แต่ไม่แก้ให้เองเงียบ ๆ
+              if (on && suggested != null && suggested != current) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => _turnOn(suggested),
+                    style: TextButton.styleFrom(
+                      foregroundColor: SleepScreen._category.color,
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(Icons.update_rounded, size: 18),
+                    label: Text('ปรับเป็น $suggested น. ตามการนอนล่าสุด',
+                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

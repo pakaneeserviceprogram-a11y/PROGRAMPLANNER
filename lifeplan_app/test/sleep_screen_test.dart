@@ -17,6 +17,8 @@ void main() {
     await Future.wait([
       Hive.openBox<Map>(HiveBoxes.sleepEntries, bytes: Uint8List(0)),
       Hive.openBox<Map>(HiveBoxes.goalSettings, bytes: Uint8List(0)),
+      // การ์ด "เตือนให้เข้านอน" เขียนลงตารางเวลา จึงต้องเปิด box นี้ด้วย
+      Hive.openBox<Map>(HiveBoxes.scheduleEvents, bytes: Uint8List(0)),
     ]);
   });
 
