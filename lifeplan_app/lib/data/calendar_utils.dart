@@ -47,6 +47,13 @@ class CalendarUtils {
   /// "16 กันยายน 2569" (พ.ศ.)
   static String thaiDate(DateTime d) => '${d.day} ${monthFull[d.month - 1]} ${d.year + 543}';
 
+  /// "25 ก.ย." — สั้นพอสำหรับแถวรายชื่อ (ปีบอกเฉพาะเมื่อไม่ใช่ปีนี้)
+  static String thaiDateShort(DateTime d, {DateTime? now}) {
+    final today = now ?? DateTime.now();
+    final base = '${d.day} ${monthShort[d.month - 1]}';
+    return d.year == today.year ? base : '$base ${d.year + 543}';
+  }
+
   /// "กันยายน 2569"
   static String thaiMonthYear(DateTime d) => '${monthFull[d.month - 1]} ${d.year + 543}';
 }

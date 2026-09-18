@@ -39,6 +39,8 @@ void main() {
         HiveBoxes.weeklyReports,
         HiveBoxes.goalSettings,
         HiveBoxes.userProfile,
+        // หน้าลูกค้าอ่านนัดถัดไปจากตารางเวลา
+        HiveBoxes.scheduleEvents,
       ])
         Hive.openBox<Map>(name, bytes: Uint8List(0)),
     ]);

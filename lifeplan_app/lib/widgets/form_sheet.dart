@@ -137,6 +137,45 @@ class RowEditButton extends StatelessWidget {
   }
 }
 
+/// ช่องกดเลือกค่า (วันที่/เวลา) หน้าตาเดียวกับ AuthField แต่เปิด picker แทนคีย์บอร์ด
+class PickerBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const PickerBox({super.key, required this.label, required this.value, required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+        const SizedBox(height: 7),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.border, width: 1.5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 17, color: AppColors.textFaint),
+                const SizedBox(width: 10),
+                Expanded(child: Text(value, style: const TextStyle(fontSize: 14, color: AppColors.text))),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Small labeled dropdown matching the AuthField visual language.
 class LabeledDropdown<T> extends StatelessWidget {
   final String label;

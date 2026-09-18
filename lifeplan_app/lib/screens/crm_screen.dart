@@ -1,12 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../data/calendar_utils.dart';
 import '../data/id_gen.dart';
+import '../data/notifications.dart';
+import '../data/repositories/schedule_repository.dart';
 import '../data/repositories/client_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
 import '../data/repositories/user_repository.dart';
 import '../data/repositories/weekly_report_repository.dart';
 import '../models/client.dart';
+import '../models/life_category.dart';
+import '../models/schedule_event.dart';
 import '../models/weekly_report.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_card.dart';
@@ -38,6 +45,82 @@ class CrmScreen extends StatelessWidget {
     return clean.isEmpty ? '?' : clean.characters.take(2).toString();
   }
 
+  /// นัดลูกค้า = กิจกรรมเฉพาะวันที่ในตารางเวลา ที่ผูก `clientId` ไว้
+  /// จึงได้การแจ้งเตือน/ป๊อปอัปเหมือนกิจกรรมอื่น และหน้าลูกค้าดึงนัดถัดไปมาโชว์ได้
+  Future<void> _openAppointmentForm(BuildContext context, Client client) async {
+    final scheduleRepo = ScheduleRepository();
+    final noteController = TextEditingController(text: client.policyLabel.split(' • ').first);
+    var selectedDate = CalendarUtils.dateOnly(DateTime.now());
+    var selectedTime = const TimeOfDay(hour: 10, minute: 0);
+
+    String timeText(TimeOfDay t) =>
+        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+    await showAppFormSheet(
+      context: context,
+      title: 'นัดหมาย ${client.name}',
+      submitLabel: 'เพิ่มลงตารางเวลา',
+      bodyBuilder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            PickerBox(
+              key: const ValueKey('appointment-date-field'),
+              label: 'วันที่',
+              icon: Icons.event_rounded,
+              value: 'วัน${CalendarUtils.weekdayFull[selectedDate.weekday - 1]}ที่ ${CalendarUtils.thaiDate(selectedDate)}',
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: ctx,
+                  initialDate: selectedDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (picked != null) setState(() => selectedDate = CalendarUtils.dateOnly(picked));
+              },
+            ),
+            const SizedBox(height: 14),
+            PickerBox(
+              key: const ValueKey('appointment-time-field'),
+              label: 'เวลา',
+              icon: Icons.schedule_rounded,
+              value: timeText(selectedTime),
+              onTap: () async {
+                final picked = await showTimePicker(context: ctx, initialTime: selectedTime);
+                if (picked != null) setState(() => selectedTime = picked);
+              },
+            ),
+            const SizedBox(height: 14),
+            AuthField(label: 'รายละเอียด (ไม่บังคับ)', hint: 'เช่น นำเสนอแผนประกันสุขภาพ', controller: noteController),
+          ],
+        ),
+      ),
+      onSubmit: () async {
+        final note = noteController.text.trim();
+        await scheduleRepo.put(ScheduleEvent.oneOff(
+          id: newId(),
+          time: timeText(selectedTime),
+          date: selectedDate,
+          title: 'นัด ${client.name}',
+          subtitle: note.isEmpty ? null : note,
+          category: LifeCategory.crm,
+          clientId: client.id,
+        ));
+        // ตั้งเตือนใหม่ไม่สำเร็จไม่ควรทำให้การบันทึกล้ม — นัดลงตารางไปแล้ว
+        unawaited(NotificationService.syncScheduleReminders().catchError((Object e) {
+          debugPrint('ตั้งการแจ้งเตือนใหม่ไม่สำเร็จ: $e');
+          return 0;
+        }));
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('นัด ${client.name} ${CalendarUtils.thaiDate(selectedDate)} ${timeText(selectedTime)} น. แล้ว')),
+          );
+        }
+      },
+    );
+  }
+
   static String _moneyText(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
 
   /// ฟอร์มเดียวใช้ทั้งเพิ่มลูกค้าใหม่ (existing = null) และแก้ไขลูกค้าเดิม
@@ -56,13 +139,32 @@ class CrmScreen extends StatelessWidget {
       submitLabel: 'บันทึก',
       footerBuilder: existing == null
           ? null
-          : (sheetCtx) => FormDeleteButton(
-                pageContext: context,
-                label: 'ลบลูกค้ารายนี้',
-                confirmTitle: 'ลบลูกค้ารายนี้?',
-                confirmMessage: '“${existing.name}” จะถูกลบออกจากรายชื่อ (รายงานประจำสัปดาห์ไม่หาย)',
-                doneMessage: 'ลบ “${existing.name}” แล้ว',
-                onDelete: () => repo.delete(existing.id),
+          : (sheetCtx) => Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        Navigator.of(sheetCtx).pop();
+                        await _openAppointmentForm(context, existing);
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.crm,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.event_rounded, size: 20),
+                      label: const Text('นัดหมายลูกค้ารายนี้', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                  FormDeleteButton(
+                    pageContext: context,
+                    label: 'ลบลูกค้ารายนี้',
+                    confirmTitle: 'ลบลูกค้ารายนี้?',
+                    confirmMessage: '“${existing.name}” จะถูกลบออกจากรายชื่อ (รายงานประจำสัปดาห์ไม่หาย)',
+                    doneMessage: 'ลบ “${existing.name}” แล้ว',
+                    onDelete: () => repo.delete(existing.id),
+                  ),
+                ],
               ),
       bodyBuilder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => Column(
@@ -114,12 +216,13 @@ class CrmScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final repo = ClientRepository();
     final goalsRepo = GoalSettingsRepository();
+    final scheduleRepo = ScheduleRepository();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
         child: AnimatedBuilder(
-          animation: Listenable.merge([repo.listenable(), goalsRepo.listenable()]),
+          animation: Listenable.merge([repo.listenable(), goalsRepo.listenable(), scheduleRepo.listenable()]),
           builder: (context, _) {
             final goals = goalsRepo.get();
             final clients = repo.getAll();
@@ -196,7 +299,7 @@ class CrmScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 const Padding(
                   padding: EdgeInsets.only(bottom: 8),
-                  child: Text('แตะที่รายชื่อเพื่อเลื่อนสถานะไปขั้นถัดไป • กดรูปดินสอเพื่อแก้ไขหรือลบ', style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
+                  child: Text('แตะที่รายชื่อเพื่อเลื่อนสถานะไปขั้นถัดไป • กดรูปดินสอเพื่อแก้ไข ลบ หรือนัดหมาย', style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
                 ),
                 if (clients.isEmpty)
                   const Padding(
@@ -218,6 +321,7 @@ class CrmScreen extends StatelessWidget {
                           _ClientRow(
                             client: clients[i],
                             color: _avatarColor(clients[i].stage),
+                            nextAppointment: scheduleRepo.nextForClient(clients[i].id),
                             onTap: () => repo.put(clients[i].copyWith(stage: clients[i].stage.next)),
                             onEdit: () => _openClientForm(context, repo, existing: clients[i]),
                           ),
@@ -258,7 +362,16 @@ class _ClientRow extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
 
-  const _ClientRow({required this.client, required this.color, required this.onTap, required this.onEdit});
+  /// นัดถัดไปของลูกค้ารายนี้ (null = ยังไม่มีนัด)
+  final ScheduleEvent? nextAppointment;
+
+  const _ClientRow({
+    required this.client,
+    required this.color,
+    required this.onTap,
+    required this.onEdit,
+    this.nextAppointment,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -283,6 +396,23 @@ class _ClientRow extends StatelessWidget {
                   Text(client.name, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 2),
                   Text(client.policyLabel, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                  if (nextAppointment != null) ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(Icons.event_rounded, size: 13, color: AppColors.crm),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'นัด ${CalendarUtils.thaiDateShort(nextAppointment!.date!)} ${nextAppointment!.time} น.',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.crm),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

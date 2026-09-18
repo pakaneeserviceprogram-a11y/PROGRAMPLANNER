@@ -43,6 +43,23 @@ class ScheduleRepository extends HiveRepository<ScheduleEvent> {
     return items;
   }
 
+  /// นัดหมายของลูกค้ารายนี้ที่ยังมาไม่ถึง (รวมวันนี้) เรียงจากใกล้ที่สุด
+  List<ScheduleEvent> upcomingForClient(String clientId, {DateTime? from}) {
+    final today = from ?? DateTime.now();
+    final start = DateTime(today.year, today.month, today.day);
+    final items = getAll()
+        .where((e) => e.clientId == clientId && e.date != null && !e.date!.isBefore(start))
+        .toList();
+    items.sort((a, b) => a.date! != b.date! ? a.date!.compareTo(b.date!) : a.time.compareTo(b.time));
+    return items;
+  }
+
+  /// นัดถัดไปของลูกค้ารายนี้ — ยังไม่มีนัด = null
+  ScheduleEvent? nextForClient(String clientId, {DateTime? from}) {
+    final items = upcomingForClient(clientId, from: from);
+    return items.isEmpty ? null : items.first;
+  }
+
   /// ทุกวันในชุดเดียวกับ [event] (รวมตัวมันเอง) เรียงจันทร์ → อาทิตย์
   ///
   /// นัดหมายเฉพาะวันที่ไม่มีชุด คืนแค่ตัวมันเอง

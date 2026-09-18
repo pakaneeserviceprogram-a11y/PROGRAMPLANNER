@@ -21,6 +21,8 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.weeklyReports, bytes: Uint8List(0)),
       Hive.openBox<Map>(HiveBoxes.goalSettings, bytes: Uint8List(0)),
       Hive.openBox<Map>(HiveBoxes.userProfile, bytes: Uint8List(0)),
+      // หน้าลูกค้าอ่านนัดถัดไปจากตารางเวลา จึงต้องเปิด box นี้ด้วย
+      Hive.openBox<Map>(HiveBoxes.scheduleEvents, bytes: Uint8List(0)),
     ]);
 
     thisWeek = WeeklyReport.startOfWeek(DateTime.now());

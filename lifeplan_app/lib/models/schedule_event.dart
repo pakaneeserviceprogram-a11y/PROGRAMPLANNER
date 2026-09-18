@@ -17,6 +17,11 @@ class ScheduleEvent {
   /// ถ้ามีค่า [weekday] ต้องตรงกับ `date.weekday` เสมอ (ใช้ [ScheduleEvent.oneOff] สร้าง)
   final DateTime? date;
 
+  /// นัดหมายที่สร้างจากหน้าลูกค้า — id ของ `Client` ที่นัด (null = กิจกรรมทั่วไป)
+  ///
+  /// ผูกด้วย id ไม่ใช่ชื่อ เพราะผู้ใช้เปลี่ยนชื่อลูกค้าได้ (ตรงกับ `linkedEntityId` ใน DATA_MODEL)
+  final String? clientId;
+
   const ScheduleEvent({
     required this.id,
     required this.time,
@@ -26,6 +31,7 @@ class ScheduleEvent {
     required this.category,
     this.seriesId,
     this.date,
+    this.clientId,
   });
 
   /// นัดหมายครั้งเดียวในวันที่ [date] — ตั้ง weekday ให้ตรงกับวันที่ให้เอง
@@ -36,6 +42,7 @@ class ScheduleEvent {
     required String title,
     String? subtitle,
     required LifeCategory category,
+    String? clientId,
   }) =>
       ScheduleEvent(
         id: id,
@@ -45,6 +52,7 @@ class ScheduleEvent {
         subtitle: subtitle,
         category: category,
         date: DateTime(date.year, date.month, date.day),
+        clientId: clientId,
       );
 
   bool get isOneOff => date != null;
@@ -71,6 +79,7 @@ class ScheduleEvent {
     String? seriesId,
     DateTime? date,
     bool clearDate = false,
+    String? clientId,
   }) =>
       ScheduleEvent(
         id: id ?? this.id,
@@ -81,6 +90,7 @@ class ScheduleEvent {
         category: category ?? this.category,
         seriesId: seriesId ?? this.seriesId,
         date: clearDate ? null : (date ?? this.date),
+        clientId: clientId ?? this.clientId,
       );
 
   Map<String, dynamic> toMap() => {
@@ -92,6 +102,7 @@ class ScheduleEvent {
         'category': category.name,
         'seriesId': seriesId,
         'date': date == null ? null : _dateKey(date!),
+        'clientId': clientId,
       };
 
   /// "yyyy-MM-dd" — เก็บเป็นวันล้วน ไม่มีโซนเวลามาทำให้วันเลื่อน
@@ -117,6 +128,7 @@ class ScheduleEvent {
       category: LifeCategory.values.firstWhere((e) => e.name == map['category'], orElse: () => LifeCategory.work),
       seriesId: map['seriesId'] as String?,
       date: date,
+      clientId: map['clientId'] as String?,
     );
   }
 }
