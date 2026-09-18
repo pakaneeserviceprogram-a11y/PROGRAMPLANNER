@@ -156,11 +156,12 @@ class NotificationService {
 
     final settings = AppSettingsRepository().get();
     await _prepareChannel(settings);
-    if (!settings.scheduleRemindersEnabled) return 0;
 
     final details = _detailsFor(settings);
+    var scheduled = await _scheduleWaterReminders(settings, details);
+    if (!settings.scheduleRemindersEnabled) return scheduled;
+
     final events = ScheduleRepository().getAll();
-    var scheduled = 0;
     for (var i = 0; i < events.length; i++) {
       final when = _nextOccurrence(events[i], settings.remindMinutesBefore);
       if (when == null) continue;
@@ -179,6 +180,49 @@ class NotificationService {
       scheduled++;
     }
     return scheduled;
+  }
+
+  /// ช่วง id ของการเตือนดื่มน้ำ — แยกจากตารางเวลา (0..จำนวนกิจกรรม) และจากการเลื่อนเตือน (5000+)
+  static const _waterIdBase = 7000;
+
+  /// เตือนดื่มน้ำเป็นการแจ้งเตือนรายวันตรง ๆ ไม่ผ่านตารางเวลา (กันตารางรก)
+  ///
+  /// เป็นอิสระจากสวิตช์ "เตือนตามตารางเวลา" — ผู้ใช้เปิดเฉพาะเตือนน้ำอย่างเดียวได้
+  static Future<int> _scheduleWaterReminders(AppSettings settings, NotificationDetails details) async {
+    final times = settings.waterReminderTimes;
+    var scheduled = 0;
+    for (var i = 0; i < times.length; i++) {
+      final when = nextDailyOccurrence(times[i]);
+      if (when == null) continue;
+
+      await _plugin.zonedSchedule(
+        id: _waterIdBase + i,
+        scheduledDate: when,
+        title: 'ถึงเวลาดื่มน้ำ',
+        body: 'จิบสักแก้วนะ แล้วกดบันทึกในหน้าโภชนาการได้เลย',
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        // ซ้ำทุกวันในเวลาเดิม
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      scheduled++;
+    }
+    return scheduled;
+  }
+
+  /// เวลาถัดไปของ "HH:mm" รายวัน (วันนี้ถ้ายังไม่ถึง ไม่งั้นพรุ่งนี้)
+  @visibleForTesting
+  static tz.TZDateTime? nextDailyOccurrence(String hhmm, {tz.TZDateTime? now}) {
+    final parts = hhmm.split(':');
+    if (parts.length != 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+
+    final current = now ?? tz.TZDateTime.now(tz.local);
+    var when = tz.TZDateTime(tz.local, current.year, current.month, current.day, hour, minute);
+    if (!when.isAfter(current)) when = when.add(const Duration(days: 1));
+    return when;
   }
 
   /// ช่วง id ของการเตือนซ้ำ — ต้องไม่ชนกับ id ของตารางประจำสัปดาห์ (0..จำนวนกิจกรรม)

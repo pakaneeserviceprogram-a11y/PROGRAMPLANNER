@@ -18,8 +18,14 @@ import '../widgets/back_button_circle.dart';
 import '../widgets/form_sheet.dart';
 import '../widgets/progress_track.dart';
 import '../widgets/section_heading.dart';
+import 'dart:async';
+
 import '../data/calendar_utils.dart';
+import '../data/meal_reminder.dart';
+import '../data/notifications.dart';
 import '../data/nutrition_history.dart';
+import '../data/repositories/app_settings_repository.dart';
+import '../models/app_settings.dart';
 
 /// โมดูลทานอาหาร & โภชนาการ — บันทึกมื้ออาหารพร้อมคุณค่าทางโภชนาการ
 /// (แคลอรี่ • โปรตีน • แป้ง • ไขมัน • น้ำตาล • วิตามิน), ติดตามการดื่มน้ำ
@@ -467,6 +473,9 @@ class NutritionScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+
+                const _RemindersCard(),
                 const SizedBox(height: 16),
 
                 // วิตามิน
@@ -932,6 +941,186 @@ class _HistoryStat extends StatelessWidget {
         Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
         const SizedBox(height: 2),
         Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted)),
+      ],
+    );
+  }
+}
+
+/// เปิด/ปิดการเตือนมื้ออาหารและดื่มน้ำ
+///
+/// มื้ออาหารเขียนเป็นกิจกรรมประจำสัปดาห์ในตารางเวลา (แก้/ลบในตารางได้เอง)
+/// ส่วนดื่มน้ำเป็นการแจ้งเตือนรายวันตรง ๆ เพราะเตือนถี่จนไม่ควรลงตาราง
+class _RemindersCard extends StatefulWidget {
+  const _RemindersCard();
+
+  @override
+  State<_RemindersCard> createState() => _RemindersCardState();
+}
+
+class _RemindersCardState extends State<_RemindersCard> {
+  final ScheduleRepository _schedule = ScheduleRepository();
+  final AppSettingsRepository _settings = AppSettingsRepository();
+
+  static const _intervalOptions = [1, 2, 3, 4];
+
+  void _syncReminders() {
+    // ตั้งเตือนใหม่ไม่สำเร็จไม่ควรทำให้การตั้งค่าล้ม — ค่าถูกบันทึกไปแล้ว
+    unawaited(NotificationService.syncScheduleReminders().catchError((Object e) {
+      debugPrint('ตั้งการแจ้งเตือนใหม่ไม่สำเร็จ: $e');
+      return 0;
+    }));
+  }
+
+  void _toast(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _toggleMeal(MealSlot slot, bool on) async {
+    if (on) {
+      await MealReminder.apply(_schedule, slot, slot.defaultTime);
+      _toast('เตือน${slot.label} ${slot.defaultTime} น. ทุกวันแล้ว');
+    } else {
+      await MealReminder.remove(_schedule, slot);
+      _toast('ปิดเตือน${slot.label}แล้ว');
+    }
+    _syncReminders();
+  }
+
+  Future<void> _pickMealTime(MealSlot slot, String current) async {
+    final parts = current.split(':');
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1])),
+    );
+    if (picked == null) return;
+    final time = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    await MealReminder.apply(_schedule, slot, time);
+    _syncReminders();
+    _toast('เตือน${slot.label} $time น. ทุกวันแล้ว');
+  }
+
+  Future<void> _saveWater(AppSettings next, String message) async {
+    await _settings.save(next);
+    _syncReminders();
+    _toast(message);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_schedule.listenable(), _settings.listenable()]),
+      builder: (context, _) {
+        final settings = _settings.get();
+        final waterTimes = settings.waterReminderTimes;
+
+        return AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SectionHeading(title: 'เตือนมื้ออาหาร & ดื่มน้ำ'),
+              const SizedBox(height: 4),
+              const Text('มื้ออาหารจะถูกเพิ่มเป็นกิจกรรมประจำในตารางเวลา แก้เวลาได้ทั้งที่นี่และในตาราง',
+                  style: TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textFaint)),
+              const SizedBox(height: 10),
+              for (final slot in MealSlot.values) ...[
+                _ReminderRow(
+                  label: slot.label,
+                  value: MealReminder.timeOf(_schedule, slot),
+                  emptyHint: 'ปิดอยู่',
+                  onValueTap: () {
+                    final current = MealReminder.timeOf(_schedule, slot);
+                    if (current != null) _pickMealTime(slot, current);
+                  },
+                  on: MealReminder.isOn(_schedule, slot),
+                  onChanged: (v) => _toggleMeal(slot, v),
+                ),
+                const Divider(height: 18, color: AppColors.border),
+              ],
+              _ReminderRow(
+                label: 'ดื่มน้ำ',
+                value: waterTimes.isEmpty ? null : '${waterTimes.first}–${waterTimes.last} น. • ${waterTimes.length} ครั้ง/วัน',
+                emptyHint: 'ปิดอยู่',
+                onValueTap: null,
+                on: settings.waterRemindersEnabled,
+                onChanged: (v) => _saveWater(
+                  settings.copyWith(waterRemindersEnabled: v),
+                  v ? 'เตือนดื่มน้ำทุก ${settings.waterIntervalHours} ชั่วโมงแล้ว' : 'ปิดเตือนดื่มน้ำแล้ว',
+                ),
+              ),
+              if (settings.waterRemindersEnabled) ...[
+                const SizedBox(height: 10),
+                LabeledDropdown<int>(
+                  label: 'เตือนทุกกี่ชั่วโมง',
+                  value: _intervalOptions.contains(settings.waterIntervalHours) ? settings.waterIntervalHours : 2,
+                  options: _intervalOptions,
+                  display: (h) => 'ทุก $h ชั่วโมง',
+                  onChanged: (v) => _saveWater(
+                    settings.copyWith(waterIntervalHours: v),
+                    'เตือนดื่มน้ำทุก $v ชั่วโมงแล้ว',
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ReminderRow extends StatelessWidget {
+  final String label;
+
+  /// null = ยังไม่ได้เปิด
+  final String? value;
+  final String emptyHint;
+  final VoidCallback? onValueTap;
+  final bool on;
+  final ValueChanged<bool> onChanged;
+
+  const _ReminderRow({
+    required this.label,
+    required this.value,
+    required this.emptyHint,
+    required this.onValueTap,
+    required this.on,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              GestureDetector(
+                onTap: value == null ? null : onValueTap,
+                child: Row(
+                  children: [
+                    Text(
+                      value ?? emptyHint,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: value == null ? AppColors.textFaint : AppColors.textMuted,
+                      ),
+                    ),
+                    if (value != null && onValueTap != null) ...[
+                      const SizedBox(width: 5),
+                      const Icon(Icons.edit_outlined, size: 13, color: AppColors.textFaint),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch(value: on, activeTrackColor: NutritionScreen._category.color, onChanged: onChanged),
       ],
     );
   }

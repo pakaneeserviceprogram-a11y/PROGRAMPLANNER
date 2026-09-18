@@ -35,6 +35,8 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.goalSettings, bytes: Uint8List(0)),
       Hive.openBox<Map>(HiveBoxes.exerciseItems, bytes: Uint8List(0)),
       Hive.openBox<Map>(HiveBoxes.scheduleEvents, bytes: Uint8List(0)),
+      // การ์ดเตือนมื้ออาหาร/ดื่มน้ำอ่านการตั้งค่าแอป
+      Hive.openBox<Map>(HiveBoxes.appSettings, bytes: Uint8List(0)),
     ]);
   });
 
