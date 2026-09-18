@@ -49,7 +49,20 @@ void main() {
 
     test('หัวข้อแนะนำครอบคลุมเรื่องที่ตั้งใจไว้ และไม่มีคำค้นซ้ำ', () {
       final labels = VideoSearch.topics.map((t) => t.label).toList();
-      expect(labels, containsAll(['การเงินส่วนบุคคล', 'การออม', 'วิเคราะห์หุ้น', 'ประกัน', 'สุขภาพ']));
+      expect(
+        labels,
+        containsAll([
+          'การเงินส่วนบุคคล',
+          'การออม',
+          'วิเคราะห์หุ้น',
+          'ประกัน',
+          'การตลาด & การขาย',
+          'สุขภาพ',
+          'ออกกำลังกาย',
+          'เรียนภาษา',
+          'บุคลิกภาพ & การพูด',
+        ]),
+      );
 
       for (final topic in VideoSearch.topics) {
         expect(topic.queries, isNotEmpty, reason: topic.label);
