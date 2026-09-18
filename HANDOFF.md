@@ -19,6 +19,7 @@
 - **`PickerBox`** ย้ายมาเป็น widget กลางใน `form_sheet.dart` (หน้าตาเดียวกับ AuthField แต่เปิด picker) + `CalendarUtils.thaiDateShort`
 - **ข้อควรจำ (test)**: เทสต์ที่ pump `CrmScreen` ต้องเปิด box `schedule_events` ด้วย (แก้ `crm_screen_test`/`edit_forms_test` แล้ว)
 - test ใหม่ `test/client_appointment_test.dart` (6 tests) — รวม **152 tests**
+- ทดสอบบน emulator แล้ว: กดดินสอ → "นัดหมายลูกค้ารายนี้" → เลือก 23 ก.ย. → บันทึก แล้วแถวลูกค้าขึ้น "นัด 23 ก.ย. 10:00 น." และตารางเวลาวันที่ 23 มี "นัด คุณสมชาย ใจดี" พร้อมป้ายนัดเฉพาะวัน (ลบนัดทดสอบออกแล้ว)
 
 ### รอบ 2026-09-18 (ต่อ) — เตือน "ถึงเวลาเข้านอน" อัตโนมัติ
 
