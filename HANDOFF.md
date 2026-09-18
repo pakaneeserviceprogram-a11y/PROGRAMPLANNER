@@ -21,7 +21,7 @@
 - **ข้อควรจำ (test)**: หน้านี้มี `Scrollable` ซ้อน (ช่องกรอกข้อความมีของตัวเอง) — `scrollUntilVisible` ต้องระบุ `scrollable: find.byType(Scrollable).first`
 - ถ้าจะทำต่อให้แสดงรายชื่อ+ยอดวิวในแอป: สมัคร API key แล้วเพิ่มตัวกลางเรียก Data API (แพตเทิร์นเดียวกับ `AuthService`) โดยหน้าจอเรียกผ่านตัวกลางแทน `searchUrl`
 - test ใหม่ `test/video_search_test.dart` (9 tests) — รวม **189 tests**
-- ทดสอบบน emulator แล้ว: แตะคำค้น "วางแผนภาษีมนุษย์เงินเดือน" → ระบบเปิดแอป YouTube จริง (`topResumedActivity=com.google.android.youtube`) แล้วส่งต่อให้ Chrome ซึ่งค้างที่หน้าต้อนรับครั้งแรกของ emulator เอง ไม่ใช่ปัญหาจากโค้ด
+- ทดสอบบน emulator แล้ว (ทั้งหัวข้อเดิมและหัวข้อที่เพิ่มรอบหลัง เช่น "แต่งตัวให้ดูดี มืออาชีพ"): แตะคำค้นแล้วระบบเปิดแอป YouTube จริง (`topResumedActivity=com.google.android.youtube`) แล้วส่งต่อให้ Chrome ซึ่งค้างที่หน้าต้อนรับครั้งแรกของ emulator เอง ไม่ใช่ปัญหาจากโค้ด
 
 ### รอบ 2026-09-18 (ต่อ) — ฐานข้อมูลเมนูอาหารไทย
 
