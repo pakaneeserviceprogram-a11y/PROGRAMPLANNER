@@ -8,6 +8,7 @@ import '../data/notifications.dart';
 import '../data/repositories/schedule_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
 import '../data/repositories/sleep_repository.dart';
+import '../data/sleep_history.dart';
 import '../models/goal_settings.dart';
 import '../models/life_category.dart';
 import '../models/sleep_entry.dart';
@@ -27,8 +28,11 @@ class SleepScreen extends StatelessWidget {
   static const _category = LifeCategory.sleep;
   static const _dangerColor = Color(0xFFD64545);
 
-  /// จำนวนคืนที่ใช้สรุปสถิติและกราฟ
+  /// จำนวนคืนที่ใช้สรุปสถิติและกราฟรายสัปดาห์
   static const _windowNights = 7;
+
+  /// จำนวนคืนของกราฟย้อนหลังรายเดือน
+  static const _monthNights = 30;
 
   static const _thaiWeekdayShort = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
   static const _thaiMonthShort = [
@@ -300,6 +304,12 @@ class SleepScreen extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 _BedtimeReminderCard(nights: recent, goals: goals),
+                const SizedBox(height: 16),
+
+                _MonthHistoryCard(
+                  history: SleepHistory.of(repo, days: _monthNights),
+                  targetMinutes: goals.sleepTargetMinutes,
+                ),
                 const SizedBox(height: 16),
 
                 AppCard(
@@ -863,6 +873,180 @@ class _BedtimeReminderCardState extends State<_BedtimeReminderCard> {
           ),
         );
       },
+    );
+  }
+}
+
+/// ย้อนหลัง 30 คืน — แท่งรายคืน (คืนที่ไม่ได้บันทึกเป็นขีดจาง) + ค่าเฉลี่ยรายสัปดาห์
+///
+/// กราฟ 7 คืนด้านบนตอบว่า "สัปดาห์นี้เป็นยังไง" ส่วนการ์ดนี้ตอบว่า "ดีขึ้นหรือแย่ลง"
+class _MonthHistoryCard extends StatelessWidget {
+  final SleepHistory history;
+  final int targetMinutes;
+
+  const _MonthHistoryCard({required this.history, required this.targetMinutes});
+
+  @override
+  Widget build(BuildContext context) {
+    final logged = history.loggedCount;
+    final stats = history.stats;
+    final weekly = history.weeklyAverages();
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeading(
+            title: 'ย้อนหลัง 30 คืน',
+            action: logged == 0 ? null : 'บันทึกแล้ว $logged คืน',
+          ),
+          const SizedBox(height: 12),
+          if (logged == 0)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text('ยังไม่มีบันทึกย้อนหลัง — บันทึกการนอนสัก 2–3 คืนแล้วกลับมาดูแนวโน้มได้',
+                  style: TextStyle(fontSize: 12.5, color: AppColors.textFaint)),
+            )
+          else ...[
+            _MonthChart(history: history, targetMinutes: targetMinutes),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _MonthStat(value: SleepScreen._duration(stats.averageMinutes.round()), label: 'เฉลี่ยต่อคืน'),
+                ),
+                Expanded(
+                  child: _MonthStat(
+                    value: '${history.nightsMeetingTarget(targetMinutes)} / $logged',
+                    label: 'คืนที่ถึงเป้า',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Text('ค่าเฉลี่ยรายสัปดาห์ (เก่า → ใหม่)',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                for (var i = 0; i < weekly.length; i++) ...[
+                  if (i != 0) const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface2,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            weekly[i] == null ? '–' : (weekly[i]! / 60).toStringAsFixed(1),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: weekly[i] == null ? AppColors.textFaint : AppColors.text,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text('สัปดาห์ ${i + 1}',
+                              style: const TextStyle(fontSize: 10, color: AppColors.textFaint)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// แท่งบาง ๆ 30 คืน — สีตามคะแนนของคืนนั้น เส้นประคือระดับเป้าหมาย
+class _MonthChart extends StatelessWidget {
+  final SleepHistory history;
+  final int targetMinutes;
+
+  const _MonthChart({required this.history, required this.targetMinutes});
+
+  static String _dayLabel(DateTime d) => '${d.day} ${SleepScreen._thaiMonthShort[d.month - 1]}';
+
+  @override
+  Widget build(BuildContext context) {
+    // สเกลอิงคืนที่นอนนานสุด แต่ไม่ต่ำกว่าเป้า เพื่อให้เส้นเป้าหมายอยู่ในกรอบเสมอ
+    final maxMinutes = history.maxMinutes > targetMinutes ? history.maxMinutes : targetMinutes;
+    const chartHeight = 86.0;
+    final targetRatio = maxMinutes == 0 ? 0.0 : targetMinutes / maxMinutes;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: chartHeight,
+          child: Stack(
+            children: [
+              // เส้นเป้าหมาย วางใต้แท่งเพื่อให้ยังอ่านแท่งได้ชัด
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: chartHeight * targetRatio,
+                child: Container(height: 1, color: AppColors.border),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: history.nights.map((n) {
+                  final score = n.entry == null ? 0 : Insights.scoreOfNight(n.entry!, targetMinutes);
+                  final ratio = maxMinutes == 0 ? 0.0 : (n.durationMinutes / maxMinutes).clamp(0.0, 1.0);
+                  return Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      height: n.isLogged ? chartHeight * ratio : 3,
+                      decoration: BoxDecoration(
+                        color: n.isLogged ? SleepScreen._scoreColor(score) : AppColors.border,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(_dayLabel(history.nights.first.date),
+                style: const TextStyle(fontSize: 10, color: AppColors.textFaint)),
+            Text('เส้นแบ่ง = เป้า ${(targetMinutes / 60).toStringAsFixed(targetMinutes % 60 == 0 ? 0 : 1)} ชม.',
+                style: const TextStyle(fontSize: 10, color: AppColors.textFaint)),
+            Text(_dayLabel(history.nights.last.date),
+                style: const TextStyle(fontSize: 10, color: AppColors.textFaint)),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _MonthStat extends StatelessWidget {
+  final String value;
+  final String label;
+
+  const _MonthStat({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted)),
+      ],
     );
   }
 }
