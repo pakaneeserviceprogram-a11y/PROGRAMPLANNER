@@ -19,6 +19,8 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.goalSettings, bytes: Uint8List(0)),
       // การ์ด "เตือนให้เข้านอน" เขียนลงตารางเวลา จึงต้องเปิด box นี้ด้วย
       Hive.openBox<Map>(HiveBoxes.scheduleEvents, bytes: Uint8List(0)),
+      // การ์ด "การนอนกับสิ่งที่กิน" อ่านมื้ออาหารของวันนั้น
+      Hive.openBox<Map>(HiveBoxes.mealEntries, bytes: Uint8List(0)),
     ]);
   });
 

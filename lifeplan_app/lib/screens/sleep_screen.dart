@@ -8,7 +8,9 @@ import '../data/notifications.dart';
 import '../data/repositories/schedule_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
 import '../data/repositories/sleep_repository.dart';
+import '../data/repositories/meal_repository.dart';
 import '../data/sleep_history.dart';
+import '../data/sleep_nutrition_insights.dart';
 import '../models/goal_settings.dart';
 import '../models/life_category.dart';
 import '../models/sleep_entry.dart';
@@ -308,6 +310,12 @@ class SleepScreen extends StatelessWidget {
 
                 _MonthHistoryCard(
                   history: SleepHistory.of(repo, days: _monthNights),
+                  targetMinutes: goals.sleepTargetMinutes,
+                ),
+                const SizedBox(height: 16),
+
+                _FoodComparisonCard(
+                  nights: SleepHistory.of(repo, days: _monthNights).loggedNights,
                   targetMinutes: goals.sleepTargetMinutes,
                 ),
                 const SizedBox(height: 16),
@@ -1053,6 +1061,93 @@ class _MonthStat extends StatelessWidget {
         Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
         const SizedBox(height: 2),
         Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted)),
+      ],
+    );
+  }
+}
+
+/// เทียบคุณภาพการนอนกับสิ่งที่กิน (คาเฟอีนบ่าย / มื้อดึก) จากบันทึกโภชนาการ
+///
+/// เดาคาเฟอีนจากชื่อเมนูที่ผู้ใช้พิมพ์ จึงเป็นการ "ช่วยสังเกต" ไม่ใช่ข้อสรุปทางการแพทย์
+class _FoodComparisonCard extends StatelessWidget {
+  final List<SleepEntry> nights;
+  final int targetMinutes;
+
+  const _FoodComparisonCard({required this.nights, required this.targetMinutes});
+
+  @override
+  Widget build(BuildContext context) {
+    final comparisons = SleepNutritionInsights.compare(
+      nights,
+      MealRepository(),
+      sleepTargetMinutes: targetMinutes,
+    );
+    final ready = comparisons.where((c) => c.hasEnoughData).toList();
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeading(title: 'การนอนกับสิ่งที่กิน'),
+          const SizedBox(height: 4),
+          const Text('เทียบคืนที่กินกับคืนที่ไม่ได้กิน จากมื้ออาหารที่บันทึกไว้ในวันนั้น',
+              style: TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textFaint)),
+          const SizedBox(height: 12),
+          if (ready.isEmpty)
+            const Text(
+              'ยังเทียบไม่ได้ — ต้องมีทั้งคืนที่กินและคืนที่ไม่ได้กินอย่างละ 2 คืนขึ้นไป '
+              '(บันทึกมื้ออาหารของวันนั้นด้วย แล้วแอปจะจับให้เอง)',
+              style: TextStyle(fontSize: 12.5, height: 1.5, color: AppColors.textFaint),
+            )
+          else
+            for (var i = 0; i < ready.length; i++) ...[
+              if (i != 0) const Divider(height: 20, color: AppColors.border),
+              _ComparisonRow(comparison: ready[i]),
+            ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ComparisonRow extends StatelessWidget {
+  final SleepComparison comparison;
+
+  const _ComparisonRow({required this.comparison});
+
+  @override
+  Widget build(BuildContext context) {
+    final worseWithIt = comparison.delta > 0;
+    final color = comparison.isMeaningful
+        ? (worseWithIt ? SleepScreen._dangerColor : SleepScreen._category.color)
+        : AppColors.textMuted;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(comparison.label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+            ),
+            Text(
+              comparison.isMeaningful
+                  ? '${worseWithIt ? '−' : '+'}${comparison.delta.abs().round()}%'
+                  : 'พอ ๆ กัน',
+              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: color),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'คืนที่กิน ${comparison.withScore.round()}% (${comparison.withCount} คืน) • '
+          'คืนที่ไม่ได้กิน ${comparison.withoutScore.round()}% (${comparison.withoutCount} คืน)',
+          style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+        ),
+        if (comparison.isMeaningful && worseWithIt) ...[
+          const SizedBox(height: 4),
+          Text(comparison.advice, style: const TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textFaint)),
+        ],
       ],
     );
   }
