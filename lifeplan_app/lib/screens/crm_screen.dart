@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 import '../data/calendar_utils.dart';
+import '../data/contact_search.dart';
 import '../data/id_gen.dart';
 import '../data/notifications.dart';
 import '../data/repositories/schedule_repository.dart';
@@ -22,6 +25,7 @@ import '../widgets/back_button_circle.dart';
 import '../widgets/form_sheet.dart';
 import '../widgets/progress_track.dart';
 import '../widgets/section_heading.dart';
+import 'prospect_search_screen.dart';
 
 class CrmScreen extends StatelessWidget {
   const CrmScreen({super.key});
@@ -131,6 +135,8 @@ class CrmScreen extends StatelessWidget {
     final policyController = TextEditingController(text: existing?.policyLabel);
     final premiumController = TextEditingController(
         text: existing != null && existing.premiumAmount > 0 ? _moneyText(existing.premiumAmount) : null);
+    final phoneController = TextEditingController(text: existing?.phone);
+    final profileController = TextEditingController(text: existing?.profileUrl);
     ClientStage selectedStage = existing?.stage ?? ClientStage.newLead;
 
     await showAppFormSheet(
@@ -189,6 +195,19 @@ class CrmScreen extends StatelessWidget {
             ],
             const SizedBox(height: 14),
             AuthField(label: 'มูลค่าเบี้ยประกันโดยประมาณ (บาท)', hint: '0', controller: premiumController, keyboardType: TextInputType.number),
+            const SizedBox(height: 14),
+            AuthField(
+              label: 'เบอร์โทร (ไม่บังคับ)',
+              hint: '08x-xxx-xxxx',
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 14),
+            AuthField(
+              label: 'ลิงก์โปรไฟล์ / เว็บไซต์ (ไม่บังคับ)',
+              hint: 'เช่น facebook.com/ชื่อเพจ',
+              controller: profileController,
+            ),
           ],
         ),
       ),
@@ -197,6 +216,8 @@ class CrmScreen extends StatelessWidget {
         if (name.isEmpty) return;
         final policy = policyController.text.trim();
         final premium = double.tryParse(premiumController.text.replaceAll(',', '').trim()) ?? 0;
+        final phone = phoneController.text.trim();
+        final profile = profileController.text.trim();
         await repo.put(Client(
           id: existing?.id ?? newId(),
           name: name,
@@ -206,6 +227,8 @@ class CrmScreen extends StatelessWidget {
               : (policy.isEmpty ? existing.policyLabel : policy),
           stage: selectedStage,
           premiumAmount: premium,
+          phone: phone.isEmpty ? null : phone,
+          profileUrl: profile.isEmpty ? null : profile,
         ));
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -283,7 +306,23 @@ class CrmScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('ลูกค้าที่ต้องติดตาม', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    const Expanded(
+                      child: Text('ลูกค้าที่ต้องติดตาม', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    ),
+                    GestureDetector(
+                      key: const ValueKey('open-prospect-search'),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ProspectSearchScreen()),
+                      ),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(color: AppColors.surface2, borderRadius: BorderRadius.circular(10)),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.search_rounded, size: 17, color: AppColors.text),
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () => _openClientForm(context, repo),
                       child: Container(
@@ -421,7 +460,20 @@ class _ClientRow extends StatelessWidget {
               decoration: BoxDecoration(color: AppColors.crmSoft, borderRadius: BorderRadius.circular(999)),
               child: Text(client.statusLabel, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.crm)),
             ),
-            const SizedBox(width: 2),
+            if (client.phone != null)
+              _ContactIconButton(
+                key: ValueKey('call-${client.id}'),
+                icon: Icons.call_rounded,
+                tooltip: 'โทรหา ${client.name}',
+                url: ContactSearch.phoneUrl(client.phone!),
+              ),
+            if (client.profileUrl != null)
+              _ContactIconButton(
+                key: ValueKey('profile-${client.id}'),
+                icon: Icons.open_in_new_rounded,
+                tooltip: 'เปิดโปรไฟล์ของ ${client.name}',
+                url: ContactSearch.profileUrl(client.profileUrl!),
+              ),
             RowEditButton(onTap: onEdit),
           ],
         ),
@@ -803,6 +855,44 @@ class _ActivityTile extends StatelessWidget {
             style: const TextStyle(fontSize: 9.5, color: AppColors.textMuted),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// ปุ่มเล็กท้ายแถวลูกค้า — โทรออก/เปิดโปรไฟล์จากข้อมูลที่ผู้ใช้กรอกไว้เอง
+///
+/// [url] เป็น null เมื่อข้อมูลที่กรอกไม่ใช่เบอร์/ลิงก์ที่ใช้ได้ — ปุ่มจะจางและกดไม่ได้
+/// แทนที่จะเด้ง error ตอนกด
+class _ContactIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final Uri? url;
+
+  const _ContactIconButton({super.key, required this.icon, required this.tooltip, required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = url != null;
+    return Tooltip(
+      message: tooltip,
+      child: InkResponse(
+        onTap: enabled
+            ? () async {
+                final opened = await launchUrl(url!, mode: LaunchMode.externalApplication);
+                if (!opened && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('เปิดไม่สำเร็จ — เครื่องอาจไม่มีแอปที่รองรับ')),
+                  );
+                }
+              }
+            : null,
+        radius: 20,
+        child: SizedBox(
+          width: 34,
+          height: 34,
+          child: Icon(icon, size: 17, color: enabled ? AppColors.crm : AppColors.border),
+        ),
       ),
     );
   }

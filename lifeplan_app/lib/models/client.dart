@@ -26,6 +26,13 @@ class Client {
   final ClientStage stage;
   final double premiumAmount;
 
+  /// เบอร์โทรที่ผู้ใช้กรอกเอง (null = ยังไม่มี) — กดโทรออกจากหน้าลูกค้าได้
+  final String? phone;
+
+  /// ลิงก์โปรไฟล์โซเชียล/เว็บไซต์ที่ผู้ใช้ **ค้นเจอเองแล้ววางไว้**
+  /// แอปไม่ได้ไปค้นหรือดึงมาเอง (ดู `ContactSearch`)
+  final String? profileUrl;
+
   const Client({
     required this.id,
     required this.name,
@@ -33,17 +40,21 @@ class Client {
     required this.policyLabel,
     required this.stage,
     this.premiumAmount = 0,
+    this.phone,
+    this.profileUrl,
   });
 
   String get statusLabel => stage.label;
 
-  Client copyWith({ClientStage? stage}) => Client(
+  Client copyWith({ClientStage? stage, String? phone, String? profileUrl}) => Client(
         id: id,
         name: name,
         initials: initials,
         policyLabel: policyLabel,
         stage: stage ?? this.stage,
         premiumAmount: premiumAmount,
+        phone: phone ?? this.phone,
+        profileUrl: profileUrl ?? this.profileUrl,
       );
 
   Map<String, dynamic> toMap() => {
@@ -53,6 +64,8 @@ class Client {
         'policyLabel': policyLabel,
         'stage': stage.name,
         'premiumAmount': premiumAmount,
+        'phone': phone,
+        'profileUrl': profileUrl,
       };
 
   factory Client.fromMap(Map<String, dynamic> map) => Client(
@@ -62,5 +75,8 @@ class Client {
         policyLabel: map['policyLabel'] as String,
         stage: ClientStage.values.firstWhere((e) => e.name == map['stage'], orElse: () => ClientStage.newLead),
         premiumAmount: (map['premiumAmount'] as num?)?.toDouble() ?? 0,
+        // ลูกค้าที่บันทึกก่อนมีช่องติดต่อยังไม่มีคีย์เหล่านี้
+        phone: map['phone'] as String?,
+        profileUrl: map['profileUrl'] as String?,
       );
 }
