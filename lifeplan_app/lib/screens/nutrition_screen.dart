@@ -25,6 +25,7 @@ import '../data/meal_reminder.dart';
 import '../data/notifications.dart';
 import '../data/nutrition_history.dart';
 import '../data/repositories/app_settings_repository.dart';
+import '../data/thai_food_database.dart';
 import '../models/app_settings.dart';
 
 /// โมดูลทานอาหาร & โภชนาการ — บันทึกมื้ออาหารพร้อมคุณค่าทางโภชนาการ
@@ -90,6 +91,7 @@ class NutritionScreen extends StatelessWidget {
     final fatController = TextEditingController(text: existing != null ? _g(existing.fatGrams) : '');
     final sugarController = TextEditingController(text: existing != null ? _g(existing.sugarGrams) : '');
 
+    final foodQueryController = TextEditingController();
     MealType selectedType = existing?.type ?? _suggestMealType();
     WorkoutTiming selectedTiming = existing?.workoutTiming ?? WorkoutTiming.none;
     TimeOfDay selectedTime = existing != null ? _parseTime(existing.time) : TimeOfDay.now();
@@ -127,6 +129,22 @@ class NutritionScreen extends StatelessWidget {
         builder: (ctx, setState) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _FoodPicker(
+              controller: foodQueryController,
+              onPick: (food) => setState(() {
+                titleController.text = food.name;
+                caloriesController.text = '${food.calories}';
+                proteinController.text = _g(food.protein);
+                carbController.text = _g(food.carbs);
+                fatController.text = _g(food.fat);
+                sugarController.text = _g(food.sugar);
+                selectedVitamins
+                  ..clear()
+                  ..addAll(food.vitamins);
+                foodQueryController.clear();
+              }),
+            ),
+            const SizedBox(height: 14),
             AuthField(label: 'ชื่อเมนู', hint: 'เช่น ข้าวกล้องอกไก่', controller: titleController),
             const SizedBox(height: 14),
             LabeledDropdown<MealType>(
@@ -1121,6 +1139,108 @@ class _ReminderRow extends StatelessWidget {
           ),
         ),
         Switch(value: on, activeTrackColor: NutritionScreen._category.color, onChanged: onChanged),
+      ],
+    );
+  }
+}
+
+/// ช่องค้นเมนูไทยสำเร็จรูป — เลือกแล้วเติมพลังงาน/สารอาหาร/วิตามินให้ทั้งชุด
+///
+/// ค่าที่เติมเป็น **ค่าประมาณต่อหนึ่งหน่วยเสิร์ฟ** ผู้ใช้แก้ต่อได้เสมอ (ดู `ThaiFoodDatabase`)
+class _FoodPicker extends StatefulWidget {
+  final TextEditingController controller;
+  final ValueChanged<ThaiFood> onPick;
+
+  const _FoodPicker({required this.controller, required this.onPick});
+
+  @override
+  State<_FoodPicker> createState() => _FoodPickerState();
+}
+
+class _FoodPickerState extends State<_FoodPicker> {
+  List<ThaiFood> _matches = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onQueryChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onQueryChanged);
+    super.dispose();
+  }
+
+  void _onQueryChanged() {
+    // ต้อง setState ทุกครั้งที่พิมพ์ ไม่ใช่เฉพาะตอนผลลัพธ์เปลี่ยน — ข้อความ "ไม่เจอเมนูนี้"
+    // ขึ้นอยู่กับว่าช่องค้นหาว่างหรือไม่ ซึ่งการพิมพ์ใน TextField ไม่ทำให้ที่นี่ rebuild เอง
+    setState(() => _matches = ThaiFoodDatabase.search(widget.controller.text));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = widget.controller.text.trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AuthField(
+          key: const ValueKey('food-search-field'),
+          label: 'ค้นเมนูไทย (ไม่บังคับ)',
+          hint: 'เช่น ข้าวมันไก่ / ผัดไทย / ส้มตำ',
+          controller: widget.controller,
+        ),
+        if (query.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          if (_matches.isEmpty)
+            const Text('ไม่เจอเมนูนี้ — กรอกชื่อและตัวเลขเองด้านล่างได้เลย',
+                style: TextStyle(fontSize: 11.5, color: AppColors.textFaint))
+          else
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                children: [
+                  for (var i = 0; i < _matches.length; i++) ...[
+                    if (i != 0) const Divider(height: 1, color: AppColors.border),
+                    InkWell(
+                      onTap: () => widget.onPick(_matches[i]),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(_matches[i].name,
+                                      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 2),
+                                  Text(_matches[i].serving,
+                                      style: const TextStyle(fontSize: 11, color: AppColors.textFaint)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text('${_matches[i].calories} kcal',
+                                style: const TextStyle(
+                                    fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          const SizedBox(height: 6),
+          const Text('ค่าที่เติมให้เป็นค่าประมาณต่อหนึ่งหน่วยเสิร์ฟ ปรับได้ตามที่กินจริง',
+              style: TextStyle(fontSize: 11, height: 1.4, color: AppColors.textFaint)),
+        ],
       ],
     );
   }
