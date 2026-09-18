@@ -18,6 +18,8 @@ import '../widgets/back_button_circle.dart';
 import '../widgets/form_sheet.dart';
 import '../widgets/progress_track.dart';
 import '../widgets/section_heading.dart';
+import '../data/calendar_utils.dart';
+import '../data/nutrition_history.dart';
 
 /// โมดูลทานอาหาร & โภชนาการ — บันทึกมื้ออาหารพร้อมคุณค่าทางโภชนาการ
 /// (แคลอรี่ • โปรตีน • แป้ง • ไขมัน • น้ำตาล • วิตามิน), ติดตามการดื่มน้ำ
@@ -292,6 +294,7 @@ class NutritionScreen extends StatelessWidget {
             final netCalories = totals.calories - burnedCalories;
 
             final calorieProgress = goals.calorieTarget > 0 ? totals.calories / goals.calorieTarget : 0.0;
+            final history = NutritionHistory.of(mealRepo, waterRepo, today: today);
 
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -420,6 +423,47 @@ class NutritionScreen extends StatelessWidget {
                           _WaterButton(icon: Icons.add_rounded, onTap: () => waterRepo.addGlass(), filled: true),
                         ],
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // ย้อนหลัง 7 วัน — ข้อมูลเก็บแยกตามวันอยู่แล้ว การ์ดนี้แค่เอามาวางเทียบกัน
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SectionHeading(
+                        title: 'ย้อนหลัง 7 วัน',
+                        action: history.loggedDays.isEmpty ? null : 'เฉลี่ย ${_int(history.averageCalories)} kcal/วัน',
+                      ),
+                      const SizedBox(height: 12),
+                      if (history.loggedDays.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Text('ยังไม่มีบันทึกย้อนหลัง — บันทึกมื้ออาหารสัก 2–3 วันแล้วกลับมาดูแนวโน้มได้',
+                              style: TextStyle(fontSize: 12.5, color: AppColors.textFaint)),
+                        )
+                      else ...[
+                        _HistoryChart(history: history, calorieTarget: goals.calorieTarget),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _HistoryStat(
+                                value: '${history.daysWithinCalorieTarget(goals.calorieTarget)} / ${history.loggedDays.length}',
+                                label: 'วันที่ไม่เกินเป้าพลังงาน',
+                              ),
+                            ),
+                            Expanded(
+                              child: _HistoryStat(
+                                value: history.averageWaterGlasses.toStringAsFixed(1),
+                                label: 'น้ำเฉลี่ย (แก้ว/วัน)',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -808,6 +852,86 @@ class _TimingRow extends StatelessWidget {
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// แท่งพลังงานของแต่ละวัน — สีแดงคือวันที่เกินเป้า วันที่ยังไม่บันทึกเป็นแท่งจาง
+class _HistoryChart extends StatelessWidget {
+  final NutritionHistory history;
+  final int calorieTarget;
+
+  const _HistoryChart({required this.history, required this.calorieTarget});
+
+  @override
+  Widget build(BuildContext context) {
+    // สเกลอิงวันที่กินมากสุด แต่ไม่ต่ำกว่าเป้า เพื่อให้เส้นเป้าหมายอยู่ในกรอบเสมอ
+    final maxValue = [history.maxCalories, calorieTarget, 1].reduce((a, b) => a > b ? a : b);
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 104,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: history.days.map((d) {
+              final over = calorieTarget > 0 && d.totals.calories > calorieTarget;
+              final ratio = d.isEmpty ? 0.0 : (d.totals.calories / maxValue).clamp(0.04, 1.0);
+              return Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      d.isEmpty ? '–' : '${d.totals.calories}',
+                      style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: AppColors.textMuted),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      height: d.isEmpty ? 3 : 70 * ratio,
+                      decoration: BoxDecoration(
+                        color: d.isEmpty ? AppColors.border : (over ? NutritionScreen._dangerColor : NutritionScreen._category.color),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: history.days
+              .map((d) => Expanded(
+                    child: Text(
+                      CalendarUtils.weekdayShort[d.date.weekday - 1],
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textFaint),
+                    ),
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _HistoryStat extends StatelessWidget {
+  final String value;
+  final String label;
+
+  const _HistoryStat({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted)),
       ],
     );
   }
