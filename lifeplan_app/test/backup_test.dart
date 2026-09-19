@@ -38,6 +38,7 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.learningStreak),
       Hive.openBox<Map>(HiveBoxes.goalSettings),
       Hive.openBox<Map>(HiveBoxes.appSettings),
+      Hive.openBox<Map>(HiveBoxes.bodyProfile),
     ]);
   });
 

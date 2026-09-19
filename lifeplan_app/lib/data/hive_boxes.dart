@@ -22,6 +22,9 @@ class HiveBoxes {
   static const goalSettings = 'goal_settings';
   static const appSettings = 'app_settings';
 
+  /// ข้อมูลร่างกายที่ใช้คำนวณเป้าหมายโภชนาการ (เพศ/อายุ/ส่วนสูง/น้ำหนัก/กิจกรรม)
+  static const bodyProfile = 'body_profile';
+
   static Future<void> init() async {
     await Hive.initFlutter();
     await Future.wait([
@@ -38,6 +41,7 @@ class HiveBoxes {
       Hive.openBox<Map>(scheduleEvents),
       Hive.openBox<Map>(learningStreak),
       Hive.openBox<Map>(goalSettings),
+      Hive.openBox<Map>(bodyProfile),
       Hive.openBox<Map>(appSettings),
     ]);
   }

@@ -40,6 +40,7 @@ class BackupService {
     HiveBoxes.learningStreak,
     HiveBoxes.goalSettings,
     HiveBoxes.appSettings,
+    HiveBoxes.bodyProfile,
   ];
 
   /// ทุก box ที่อยู่ในไฟล์สำรอง = ข้อมูลทั้งหมดของแอป
