@@ -29,6 +29,14 @@
 - **ข้อควรจำ**: `hasDataWorthBackingUp` ต้องข้าม box ที่ยังไม่เปิด (`Hive.isBoxOpen`) ไม่งั้นหน้าหลักพังทั้งหน้าเวลามี box ไหนไม่ได้เปิด (เทสต์ dashboard จับได้)
 - test ใหม่ `test/backup_reminder_test.dart` (9 tests) — รวม **236 tests**
 
+**บั๊กที่เจอตอน build ตัวเซ็นจริงครั้งแรก**: R8 ล้มทั้ง build ด้วย `Missing class ...TextRecognizerOptions`
+เพราะปลั๊กอิน `google_mlkit_text_recognition` อ้างถึงตัวอ่านภาษาจีน/ญี่ปุ่น/เกาหลี/เทวนาครี ซึ่งเป็น dependency แยกที่ไม่ได้ใส่
+→ เพิ่ม `-dontwarn com.google.mlkit.vision.text.{chinese,devanagari,japanese,korean}.**` ใน `android/app/proguard-rules.pro`
+(ถ้าวันหลังเพิ่มฟีเจอร์ ML Kit อื่นแล้ว build ล้มแบบเดียวกัน ให้ดูที่ไฟล์นี้ก่อน)
+
+**APK ที่ส่งให้ผู้ใช้ (2026-09-19)**: เวอร์ชัน **1.7.0+8** arm64 32.2MB เซ็นด้วย keystore จริงแล้ว
+(`CN=LifePlan`) — ขนาดโตจาก ~20MB เพราะ ML Kit; ถ้า build รวมทุก ABI จะได้ 50MB จึงควรใช้ `--split-per-abi` เสมอ
+
 ### รอบ 2026-09-19 (ต่อ) — สแกนนามบัตรเข้ารายชื่อลูกค้า
 
 หน้าใหม่ `lib/screens/business_card_scan_screen.dart` เข้าจากการ์ดในหน้าค้นหาผู้มุ่งหวัง
