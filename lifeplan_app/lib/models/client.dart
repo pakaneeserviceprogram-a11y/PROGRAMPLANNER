@@ -19,13 +19,14 @@ extension ClientStageX on ClientStage {
 }
 
 /// ลูกค้ารายนี้มาจากไหน — ใช้ดูว่าแหล่งไหนปิดการขายได้จริง (ต่อยอดรายงาน N = New Market)
-enum ClientSource { unknown, referral, phonebook, facebook, instagram, line, event, walkIn }
+enum ClientSource { unknown, referral, phonebook, businessCard, facebook, instagram, line, event, walkIn }
 
 extension ClientSourceX on ClientSource {
   String get label => switch (this) {
         ClientSource.unknown => 'ไม่ได้ระบุ',
         ClientSource.referral => 'เพื่อน/ลูกค้าแนะนำ',
         ClientSource.phonebook => 'สมุดโทรศัพท์',
+        ClientSource.businessCard => 'นามบัตร',
         ClientSource.facebook => 'Facebook',
         ClientSource.instagram => 'Instagram',
         ClientSource.line => 'LINE',

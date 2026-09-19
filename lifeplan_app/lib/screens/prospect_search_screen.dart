@@ -10,6 +10,7 @@ import '../widgets/app_card.dart';
 import '../widgets/auth_widgets.dart';
 import '../widgets/back_button_circle.dart';
 import '../widgets/section_heading.dart';
+import 'business_card_scan_screen.dart';
 import 'contacts_import_screen.dart';
 
 /// ค้นหาผู้มุ่งหวัง/บริษัท แล้วบันทึกเข้ารายชื่อลูกค้าได้ในหน้าเดียว
@@ -150,6 +151,35 @@ class _ProspectSearchScreenState extends State<ProspectSearchScreen> {
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
                           SizedBox(height: 2),
                           Text('ติ๊กเลือกคนที่จะเพิ่มเป็นผู้มุ่งหวัง พร้อมเบอร์โทร',
+                              style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            GestureDetector(
+              key: const ValueKey('open-card-scan'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BusinessCardScanScreen()),
+              ),
+              child: AppCard(
+                child: Row(
+                  children: [
+                    const Icon(Icons.document_scanner_rounded, size: 22, color: AppColors.crm),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('สแกนนามบัตร',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                          SizedBox(height: 2),
+                          Text('ถ่ายรูปแล้วแอปอ่านเบอร์/อีเมล/บริษัทให้ในเครื่อง',
                               style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                         ],
                       ),
