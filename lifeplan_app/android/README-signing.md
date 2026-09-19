@@ -7,10 +7,11 @@
 | `android/lifeplan-release.jks` | keystore (PKCS12, alias `lifeplan`, อายุใบรับรอง 10,000 วัน) |
 | `android/key.properties` | รหัสผ่าน + alias ที่ Gradle อ่านตอน build |
 
-SHA-256 fingerprint ของใบรับรองปัจจุบัน:
+SHA-256 fingerprint ของใบรับรองปัจจุบัน (keystore ชุดใหม่ สร้าง 2026-09-19 บนเครื่อง `D:\WORK\PROGRAMPLANNER`
+หลังจากของเดิมหายไปพร้อมเครื่องเก่า — แอปที่เซ็นด้วย key เก่าจะอัปเดตทับด้วยตัวนี้ไม่ได้ ต้องถอนแล้วลงใหม่ครั้งเดียว):
 
 ```
-24:9A:7E:D3:72:3C:26:BB:CC:45:EE:6C:BF:BA:13:79:B9:C3:F0:67:5C:78:CF:77:16:8A:F0:5D:59:2D:15:D1
+F6:ED:6A:23:9A:5A:20:F7:73:26:5F:CB:3B:1B:01:06:9C:3A:F4:C0:4A:52:01:1D:EF:97:08:3E:19:80:0A:30
 ```
 
 ## ⚠️ สำคัญมาก

@@ -9,6 +9,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../models/app_settings.dart';
 import '../models/schedule_event.dart';
+import 'backup_reminder.dart';
 import 'repositories/app_settings_repository.dart';
 import 'repositories/schedule_repository.dart';
 
@@ -159,6 +160,7 @@ class NotificationService {
 
     final details = _detailsFor(settings);
     var scheduled = await _scheduleWaterReminders(settings, details);
+    scheduled += await _scheduleBackupReminder(settings, details);
     if (!settings.scheduleRemindersEnabled) return scheduled;
 
     final events = ScheduleRepository().getAll();
@@ -180,6 +182,25 @@ class NotificationService {
       scheduled++;
     }
     return scheduled;
+  }
+
+  /// id ของการเตือนสำรองข้อมูล (ครั้งเดียว ตั้งใหม่ทุกครั้งที่ sync)
+  static const _backupReminderId = 7500;
+
+  /// เตือนให้สำรองข้อมูลเมื่อครบกำหนด — ข้อมูลอยู่ในเครื่องอย่างเดียว หายแล้วกู้ไม่ได้
+  static Future<int> _scheduleBackupReminder(AppSettings settings, NotificationDetails details) async {
+    final at = BackupReminder.nextReminderAt(settings);
+    if (at == null) return 0;
+
+    await _plugin.zonedSchedule(
+      id: _backupReminderId,
+      scheduledDate: tz.TZDateTime.from(at, tz.local),
+      title: 'สำรองข้อมูล LifePlan',
+      body: 'ข้อมูลทั้งหมดอยู่ในเครื่องนี้เท่านั้น — เปิดโปรไฟล์ → สำรอง & กู้คืนข้อมูล',
+      notificationDetails: details,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+    return 1;
   }
 
   /// ช่วง id ของการเตือนดื่มน้ำ — แยกจากตารางเวลา (0..จำนวนกิจกรรม) และจากการเลื่อนเตือน (5000+)

@@ -2,11 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../data/backup.dart';
+import '../data/backup_reminder.dart';
+import '../data/repositories/app_settings_repository.dart';
+import '../models/app_settings.dart';
 import '../data/notifications.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_card.dart';
@@ -24,7 +29,16 @@ class BackupScreen extends StatefulWidget {
 class _BackupScreenState extends State<BackupScreen> {
   static const _dangerColor = Color(0xFFB3401E);
 
+  final AppSettingsRepository _settings = AppSettingsRepository();
   bool _busy = false;
+
+  /// ตั้งการแจ้งเตือนใหม่หลังเปลี่ยนค่า — ล้มเหลวไม่ควรทำให้การตั้งค่าล้ม
+  void _syncReminders() {
+    unawaited(NotificationService.syncScheduleReminders().catchError((Object e) {
+      debugPrint('ตั้งการแจ้งเตือนใหม่ไม่สำเร็จ: $e');
+      return 0;
+    }));
+  }
 
   void _toast(String message) {
     if (!mounted) return;
@@ -46,6 +60,10 @@ class _BackupScreenState extends State<BackupScreen> {
         subject: 'LifePlan backup',
         text: 'ไฟล์สำรองข้อมูล LifePlan',
       ));
+
+      // นับว่าสำรองแล้วเมื่อส่งออกสำเร็จ — เลื่อนกำหนดเตือนรอบถัดไปออกไป
+      await _settings.save(_settings.get().copyWith(lastBackupAt: DateTime.now()));
+      _syncReminders();
     } catch (e) {
       _toast('ส่งออกไม่สำเร็จ: $e');
     } finally {
@@ -244,9 +262,19 @@ class _BackupScreenState extends State<BackupScreen> {
         title: const Text('สำรอง & กู้คืนข้อมูล', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
       ),
       body: SafeArea(
-        child: ListView(
+        child: AnimatedBuilder(
+          animation: _settings.listenable(),
+          builder: (context, _) => ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: [
+            _ReminderCard(
+              settings: _settings.get(),
+              onToggle: (on) async {
+                await _settings.save(_settings.get().copyWith(backupReminderEnabled: on));
+                _syncReminders();
+              },
+            ),
+            const SizedBox(height: 14),
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,7 +339,62 @@ class _BackupScreenState extends State<BackupScreen> {
               const Center(child: CircularProgressIndicator()),
             ],
           ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+/// สถานะการสำรองข้อมูล + สวิตช์เตือนอัตโนมัติ
+class _ReminderCard extends StatelessWidget {
+  final AppSettings settings;
+  final ValueChanged<bool> onToggle;
+
+  const _ReminderCard({required this.settings, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    final days = BackupReminder.daysSinceBackup(settings);
+    final overdue = days == null || days >= settings.backupReminderDays;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(overdue ? Icons.warning_amber_rounded : Icons.verified_rounded,
+                  size: 20, color: overdue ? const Color(0xFFB3401E) : AppColors.exercise),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  days == null
+                      ? 'ยังไม่เคยสำรองข้อมูล'
+                      : days == 0
+                          ? 'สำรองข้อมูลล่าสุดวันนี้'
+                          : 'สำรองข้อมูลล่าสุดเมื่อ $days วันก่อน',
+                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Text('เตือนเมื่อไม่ได้สำรองเกิน ${settings.backupReminderDays} วัน',
+                    style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
+              ),
+              Switch(
+                key: const ValueKey('backup-reminder-switch'),
+                value: settings.backupReminderEnabled,
+                activeTrackColor: AppColors.primary,
+                onChanged: onToggle,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

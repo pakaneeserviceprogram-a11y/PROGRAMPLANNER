@@ -27,6 +27,13 @@ class AppSettings {
   final int waterStartHour;
   final int waterEndHour;
 
+  /// เตือนให้สำรองข้อมูลเมื่อไม่ได้สำรองมานานเกิน [backupReminderDays]
+  final bool backupReminderEnabled;
+  final int backupReminderDays;
+
+  /// เวลาที่สำรองข้อมูลสำเร็จครั้งล่าสุด (null = ยังไม่เคยสำรอง)
+  final DateTime? lastBackupAt;
+
   /// ผู้ใช้ล้างข้อมูลเพื่อเริ่มเก็บประวัติใหม่แล้ว — ห้าม `SeedData` ใส่ข้อมูล
   /// ตัวอย่างกลับเข้ามาอีกตอนเปิดแอปครั้งถัดไป (ไม่งั้นจะเห็นข้อมูลปลอมโผล่ซ้ำ)
   final bool sampleDataDisabled;
@@ -41,6 +48,9 @@ class AppSettings {
     this.waterIntervalHours = 2,
     this.waterStartHour = 9,
     this.waterEndHour = 20,
+    this.backupReminderEnabled = true,
+    this.backupReminderDays = 7,
+    this.lastBackupAt,
     this.sampleDataDisabled = false,
   });
 
@@ -54,6 +64,9 @@ class AppSettings {
     int? waterIntervalHours,
     int? waterStartHour,
     int? waterEndHour,
+    bool? backupReminderEnabled,
+    int? backupReminderDays,
+    DateTime? lastBackupAt,
     bool? sampleDataDisabled,
   }) =>
       AppSettings(
@@ -66,6 +79,9 @@ class AppSettings {
         waterIntervalHours: waterIntervalHours ?? this.waterIntervalHours,
         waterStartHour: waterStartHour ?? this.waterStartHour,
         waterEndHour: waterEndHour ?? this.waterEndHour,
+        backupReminderEnabled: backupReminderEnabled ?? this.backupReminderEnabled,
+        backupReminderDays: backupReminderDays ?? this.backupReminderDays,
+        lastBackupAt: lastBackupAt ?? this.lastBackupAt,
         sampleDataDisabled: sampleDataDisabled ?? this.sampleDataDisabled,
       );
 
@@ -90,6 +106,9 @@ class AppSettings {
         'waterIntervalHours': waterIntervalHours,
         'waterStartHour': waterStartHour,
         'waterEndHour': waterEndHour,
+        'backupReminderEnabled': backupReminderEnabled,
+        'backupReminderDays': backupReminderDays,
+        'lastBackupAt': lastBackupAt?.toIso8601String(),
         'sampleDataDisabled': sampleDataDisabled,
       };
 
@@ -105,6 +124,10 @@ class AppSettings {
         waterIntervalHours: (map['waterIntervalHours'] as num?)?.toInt() ?? 2,
         waterStartHour: (map['waterStartHour'] as num?)?.toInt() ?? 9,
         waterEndHour: (map['waterEndHour'] as num?)?.toInt() ?? 20,
+        // ค่าที่บันทึกไว้ก่อนมีการเตือนสำรองข้อมูลยังไม่มีคีย์เหล่านี้
+        backupReminderEnabled: map['backupReminderEnabled'] as bool? ?? true,
+        backupReminderDays: (map['backupReminderDays'] as num?)?.toInt() ?? 7,
+        lastBackupAt: map['lastBackupAt'] == null ? null : DateTime.tryParse(map['lastBackupAt'] as String),
         sampleDataDisabled: map['sampleDataDisabled'] as bool? ?? false,
       );
 }

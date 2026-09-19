@@ -30,6 +30,8 @@ void main() {
         HiveBoxes.skillTracks,
         HiveBoxes.scheduleEvents,
         HiveBoxes.goalSettings,
+        // หน้าหลักอ่านการตั้งค่าเพื่อเช็คว่าถึงเวลาเตือนสำรองข้อมูลหรือยัง
+        HiveBoxes.appSettings,
       ])
         Hive.openBox<Map>(name, bytes: Uint8List(0)),
     ]);

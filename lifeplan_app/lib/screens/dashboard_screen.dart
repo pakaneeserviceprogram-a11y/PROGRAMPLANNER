@@ -18,11 +18,14 @@ import '../models/meal_entry.dart';
 import '../models/sleep_entry.dart';
 import '../models/water_log.dart';
 import '../models/work_task.dart';
+import '../data/backup_reminder.dart';
+import '../data/repositories/app_settings_repository.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_card.dart';
 import '../widgets/icon_tile.dart';
 import '../widgets/progress_track.dart';
 import '../widgets/section_heading.dart';
+import 'backup_screen.dart';
 import 'crm_screen.dart';
 import 'exercise_screen.dart';
 import 'finance_screen.dart';
@@ -66,6 +69,7 @@ class DashboardScreen extends StatelessWidget {
     final sleepRepo = SleepRepository();
     final userRepo = UserRepository();
     final goalsRepo = GoalSettingsRepository();
+    final settingsRepo = AppSettingsRepository();
 
     return SafeArea(
       child: AnimatedBuilder(
@@ -81,6 +85,7 @@ class DashboardScreen extends StatelessWidget {
           sleepRepo.listenable(),
           userRepo.listenable(),
           goalsRepo.listenable(),
+          settingsRepo.listenable(),
         ]),
         builder: (context, _) {
           final scores = Insights.categoryScores();
@@ -112,9 +117,24 @@ class DashboardScreen extends StatelessWidget {
           final events = scheduleRepo.getForDate(DateTime.now()).take(3).toList();
           final user = userRepo.getCurrent();
 
+          final appSettings = settingsRepo.get();
+          final backupOverdue = BackupReminder.isOverdue(
+            appSettings,
+            hasData: BackupReminder.hasDataWorthBackingUp(),
+          );
+
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
+              if (backupOverdue) ...[
+                _BackupBanner(
+                  message: BackupReminder.bannerMessage(appSettings),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const BackupScreen()),
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -407,6 +427,42 @@ class _ModuleCard extends StatelessWidget {
                 ProgressTrack(value: progress, color: category.color),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// แบนเนอร์เตือนให้สำรองข้อมูล — ขึ้นเฉพาะตอนเลยกำหนดและมีข้อมูลให้เสียดาย
+class _BackupBanner extends StatelessWidget {
+  final String message;
+  final VoidCallback onTap;
+
+  const _BackupBanner({required this.message, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      key: const ValueKey('backup-banner'),
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCE4DE),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFB3401E), width: 1.2),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.backup_outlined, size: 20, color: Color(0xFFB3401E)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(message,
+                  style: const TextStyle(fontSize: 12, height: 1.4, fontWeight: FontWeight.w600, color: Color(0xFFB3401E))),
+            ),
+            const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFB3401E)),
           ],
         ),
       ),
