@@ -138,6 +138,7 @@ class CrmScreen extends StatelessWidget {
     final phoneController = TextEditingController(text: existing?.phone);
     final profileController = TextEditingController(text: existing?.profileUrl);
     ClientStage selectedStage = existing?.stage ?? ClientStage.newLead;
+    ClientSource selectedSource = existing?.source ?? ClientSource.unknown;
 
     await showAppFormSheet(
       context: context,
@@ -208,6 +209,17 @@ class CrmScreen extends StatelessWidget {
               hint: 'เช่น facebook.com/ชื่อเพจ',
               controller: profileController,
             ),
+            const SizedBox(height: 14),
+            LabeledDropdown<ClientSource>(
+              label: 'รู้จักลูกค้ารายนี้จากไหน',
+              value: selectedSource,
+              options: ClientSource.values,
+              display: (s) => s.label,
+              onChanged: (v) => setState(() => selectedSource = v!),
+            ),
+            const SizedBox(height: 6),
+            const Text('ใช้ดูว่าแหล่งไหนปิดการขายได้จริง (สรุปอยู่ใต้รายชื่อลูกค้า)',
+                style: TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textFaint)),
           ],
         ),
       ),
@@ -229,6 +241,7 @@ class CrmScreen extends StatelessWidget {
           premiumAmount: premium,
           phone: phone.isEmpty ? null : phone,
           profileUrl: profile.isEmpty ? null : profile,
+          source: selectedSource,
         ));
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -368,10 +381,77 @@ class CrmScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                const SizedBox(height: 20),
+                _SourceBreakdown(clients: clients),
               ],
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// สรุปว่าลูกค้ามาจากแหล่งไหน และแหล่งไหนปิดการขายได้จริง
+///
+/// ต่อยอดรายงาน N (New Market) — ช่วยตัดสินใจว่าควรทุ่มเวลาไปทางไหน
+class _SourceBreakdown extends StatelessWidget {
+  final List<Client> clients;
+
+  const _SourceBreakdown({required this.clients});
+
+  @override
+  Widget build(BuildContext context) {
+    final counts = <ClientSource, int>{};
+    final won = <ClientSource, int>{};
+    for (final c in clients) {
+      counts[c.source] = (counts[c.source] ?? 0) + 1;
+      if (c.stage == ClientStage.closedWon) won[c.source] = (won[c.source] ?? 0) + 1;
+    }
+    // เรียงจากแหล่งที่มีลูกค้ามากสุด และไม่โชว์แหล่งที่ยังไม่มีใครเลย
+    final sources = counts.keys.toList()..sort((a, b) => counts[b]!.compareTo(counts[a]!));
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeading(title: 'ลูกค้ามาจากไหน'),
+          const SizedBox(height: 4),
+          const Text('นับจากช่อง "รู้จักลูกค้ารายนี้จากไหน" ในฟอร์มแก้ไขลูกค้า',
+              style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
+          const SizedBox(height: 12),
+          if (sources.isEmpty)
+            const Text('ยังไม่มีลูกค้าในระบบ', style: TextStyle(fontSize: 12.5, color: AppColors.textFaint))
+          else
+            for (final source in sources) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(source.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                    Text('${counts[source]} ราย',
+                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: (won[source] ?? 0) > 0 ? AppColors.exerciseSoft : AppColors.surface2,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text('ปิดได้ ${won[source] ?? 0}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: (won[source] ?? 0) > 0 ? AppColors.exercise : AppColors.textFaint,
+                          )),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+        ],
       ),
     );
   }

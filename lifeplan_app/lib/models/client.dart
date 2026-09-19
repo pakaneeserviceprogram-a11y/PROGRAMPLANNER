@@ -18,6 +18,22 @@ extension ClientStageX on ClientStage {
       };
 }
 
+/// ลูกค้ารายนี้มาจากไหน — ใช้ดูว่าแหล่งไหนปิดการขายได้จริง (ต่อยอดรายงาน N = New Market)
+enum ClientSource { unknown, referral, phonebook, facebook, instagram, line, event, walkIn }
+
+extension ClientSourceX on ClientSource {
+  String get label => switch (this) {
+        ClientSource.unknown => 'ไม่ได้ระบุ',
+        ClientSource.referral => 'เพื่อน/ลูกค้าแนะนำ',
+        ClientSource.phonebook => 'สมุดโทรศัพท์',
+        ClientSource.facebook => 'Facebook',
+        ClientSource.instagram => 'Instagram',
+        ClientSource.line => 'LINE',
+        ClientSource.event => 'งานอีเวนต์/ออกบูท',
+        ClientSource.walkIn => 'ติดต่อเข้ามาเอง',
+      };
+}
+
 class Client {
   final String id;
   final String name;
@@ -33,6 +49,9 @@ class Client {
   /// แอปไม่ได้ไปค้นหรือดึงมาเอง (ดู `ContactSearch`)
   final String? profileUrl;
 
+  /// แหล่งที่มาของลูกค้ารายนี้ (ค่าเริ่มต้น = ยังไม่ได้ระบุ)
+  final ClientSource source;
+
   const Client({
     required this.id,
     required this.name,
@@ -42,11 +61,12 @@ class Client {
     this.premiumAmount = 0,
     this.phone,
     this.profileUrl,
+    this.source = ClientSource.unknown,
   });
 
   String get statusLabel => stage.label;
 
-  Client copyWith({ClientStage? stage, String? phone, String? profileUrl}) => Client(
+  Client copyWith({ClientStage? stage, String? phone, String? profileUrl, ClientSource? source}) => Client(
         id: id,
         name: name,
         initials: initials,
@@ -55,6 +75,7 @@ class Client {
         premiumAmount: premiumAmount,
         phone: phone ?? this.phone,
         profileUrl: profileUrl ?? this.profileUrl,
+        source: source ?? this.source,
       );
 
   Map<String, dynamic> toMap() => {
@@ -66,6 +87,7 @@ class Client {
         'premiumAmount': premiumAmount,
         'phone': phone,
         'profileUrl': profileUrl,
+        'source': source.name,
       };
 
   factory Client.fromMap(Map<String, dynamic> map) => Client(
@@ -78,5 +100,9 @@ class Client {
         // ลูกค้าที่บันทึกก่อนมีช่องติดต่อยังไม่มีคีย์เหล่านี้
         phone: map['phone'] as String?,
         profileUrl: map['profileUrl'] as String?,
+        source: ClientSource.values.firstWhere(
+          (e) => e.name == map['source'],
+          orElse: () => ClientSource.unknown,
+        ),
       );
 }
