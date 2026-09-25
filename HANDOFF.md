@@ -22,6 +22,22 @@
   ถ้ายัง error อยู่ ให้ขอข้อความ error เต็ม ๆ จากหน้าจอ (หน้าสแกนแสดงข้อความดิบไว้ให้แล้ว)
 - **บทเรียน**: ไลบรารีที่ใช้ reflection (ML Kit และพวกเดียวกัน) ต้องมีทั้ง `-dontwarn` และ `-keep`
   และควรทดสอบ **release build** ไม่ใช่แค่ debug ก่อนส่งให้ผู้ใช้
+- **ยืนยันสาเหตุแล้ว (2026-09-25)** จาก error จริงบนมือถือ: `NullPointerException: getClass() on a null object reference`
+  ที่ `x40.onMethodCall` — ปลั๊กอินเรียก `TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)`
+  เทียบ dex สองตัว: 1.8.0 มี `com/google/mlkit/vision/text/latin/TextRecognizerOptions` และ `DEFAULT_OPTIONS` **0 ครั้ง**
+  ส่วน 1.8.1 มีครบ → ค่าที่ส่งให้ ML Kit เป็น null จึงพัง
+
+### การปล่อย release ขึ้น GitHub (ตั้งแต่ 2026-09-25)
+
+- เครื่องนี้**ไม่มี `gh` CLI** — ใช้ REST API กับ token จาก Git Credential Manager แทน (token ตัวเดียวกับที่ `git push` ใช้ มี scope `repo`)
+- สคริปต์ตัวอย่างอยู่ที่ scratchpad `gh_release.sh` (สร้าง release + อัป asset + พิมพ์ลิงก์) — ดึง token ด้วย
+  `printf "protocol=https
+host=github.com
+
+" | git credential fill` แล้วไม่พิมพ์ค่าออกมา
+- **repo เป็น public** ไฟล์ที่แนบใน release ใครก็โหลดได้
+- ตั้งชื่อไฟล์ให้บอก ABI ชัดเจน (`LifePlan-<version>-arm64-v8a.apk`) เพราะ `--split-per-abi` ได้ไฟล์ชื่อเหมือนกันทุกรุ่น
+- release แรก: **v1.8.1** — https://github.com/pakaneeserviceprogram-a11y/PROGRAMPLANNER/releases/tag/v1.8.1
 
 ### รอบ 2026-09-19 (ต่อ) — เป้าหมายโภชนาการเฉพาะบุคคล
 
