@@ -19,6 +19,7 @@ import '../widgets/form_sheet.dart';
 import '../widgets/progress_track.dart';
 import '../widgets/section_heading.dart';
 import 'nutrition_plan_screen.dart';
+import 'recipe_calculator_screen.dart';
 import 'dart:async';
 
 import '../data/calendar_utils.dart';
@@ -512,6 +513,35 @@ class NutritionScreen extends StatelessWidget {
                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
                               SizedBox(height: 2),
                               Text('จากน้ำหนัก ส่วนสูง อายุ และการออกกำลังกาย',
+                                  style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                GestureDetector(
+                  key: const ValueKey('open-recipe-calculator'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const RecipeCalculatorScreen()),
+                  ),
+                  child: AppCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.scale_rounded, size: 22, color: AppColors.nutrition),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('คำนวณจากวัตถุดิบ',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                              SizedBox(height: 2),
+                              Text('ชั่งเป็นกรัม แล้วดูโปรตีน ไขมัน และวิตามินที่ได้',
                                   style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                             ],
                           ),
