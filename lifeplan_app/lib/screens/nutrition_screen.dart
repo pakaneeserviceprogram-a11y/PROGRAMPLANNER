@@ -18,6 +18,7 @@ import '../widgets/back_button_circle.dart';
 import '../widgets/form_sheet.dart';
 import '../widgets/progress_track.dart';
 import '../widgets/section_heading.dart';
+import 'medication_screen.dart';
 import 'nutrition_plan_screen.dart';
 import 'recipe_calculator_screen.dart';
 import 'dart:async';
@@ -40,6 +41,19 @@ class NutritionScreen extends StatelessWidget {
   static const _dangerColor = Color(0xFFD64545);
 
   static const _thaiWeekdays = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+  static const _thaiMonthShort = [
+    'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+  ];
+
+  static String _mealDateLabel(DateTime d) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final diff = today.difference(DateTime(d.year, d.month, d.day)).inDays;
+    final base = '${d.day} ${_thaiMonthShort[d.month - 1]} ${d.year + 543}';
+    if (diff == 0) return 'วันนี้ ($base)';
+    if (diff == 1) return 'เมื่อวาน ($base)';
+    return base;
+  }
 
   /// ประมาณการเผาผลาญ 7 kcal ต่อนาที — ใช้สูตรเดียวกับหน้าออกกำลังกาย
   static const _kcalPerExerciseMinute = 7;
@@ -92,11 +106,14 @@ class NutritionScreen extends StatelessWidget {
     final carbController = TextEditingController(text: existing != null ? _g(existing.carbGrams) : '');
     final fatController = TextEditingController(text: existing != null ? _g(existing.fatGrams) : '');
     final sugarController = TextEditingController(text: existing != null ? _g(existing.sugarGrams) : '');
+    final fiberController = TextEditingController(text: existing != null ? _g(existing.fiberGrams) : '');
 
     final foodQueryController = TextEditingController();
     MealType selectedType = existing?.type ?? _suggestMealType();
     WorkoutTiming selectedTiming = existing?.workoutTiming ?? WorkoutTiming.none;
     TimeOfDay selectedTime = existing != null ? _parseTime(existing.time) : TimeOfDay.now();
+    // บันทึกย้อนหลังได้ — ลืมจดมื้อเมื่อวาน กราฟ 7 วันจะได้ไม่โหว่
+    DateTime selectedDate = existing?.date ?? DateTime.now();
     final selectedVitamins = <Vitamin>{...?existing?.vitamins};
 
     double parseGrams(TextEditingController c) => double.tryParse(c.text.replaceAll(',', '').trim()) ?? 0;
@@ -140,6 +157,7 @@ class NutritionScreen extends StatelessWidget {
                 carbController.text = _g(food.carbs);
                 fatController.text = _g(food.fat);
                 sugarController.text = _g(food.sugar);
+                fiberController.text = _g(food.fiber);
                 selectedVitamins
                   ..clear()
                   ..addAll(food.vitamins);
@@ -155,6 +173,28 @@ class NutritionScreen extends StatelessWidget {
               options: MealType.values,
               display: (t) => t.label,
               onChanged: (v) => setState(() => selectedType = v!),
+            ),
+            const SizedBox(height: 14),
+            const Text('วันที่', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+            const SizedBox(height: 7),
+            GestureDetector(
+              key: const ValueKey('meal-date'),
+              onTap: () async {
+                final now = DateTime.now();
+                final picked = await showDatePicker(
+                  context: ctx,
+                  initialDate: selectedDate,
+                  firstDate: now.subtract(const Duration(days: 365)),
+                  lastDate: now,
+                );
+                if (picked != null) setState(() => selectedDate = picked);
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
+                child: Text(_mealDateLabel(selectedDate), style: const TextStyle(fontSize: 14, color: AppColors.text)),
+              ),
             ),
             const SizedBox(height: 14),
             const Text('เวลา', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
@@ -217,6 +257,13 @@ class NutritionScreen extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 14),
+            AuthField(
+              label: 'ใยอาหาร (ก.)',
+              hint: '4',
+              controller: fiberController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
             const SizedBox(height: 16),
             const Text('วิตามินที่ได้รับ', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
             const SizedBox(height: 8),
@@ -265,16 +312,25 @@ class NutritionScreen extends StatelessWidget {
           title: title,
           type: selectedType,
           time: _formatTime(selectedTime),
-          date: existing?.date ?? DateTime.now(),
+          date: selectedDate,
           calories: int.tryParse(caloriesController.text.replaceAll(',', '').trim()) ?? 0,
           proteinGrams: parseGrams(proteinController),
           carbGrams: parseGrams(carbController),
           fatGrams: parseGrams(fatController),
           sugarGrams: parseGrams(sugarController),
+          fiberGrams: parseGrams(fiberController),
           vitamins: selectedVitamins.toList(),
           workoutTiming: selectedTiming,
         ));
-        if (context.mounted) Navigator.of(context).pop();
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          // มื้อของวันอื่นไม่ขึ้นในรายการวันนี้ บอกให้รู้ว่าบันทึกแล้วจริง
+          if (MealEntry.dateKeyOf(selectedDate) != MealEntry.dateKeyOf(DateTime.now())) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('บันทึก “$title” ลงวันที่ ${_mealDateLabel(selectedDate)} แล้ว')),
+            );
+          }
+        }
       },
     );
   }
@@ -413,6 +469,8 @@ class NutritionScreen extends StatelessWidget {
                         color: _dangerColor,
                         isLimit: true,
                       ),
+                      const SizedBox(height: 12),
+                      _MacroRow(label: 'ใยอาหาร', value: totals.fiber, target: goals.fiberTarget, color: AppColors.exercise),
                     ],
                   ),
                 ),
@@ -542,6 +600,35 @@ class NutritionScreen extends StatelessWidget {
                                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
                               SizedBox(height: 2),
                               Text('ชั่งเป็นกรัม แล้วดูโปรตีน ไขมัน และวิตามินที่ได้',
+                                  style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                GestureDetector(
+                  key: const ValueKey('open-medications'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const MedicationScreen()),
+                  ),
+                  child: AppCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.medication_rounded, size: 22, color: AppColors.nutrition),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('ยาและวิตามิน',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                              SizedBox(height: 2),
+                              Text('ตั้งเตือนกินยารักษาโรคและวิตามินบำรุง',
                                   style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                             ],
                           ),
@@ -813,7 +900,8 @@ class _MealRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     'โปรตีน ${NutritionScreen._g(meal.proteinGrams)} ก. • แป้ง ${NutritionScreen._g(meal.carbGrams)} ก. • '
-                    'ไขมัน ${NutritionScreen._g(meal.fatGrams)} ก. • น้ำตาล ${NutritionScreen._g(meal.sugarGrams)} ก.',
+                    'ไขมัน ${NutritionScreen._g(meal.fatGrams)} ก. • น้ำตาล ${NutritionScreen._g(meal.sugarGrams)} ก.'
+                    '${meal.fiberGrams > 0 ? ' • ใยอาหาร ${NutritionScreen._g(meal.fiberGrams)} ก.' : ''}',
                     style: const TextStyle(fontSize: 11.5, color: AppColors.textFaint),
                   ),
                   if (meal.vitamins.isNotEmpty) ...[

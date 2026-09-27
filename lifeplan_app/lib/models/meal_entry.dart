@@ -68,6 +68,9 @@ class MealEntry {
   final double carbGrams;
   final double fatGrams;
   final double sugarGrams;
+
+  /// ใยอาหาร (กรัม) — เรคคอร์ดก่อนมีฟิลด์นี้อ่านเป็น 0
+  final double fiberGrams;
   final List<Vitamin> vitamins;
   final WorkoutTiming workoutTiming;
 
@@ -82,6 +85,7 @@ class MealEntry {
     this.carbGrams = 0,
     this.fatGrams = 0,
     this.sugarGrams = 0,
+    this.fiberGrams = 0,
     this.vitamins = const [],
     this.workoutTiming = WorkoutTiming.none,
   }) : date = DateTime(date.year, date.month, date.day);
@@ -106,6 +110,7 @@ class MealEntry {
     double? carbGrams,
     double? fatGrams,
     double? sugarGrams,
+    double? fiberGrams,
     List<Vitamin>? vitamins,
     WorkoutTiming? workoutTiming,
   }) =>
@@ -120,6 +125,7 @@ class MealEntry {
         carbGrams: carbGrams ?? this.carbGrams,
         fatGrams: fatGrams ?? this.fatGrams,
         sugarGrams: sugarGrams ?? this.sugarGrams,
+        fiberGrams: fiberGrams ?? this.fiberGrams,
         vitamins: vitamins ?? this.vitamins,
         workoutTiming: workoutTiming ?? this.workoutTiming,
       );
@@ -135,6 +141,7 @@ class MealEntry {
         'carbGrams': carbGrams,
         'fatGrams': fatGrams,
         'sugarGrams': sugarGrams,
+        'fiberGrams': fiberGrams,
         'vitamins': vitamins.map((v) => v.name).toList(),
         'workoutTiming': workoutTiming.name,
       };
@@ -150,6 +157,7 @@ class MealEntry {
         carbGrams: (map['carbGrams'] as num?)?.toDouble() ?? 0,
         fatGrams: (map['fatGrams'] as num?)?.toDouble() ?? 0,
         sugarGrams: (map['sugarGrams'] as num?)?.toDouble() ?? 0,
+        fiberGrams: (map['fiberGrams'] as num?)?.toDouble() ?? 0,
         vitamins: ((map['vitamins'] as List?) ?? const [])
             .expand<Vitamin>((name) => Vitamin.values.where((v) => v.name == name))
             .toList(),
@@ -165,6 +173,7 @@ class NutritionTotals {
   final double carbs;
   final double fat;
   final double sugar;
+  final double fiber;
   final Set<Vitamin> vitamins;
   final int mealCount;
 
@@ -174,13 +183,14 @@ class NutritionTotals {
     this.carbs = 0,
     this.fat = 0,
     this.sugar = 0,
+    this.fiber = 0,
     this.vitamins = const {},
     this.mealCount = 0,
   });
 
   factory NutritionTotals.of(Iterable<MealEntry> meals) {
     var calories = 0;
-    var protein = 0.0, carbs = 0.0, fat = 0.0, sugar = 0.0;
+    var protein = 0.0, carbs = 0.0, fat = 0.0, sugar = 0.0, fiber = 0.0;
     final vitamins = <Vitamin>{};
     var count = 0;
 
@@ -190,6 +200,7 @@ class NutritionTotals {
       carbs += m.carbGrams;
       fat += m.fatGrams;
       sugar += m.sugarGrams;
+      fiber += m.fiberGrams;
       vitamins.addAll(m.vitamins);
       count++;
     }
@@ -200,6 +211,7 @@ class NutritionTotals {
       carbs: carbs,
       fat: fat,
       sugar: sugar,
+      fiber: fiber,
       vitamins: vitamins,
       mealCount: count,
     );

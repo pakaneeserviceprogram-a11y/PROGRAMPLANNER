@@ -9,6 +9,7 @@ import 'package:lifeplan_app/data/hive_boxes.dart';
 import 'package:lifeplan_app/data/ingredient_database.dart';
 import 'package:lifeplan_app/data/recipe_calculator.dart';
 import 'package:lifeplan_app/data/repositories/meal_repository.dart';
+import 'package:lifeplan_app/models/goal_settings.dart';
 import 'package:lifeplan_app/models/meal_entry.dart';
 import 'package:lifeplan_app/screens/recipe_calculator_screen.dart';
 
@@ -233,6 +234,48 @@ void main() {
       expect(meal.title, 'มะเขือเทศ');
       expect(meal.calories, 22); // 18 × 1.2 (120 ก.)
       expect(meal.vitamins, contains(Vitamin.c));
+    });
+  });
+
+  group('ใยอาหาร', () {
+    test('รวมใยอาหารตามน้ำหนักจริง และติดไปกับมื้อที่บันทึก', () {
+      final broccoli = byName('บรอกโคลี'); // 2.6 ก. ต่อ 100 ก.
+      final items = [
+        RecipeItem(ingredient: broccoli, grams: 200),
+        RecipeItem(ingredient: chicken, grams: 150),
+      ];
+      expect(RecipeCalculator.totalsOf(items).fiber, closeTo(5.2, 0.01));
+
+      final meal = RecipeCalculator.toMealEntry(items, title: 'ไก่ผัดบรอกโคลี', type: MealType.lunch, time: '12:00');
+      expect(meal.fiberGrams, 5.2);
+    });
+
+    test('เนื้อสัตว์ ไข่ นม ไม่มีใยอาหาร และใยอาหารไม่เกินคาร์บ (นับรวมอยู่ในคาร์บ)', () {
+      for (final i in IngredientDatabase.items) {
+        if (const {IngredientGroup.meat, IngredientGroup.seafood, IngredientGroup.egg, IngredientGroup.dairy}
+            .contains(i.group)) {
+          expect(i.fiber, 0, reason: i.name);
+        }
+        expect(i.fiber, lessThanOrEqualTo(i.carbs), reason: i.name);
+      }
+      expect(IngredientDatabase.items.where((i) => i.group == IngredientGroup.vegetable).every((i) => i.fiber > 0), isTrue);
+    });
+
+    test('มื้อเก่าที่ยังไม่มีฟิลด์ใยอาหารอ่านเป็น 0 และรวมทั้งวันได้', () {
+      final old = MealEntry.fromMap({
+        'id': 'a', 'title': 'เก่า', 'type': MealType.lunch.name, 'time': '12:00',
+        'date': DateTime(2026, 9, 1).toIso8601String(), 'calories': 300,
+      });
+      expect(old.fiberGrams, 0);
+      expect(MealEntry.fromMap(old.copyWith(fiberGrams: 4.5).toMap()).fiberGrams, 4.5);
+
+      final totals = NutritionTotals.of([old, old.copyWith(fiberGrams: 3), old.copyWith(fiberGrams: 2.5)]);
+      expect(totals.fiber, 5.5);
+    });
+
+    test('เป้าหมายเก่าที่ไม่มีใยอาหารใช้ค่าเริ่มต้น 25 ก.', () {
+      expect(GoalSettings.fromMap({}).fiberTarget, GoalSettings.defaultFiberTarget);
+      expect(GoalSettings.fromMap(const GoalSettings(fiberTarget: 30).toMap()).fiberTarget, 30);
     });
   });
 }

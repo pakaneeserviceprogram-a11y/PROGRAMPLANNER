@@ -28,6 +28,10 @@ class Ingredient {
   final double fat;
   final double sugar;
 
+  /// ใยอาหาร (กรัม) — **รวมอยู่ในคาร์บแล้ว** (นับแบบ total carbohydrate เหมือนฉลาก/USDA)
+  /// เนื้อสัตว์ ไข่ นม และน้ำมัน = 0
+  final double fiber;
+
   /// วิตามินที่วัตถุดิบนี้ให้ — เก็บเป็น **% ของที่ควรได้ต่อวันต่อ 100 ก.**
   /// ใส่เฉพาะตัวที่ให้ตั้งแต่ราว 10% ขึ้นไป (ต่ำกว่านั้นไม่มีผลในทางปฏิบัติ)
   final Map<Vitamin, double> vitaminPercent;
@@ -46,6 +50,7 @@ class Ingredient {
     required this.carbs,
     required this.fat,
     this.sugar = 0,
+    this.fiber = 0,
     this.vitaminPercent = const {},
     this.unitHint,
     this.unitGrams,
@@ -218,7 +223,7 @@ class IngredientDatabase {
     Ingredient(
       name: 'เต้าหู้ขาวอ่อน',
       group: IngredientGroup.other,
-      calories: 76, protein: 8, carbs: 1.9, fat: 4.8,
+      calories: 76, protein: 8, carbs: 1.9, fat: 4.8, fiber: 0.3,
       vitaminPercent: {Vitamin.b: 10, Vitamin.k: 10},
     ),
 
@@ -226,68 +231,68 @@ class IngredientDatabase {
     Ingredient(
       name: 'มะเขือเทศ',
       group: IngredientGroup.vegetable,
-      calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2, sugar: 2.6,
+      calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2, sugar: 2.6, fiber: 1.2,
       vitaminPercent: {Vitamin.a: 20, Vitamin.c: 25, Vitamin.k: 10, Vitamin.e: 10},
       unitHint: '1 ลูกกลาง ≈ 120 ก.', unitGrams: 120,
     ),
     Ingredient(
       name: 'แครอท',
       group: IngredientGroup.vegetable,
-      calories: 41, protein: 0.9, carbs: 9.6, fat: 0.2, sugar: 4.7,
+      calories: 41, protein: 0.9, carbs: 9.6, fat: 0.2, sugar: 4.7, fiber: 2.8,
       vitaminPercent: {Vitamin.a: 180, Vitamin.k: 15, Vitamin.c: 10},
     ),
     Ingredient(
       name: 'บรอกโคลี',
       group: IngredientGroup.vegetable,
-      calories: 34, protein: 2.8, carbs: 6.6, fat: 0.4, sugar: 1.7,
+      calories: 34, protein: 2.8, carbs: 6.6, fat: 0.4, sugar: 1.7, fiber: 2.6,
       vitaminPercent: {Vitamin.c: 150, Vitamin.k: 130, Vitamin.a: 12},
     ),
     Ingredient(
       name: 'คะน้า',
       group: IngredientGroup.vegetable,
-      calories: 35, protein: 2.5, carbs: 5.5, fat: 0.5, sugar: 1.3,
+      calories: 35, protein: 2.5, carbs: 5.5, fat: 0.5, sugar: 1.3, fiber: 2.5,
       vitaminPercent: {Vitamin.c: 110, Vitamin.k: 250, Vitamin.a: 50},
     ),
     Ingredient(
       name: 'ผักบุ้ง',
       group: IngredientGroup.vegetable,
-      calories: 19, protein: 2.6, carbs: 3.1, fat: 0.2,
+      calories: 19, protein: 2.6, carbs: 3.1, fat: 0.2, fiber: 2.1,
       vitaminPercent: {Vitamin.a: 60, Vitamin.c: 60, Vitamin.k: 30},
     ),
     Ingredient(
       name: 'ฟักทอง',
       group: IngredientGroup.vegetable,
-      calories: 26, protein: 1, carbs: 6.5, fat: 0.1, sugar: 2.8,
+      calories: 26, protein: 1, carbs: 6.5, fat: 0.1, sugar: 2.8, fiber: 0.5,
       vitaminPercent: {Vitamin.a: 100, Vitamin.c: 15, Vitamin.e: 10},
     ),
     Ingredient(
       name: 'พริกหวาน',
       group: IngredientGroup.vegetable,
-      calories: 31, protein: 1, carbs: 6, fat: 0.3, sugar: 4.2,
+      calories: 31, protein: 1, carbs: 6, fat: 0.3, sugar: 4.2, fiber: 2.1,
       vitaminPercent: {Vitamin.c: 210, Vitamin.a: 35, Vitamin.e: 15},
     ),
     Ingredient(
       name: 'แตงกวา',
       group: IngredientGroup.vegetable,
-      calories: 15, protein: 0.7, carbs: 3.6, fat: 0.1, sugar: 1.7,
+      calories: 15, protein: 0.7, carbs: 3.6, fat: 0.1, sugar: 1.7, fiber: 0.5,
       vitaminPercent: {Vitamin.k: 20},
     ),
     Ingredient(
       name: 'กะหล่ำปลี',
       group: IngredientGroup.vegetable,
-      calories: 25, protein: 1.3, carbs: 5.8, fat: 0.1, sugar: 3.2,
+      calories: 25, protein: 1.3, carbs: 5.8, fat: 0.1, sugar: 3.2, fiber: 2.5,
       vitaminPercent: {Vitamin.c: 40, Vitamin.k: 70},
     ),
     Ingredient(
       name: 'เห็ดฟาง',
       group: IngredientGroup.vegetable,
-      calories: 30, protein: 3, carbs: 4.5, fat: 0.3,
+      calories: 30, protein: 3, carbs: 4.5, fat: 0.3, fiber: 2.5,
       vitaminPercent: {Vitamin.b: 20, Vitamin.d: 15},
     ),
     Ingredient(
       name: 'ผักกาดหอม',
       group: IngredientGroup.vegetable,
-      calories: 15, protein: 1.4, carbs: 2.9, fat: 0.2,
+      calories: 15, protein: 1.4, carbs: 2.9, fat: 0.2, fiber: 1.3,
       vitaminPercent: {Vitamin.a: 40, Vitamin.k: 100},
     ),
 
@@ -295,33 +300,33 @@ class IngredientDatabase {
     Ingredient(
       name: 'กล้วยน้ำว้า',
       group: IngredientGroup.fruit,
-      calories: 89, protein: 1.1, carbs: 23, fat: 0.3, sugar: 12,
+      calories: 89, protein: 1.1, carbs: 23, fat: 0.3, sugar: 12, fiber: 2.6,
       vitaminPercent: {Vitamin.b: 20, Vitamin.c: 12},
       unitHint: '1 ผล ≈ 60 ก.', unitGrams: 60,
     ),
     Ingredient(
       name: 'ส้ม',
       group: IngredientGroup.fruit,
-      calories: 47, protein: 0.9, carbs: 12, fat: 0.1, sugar: 9,
+      calories: 47, protein: 0.9, carbs: 12, fat: 0.1, sugar: 9, fiber: 2.4,
       vitaminPercent: {Vitamin.c: 90, Vitamin.a: 10},
       unitHint: '1 ผล ≈ 130 ก.', unitGrams: 130,
     ),
     Ingredient(
       name: 'มะละกอสุก',
       group: IngredientGroup.fruit,
-      calories: 43, protein: 0.5, carbs: 11, fat: 0.3, sugar: 8,
+      calories: 43, protein: 0.5, carbs: 11, fat: 0.3, sugar: 8, fiber: 1.7,
       vitaminPercent: {Vitamin.c: 70, Vitamin.a: 25},
     ),
     Ingredient(
       name: 'ฝรั่ง',
       group: IngredientGroup.fruit,
-      calories: 68, protein: 2.6, carbs: 14, fat: 1, sugar: 9,
+      calories: 68, protein: 2.6, carbs: 14, fat: 1, sugar: 9, fiber: 5.4,
       vitaminPercent: {Vitamin.c: 250, Vitamin.a: 12},
     ),
     Ingredient(
       name: 'อะโวคาโด',
       group: IngredientGroup.fruit,
-      calories: 160, protein: 2, carbs: 8.5, fat: 15, sugar: 0.7,
+      calories: 160, protein: 2, carbs: 8.5, fat: 15, sugar: 0.7, fiber: 6.7,
       vitaminPercent: {Vitamin.e: 15, Vitamin.k: 25, Vitamin.c: 12, Vitamin.b: 20},
     ),
 
@@ -329,31 +334,31 @@ class IngredientDatabase {
     Ingredient(
       name: 'ข้าวสวย',
       group: IngredientGroup.grain,
-      calories: 130, protein: 2.7, carbs: 28, fat: 0.3,
+      calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4,
       unitHint: '1 ทัพพี ≈ 60 ก.', unitGrams: 60,
     ),
     Ingredient(
       name: 'ข้าวกล้องสุก',
       group: IngredientGroup.grain,
-      calories: 123, protein: 2.7, carbs: 26, fat: 1,
+      calories: 123, protein: 2.7, carbs: 26, fat: 1, fiber: 1.8,
       vitaminPercent: {Vitamin.b: 15},
       unitHint: '1 ทัพพี ≈ 60 ก.', unitGrams: 60,
     ),
     Ingredient(
       name: 'ข้าวเหนียวนึ่ง',
       group: IngredientGroup.grain,
-      calories: 169, protein: 3.5, carbs: 37, fat: 0.3,
+      calories: 169, protein: 3.5, carbs: 37, fat: 0.3, fiber: 1.0,
       unitHint: '1 ห่อ ≈ 100 ก.', unitGrams: 100,
     ),
     Ingredient(
       name: 'เส้นก๋วยเตี๋ยวลวก',
       group: IngredientGroup.grain,
-      calories: 109, protein: 1.8, carbs: 25, fat: 0.2,
+      calories: 109, protein: 1.8, carbs: 25, fat: 0.2, fiber: 0.9,
     ),
     Ingredient(
       name: 'ขนมปังโฮลวีต',
       group: IngredientGroup.grain,
-      calories: 247, protein: 13, carbs: 41, fat: 3.4, sugar: 5,
+      calories: 247, protein: 13, carbs: 41, fat: 3.4, sugar: 5, fiber: 7,
       vitaminPercent: {Vitamin.b: 20},
       unitHint: '1 แผ่น ≈ 30 ก.', unitGrams: 30,
     ),
@@ -376,19 +381,19 @@ class IngredientDatabase {
     Ingredient(
       name: 'กะทิ',
       group: IngredientGroup.fat,
-      calories: 230, protein: 2.3, carbs: 5.5, fat: 24, sugar: 3.3,
+      calories: 230, protein: 2.3, carbs: 5.5, fat: 24, sugar: 3.3, fiber: 2.2,
       unitHint: '1 ถ้วย ≈ 240 ก.', unitGrams: 240,
     ),
     Ingredient(
       name: 'ถั่วลิสงคั่ว',
       group: IngredientGroup.fat,
-      calories: 567, protein: 26, carbs: 16, fat: 49, sugar: 4,
+      calories: 567, protein: 26, carbs: 16, fat: 49, sugar: 4, fiber: 8.5,
       vitaminPercent: {Vitamin.e: 55, Vitamin.b: 60},
     ),
     Ingredient(
       name: 'อัลมอนด์',
       group: IngredientGroup.fat,
-      calories: 579, protein: 21, carbs: 22, fat: 50, sugar: 4.4,
+      calories: 579, protein: 21, carbs: 22, fat: 50, sugar: 4.4, fiber: 12.5,
       vitaminPercent: {Vitamin.e: 170, Vitamin.b: 30},
     ),
   ];

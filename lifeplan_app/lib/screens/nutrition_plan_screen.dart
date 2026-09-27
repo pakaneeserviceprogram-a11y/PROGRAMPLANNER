@@ -247,6 +247,8 @@ class _PlanCard extends StatelessWidget {
           _PlanRow(label: 'ไขมัน', value: '${plan.fatTarget.round()} ก.', color: AppColors.finance),
           const SizedBox(height: 10),
           _PlanRow(label: 'น้ำตาล (ไม่เกิน)', value: '${plan.sugarLimit.round()} ก.', color: const Color(0xFFD64545)),
+          const SizedBox(height: 10),
+          _PlanRow(label: 'ใยอาหาร', value: '${plan.fiberTarget.round()} ก.', color: AppColors.exercise),
           const Divider(height: 20, color: AppColors.border),
           _PlanRow(
             label: 'น้ำดื่ม',

@@ -94,4 +94,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('ยังไม่ได้บันทึกมื้ออาหารของวันนี้'), findsOneWidget);
   });
+
+  testWidgets('แก้วันที่ของมื้อเป็นเมื่อวานได้ มื้อหายจากวันนี้และบอกว่าบันทึกลงวันไหน', (tester) async {
+    await pumpScreen(tester);
+    await tester.scrollUntilVisible(find.text('ข้าวกล้องอกไก่'), 250);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ข้าวกล้องอกไก่'));
+    await tester.pumpAndSettle();
+
+    final dateField = find.byKey(const ValueKey('meal-date'));
+    expect(find.descendant(of: dateField, matching: find.textContaining('วันนี้')), findsOneWidget);
+    await tester.ensureVisible(dateField);
+    await tester.tap(dateField);
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    // วันที่ 1 ของเดือน เมื่อวานอยู่เดือนก่อน ต้องเลื่อนปฏิทินกลับไปหนึ่งเดือน
+    if (yesterday.month != now.month) {
+      await tester.tap(find.byTooltip('Previous month'));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('${yesterday.day}'));
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: dateField, matching: find.textContaining('เมื่อวาน')), findsOneWidget);
+
+    final save = find.text('บันทึก').last;
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    final meal = MealRepository().getAll().single;
+    expect(MealEntry.dateKeyOf(meal.date), MealEntry.dateKeyOf(yesterday));
+    expect(find.textContaining('ลงวันที่ เมื่อวาน'), findsOneWidget);
+    expect(MealRepository().getToday(), isEmpty);
+  });
 }

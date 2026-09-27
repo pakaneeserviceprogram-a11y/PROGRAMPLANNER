@@ -39,6 +39,8 @@ void main() {
       Hive.openBox<Map>(HiveBoxes.goalSettings),
       Hive.openBox<Map>(HiveBoxes.appSettings),
       Hive.openBox<Map>(HiveBoxes.bodyProfile),
+      Hive.openBox<Map>(HiveBoxes.medications),
+      Hive.openBox<Map>(HiveBoxes.medicationLog),
     ]);
   });
 

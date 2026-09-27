@@ -12,6 +12,7 @@ class GoalSettings {
   static const defaultCarbTarget = 250.0; // กรัม (แป้ง/คาร์โบไฮเดรต)
   static const defaultFatTarget = 65.0; // กรัม
   static const defaultSugarLimit = 25.0; // กรัม — เพดานตามคำแนะนำ WHO
+  static const defaultFiberTarget = 25.0; // กรัม — ปริมาณที่แนะนำต่อวันของคนไทย (กรมอนามัย)
   static const defaultWaterTargetMl = 2000; // มล. (8 แก้ว)
 
   /// เป้าเวลานอนต่อคืนเป็นนาที — 8 ชั่วโมงตามคำแนะนำผู้ใหญ่ทั่วไป (7–9 ชม.)
@@ -25,6 +26,7 @@ class GoalSettings {
   final double carbTarget;
   final double fatTarget;
   final double sugarLimit;
+  final double fiberTarget;
   final int waterTargetMl;
   final int sleepTargetMinutes;
 
@@ -37,6 +39,7 @@ class GoalSettings {
     this.carbTarget = defaultCarbTarget,
     this.fatTarget = defaultFatTarget,
     this.sugarLimit = defaultSugarLimit,
+    this.fiberTarget = defaultFiberTarget,
     this.waterTargetMl = defaultWaterTargetMl,
     this.sleepTargetMinutes = defaultSleepTargetMinutes,
   });
@@ -50,6 +53,7 @@ class GoalSettings {
     double? carbTarget,
     double? fatTarget,
     double? sugarLimit,
+    double? fiberTarget,
     int? waterTargetMl,
     int? sleepTargetMinutes,
   }) =>
@@ -62,6 +66,7 @@ class GoalSettings {
         carbTarget: carbTarget ?? this.carbTarget,
         fatTarget: fatTarget ?? this.fatTarget,
         sugarLimit: sugarLimit ?? this.sugarLimit,
+        fiberTarget: fiberTarget ?? this.fiberTarget,
         waterTargetMl: waterTargetMl ?? this.waterTargetMl,
         sleepTargetMinutes: sleepTargetMinutes ?? this.sleepTargetMinutes,
       );
@@ -75,6 +80,7 @@ class GoalSettings {
         'carbTarget': carbTarget,
         'fatTarget': fatTarget,
         'sugarLimit': sugarLimit,
+        'fiberTarget': fiberTarget,
         'waterTargetMl': waterTargetMl,
         'sleepTargetMinutes': sleepTargetMinutes,
       };
@@ -88,6 +94,7 @@ class GoalSettings {
         carbTarget: (map['carbTarget'] as num?)?.toDouble() ?? defaultCarbTarget,
         fatTarget: (map['fatTarget'] as num?)?.toDouble() ?? defaultFatTarget,
         sugarLimit: (map['sugarLimit'] as num?)?.toDouble() ?? defaultSugarLimit,
+        fiberTarget: (map['fiberTarget'] as num?)?.toDouble() ?? defaultFiberTarget,
         waterTargetMl: (map['waterTargetMl'] as num?)?.toInt() ?? defaultWaterTargetMl,
         sleepTargetMinutes:
             (map['sleepTargetMinutes'] as num?)?.toInt() ?? defaultSleepTargetMinutes,

@@ -16,6 +16,7 @@ class NutritionPlan {
   final double carbTarget;
   final double fatTarget;
   final double sugarLimit;
+  final double fiberTarget;
   final int waterTargetMl;
 
   final double bmi;
@@ -31,6 +32,7 @@ class NutritionPlan {
     required this.carbTarget,
     required this.fatTarget,
     required this.sugarLimit,
+    required this.fiberTarget,
     required this.waterTargetMl,
     required this.bmi,
     this.advice = const [],
@@ -52,6 +54,7 @@ class NutritionPlan {
         carbTarget: carbTarget,
         fatTarget: fatTarget,
         sugarLimit: sugarLimit,
+        fiberTarget: fiberTarget,
         waterTargetMl: waterTargetMl,
       );
 }
@@ -104,6 +107,8 @@ class NutritionPlanner {
     // ที่เหลือหลังหักโปรตีนกับไขมันเป็นคาร์บ — กันติดลบเมื่อเป้าพลังงานต่ำมาก
     final carbs = ((calories - protein * 4 - fat * 9) / 4).clamp(50.0, 1000.0);
     final sugar = calories * 0.10 / 4;
+    // 14 ก. ต่อ 1,000 kcal (เกณฑ์ IOM) กันไม่ให้ต่ำหรือสูงเกินใช้จริง
+    final fiber = (calories * 14 / 1000).clamp(20.0, 40.0);
 
     final exerciseWater = (weeklyExerciseMinutes / 7 / 30 * waterMlPer30MinExercise).round();
     final water = (weight * waterMlPerKg).round() + exerciseWater;
@@ -118,6 +123,7 @@ class NutritionPlanner {
       carbTarget: _round1(carbs),
       fatTarget: _round1(fat),
       sugarLimit: _round1(sugar),
+      fiberTarget: _round1(fiber),
       // ปัดขึ้นเป็นหลักร้อยให้จำง่ายเวลานับเป็นแก้ว
       waterTargetMl: ((water / 100).ceil() * 100),
       bmi: double.parse(bmi.toStringAsFixed(1)),

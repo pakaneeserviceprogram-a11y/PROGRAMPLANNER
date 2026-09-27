@@ -238,7 +238,8 @@ class _RecipeCalculatorScreenState extends State<RecipeCalculatorScreen> {
                 ),
               ),
               const SizedBox(height: 18),
-              _TotalsCard(totals: totals, calorieTarget: goals.calorieTarget, proteinTarget: goals.proteinTarget),
+              _TotalsCard(totals: totals, calorieTarget: goals.calorieTarget, proteinTarget: goals.proteinTarget,
+                  fiberTarget: goals.fiberTarget),
               const SizedBox(height: 18),
               _VitaminCard(totals: totals),
               const SizedBox(height: 18),
@@ -331,8 +332,9 @@ class _TotalsCard extends StatelessWidget {
   final RecipeTotals totals;
   final int calorieTarget;
   final double proteinTarget;
+  final double fiberTarget;
 
-  const _TotalsCard({required this.totals, required this.calorieTarget, required this.proteinTarget});
+  const _TotalsCard({required this.totals, required this.calorieTarget, required this.proteinTarget, required this.fiberTarget});
 
   @override
   Widget build(BuildContext context) {
@@ -367,11 +369,16 @@ class _TotalsCard extends StatelessWidget {
           const SizedBox(height: 10),
           _MacroLine(label: 'ไขมัน', grams: totals.fat, ratio: split.fat, color: AppColors.finance),
           const SizedBox(height: 12),
-          Text('น้ำตาล ${totals.sugar.toStringAsFixed(1)} ก.',
+          Text('น้ำตาล ${totals.sugar.toStringAsFixed(1)} ก. • ใยอาหาร ${totals.fiber.toStringAsFixed(1)} ก.',
               style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
           if (proteinTarget > 0) ...[
             const SizedBox(height: 6),
             Text('จานนี้ให้โปรตีน ${(totals.protein / proteinTarget * 100).round()}% ของที่ควรได้ทั้งวัน',
+                style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+          ],
+          if (fiberTarget > 0) ...[
+            const SizedBox(height: 4),
+            Text('ใยอาหาร ${(totals.fiber / fiberTarget * 100).round()}% ของที่ควรได้ทั้งวัน',
                 style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
           ],
         ],

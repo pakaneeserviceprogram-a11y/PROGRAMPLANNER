@@ -41,6 +41,8 @@ class BackupService {
     HiveBoxes.goalSettings,
     HiveBoxes.appSettings,
     HiveBoxes.bodyProfile,
+    HiveBoxes.medications,
+    HiveBoxes.medicationLog,
   ];
 
   /// ทุก box ที่อยู่ในไฟล์สำรอง = ข้อมูลทั้งหมดของแอป
@@ -60,6 +62,7 @@ class BackupService {
     HiveBoxes.skillTracks,
     HiveBoxes.scheduleEvents,
     HiveBoxes.learningStreak,
+    HiveBoxes.medicationLog,
   ];
 
   /// จำนวนรายการที่มีอยู่จริงในเครื่องตอนนี้ — ใช้โชว์ให้ผู้ใช้เห็นก่อนกดล้าง

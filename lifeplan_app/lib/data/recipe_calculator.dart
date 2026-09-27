@@ -17,6 +17,7 @@ class RecipeItem {
   double get carbs => ingredient.carbs * _factor;
   double get fat => ingredient.fat * _factor;
   double get sugar => ingredient.sugar * _factor;
+  double get fiber => ingredient.fiber * _factor;
 
   /// วิตามินที่ได้จากบรรทัดนี้ (% ของที่ควรได้ต่อวัน)
   Map<Vitamin, double> get vitaminPercent =>
@@ -32,6 +33,7 @@ class RecipeTotals {
   final double carbs;
   final double fat;
   final double sugar;
+  final double fiber;
   final double grams;
 
   /// รวมวิตามินเป็น % ของที่ควรได้ต่อวัน (ยังไม่ตัดเพดาน — ตัดตอนแสดงผล)
@@ -43,6 +45,7 @@ class RecipeTotals {
     this.carbs = 0,
     this.fat = 0,
     this.sugar = 0,
+    this.fiber = 0,
     this.grams = 0,
     this.vitaminPercent = const {},
   });
@@ -74,7 +77,7 @@ class RecipeCalculator {
   RecipeCalculator._();
 
   static RecipeTotals totalsOf(Iterable<RecipeItem> items) {
-    var calories = 0.0, protein = 0.0, carbs = 0.0, fat = 0.0, sugar = 0.0, grams = 0.0;
+    var calories = 0.0, protein = 0.0, carbs = 0.0, fat = 0.0, sugar = 0.0, fiber = 0.0, grams = 0.0;
     final vitamins = <Vitamin, double>{};
 
     for (final item in items) {
@@ -83,6 +86,7 @@ class RecipeCalculator {
       carbs += item.carbs;
       fat += item.fat;
       sugar += item.sugar;
+      fiber += item.fiber;
       grams += item.grams;
       item.vitaminPercent.forEach((k, v) => vitamins[k] = (vitamins[k] ?? 0) + v);
     }
@@ -93,6 +97,7 @@ class RecipeCalculator {
       carbs: carbs,
       fat: fat,
       sugar: sugar,
+      fiber: fiber,
       grams: grams,
       vitaminPercent: vitamins,
     );
@@ -122,6 +127,7 @@ class RecipeCalculator {
       carbGrams: _round1(totals.carbs),
       fatGrams: _round1(totals.fat),
       sugarGrams: _round1(totals.sugar),
+      fiberGrams: _round1(totals.fiber),
       vitamins: totals.notableVitamins(threshold: vitaminThreshold).map((e) => e.key).toList(),
     );
   }

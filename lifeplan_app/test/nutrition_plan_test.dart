@@ -40,6 +40,16 @@ void main() {
       expect(plan.calorieTarget, 2509);
     });
 
+    test('ใยอาหาร 14 ก. ต่อ 1,000 kcal และถูกนำไปใช้เป็นเป้าหมาย', () {
+      final plan = NutritionPlanner.of(man, now: today)!;
+      // 2509 × 14 / 1000 = 35.126 → 35.1
+      expect(plan.fiberTarget, 35.1);
+      expect(plan.applyTo(const GoalSettings()).fiberTarget, 35.1);
+
+      final lose = NutritionPlanner.of(man.copyWith(weightGoal: WeightGoal.lose), now: today)!;
+      expect(lose.fiberTarget, inInclusiveRange(20, 40));
+    });
+
     test('ผู้หญิงใช้ค่าคงที่ต่างกัน 166 kcal ตามสูตร', () {
       final woman = man.copyWith(sex: BodySex.female);
       final planMan = NutritionPlanner.of(man, now: today)!;

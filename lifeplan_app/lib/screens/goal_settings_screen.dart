@@ -27,6 +27,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
   late final TextEditingController _carbController;
   late final TextEditingController _fatController;
   late final TextEditingController _sugarController;
+  late final TextEditingController _fiberController;
   late final TextEditingController _waterController;
   late final TextEditingController _sleepHoursController;
 
@@ -42,6 +43,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     _carbController = TextEditingController(text: goals.carbTarget.toStringAsFixed(0));
     _fatController = TextEditingController(text: goals.fatTarget.toStringAsFixed(0));
     _sugarController = TextEditingController(text: goals.sugarLimit.toStringAsFixed(0));
+    _fiberController = TextEditingController(text: goals.fiberTarget.toStringAsFixed(0));
     _waterController = TextEditingController(text: '${goals.waterTargetMl}');
     _sleepHoursController =
         TextEditingController(text: _hoursText(goals.sleepTargetMinutes));
@@ -57,6 +59,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     _carbController.dispose();
     _fatController.dispose();
     _sugarController.dispose();
+    _fiberController.dispose();
     _waterController.dispose();
     _sleepHoursController.dispose();
     super.dispose();
@@ -87,6 +90,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
     final carb = _parsePositive(_carbController.text);
     final fat = _parsePositive(_fatController.text);
     final sugar = _parsePositive(_sugarController.text);
+    final fiber = _parsePositive(_fiberController.text);
     final water = _parsePositive(_waterController.text);
     final sleepHours = _parsePositive(_sleepHoursController.text);
 
@@ -98,7 +102,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       _showMessage('เป้าหมายออกกำลังกายต้องอยู่ระหว่าง 1–21 ครั้งต่อสัปดาห์');
       return;
     }
-    if (calorie == null || protein == null || carb == null || fat == null || sugar == null || water == null) {
+    if (calorie == null || protein == null || carb == null || fat == null || sugar == null || fiber == null || water == null) {
       _showMessage('เป้าหมายโภชนาการทุกช่องต้องเป็นตัวเลขที่มากกว่า 0');
       return;
     }
@@ -116,6 +120,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       carbTarget: carb,
       fatTarget: fat,
       sugarLimit: sugar,
+      fiberTarget: fiber,
       waterTargetMl: water.round(),
       sleepTargetMinutes: (sleepHours * 60).round(),
     ));
@@ -134,6 +139,7 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
       _carbController.text = GoalSettings.defaultCarbTarget.toStringAsFixed(0);
       _fatController.text = GoalSettings.defaultFatTarget.toStringAsFixed(0);
       _sugarController.text = GoalSettings.defaultSugarLimit.toStringAsFixed(0);
+      _fiberController.text = GoalSettings.defaultFiberTarget.toStringAsFixed(0);
       _waterController.text = '${GoalSettings.defaultWaterTargetMl}';
       _sleepHoursController.text = _hoursText(GoalSettings.defaultSleepTargetMinutes);
     });
@@ -243,11 +249,26 @@ class _GoalSettingsScreenState extends State<GoalSettingsScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  AuthField(
-                    label: 'น้ำดื่มต่อวัน (มล.)',
-                    hint: 'เช่น 2000',
-                    controller: _waterController,
-                    keyboardType: TextInputType.number,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AuthField(
+                          label: 'ใยอาหาร (ก./วัน)',
+                          hint: 'เช่น 25',
+                          controller: _fiberController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AuthField(
+                          label: 'น้ำดื่มต่อวัน (มล.)',
+                          hint: 'เช่น 2000',
+                          controller: _waterController,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

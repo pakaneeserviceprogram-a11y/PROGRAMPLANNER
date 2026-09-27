@@ -25,6 +25,12 @@ class HiveBoxes {
   /// ข้อมูลร่างกายที่ใช้คำนวณเป้าหมายโภชนาการ (เพศ/อายุ/ส่วนสูง/น้ำหนัก/กิจกรรม)
   static const bodyProfile = 'body_profile';
 
+  /// รายการยา/วิตามินที่ผู้ใช้บันทึกไว้ (ไม่ใช่ประวัติ — ล้างประวัติแล้วยายังอยู่)
+  static const medications = 'medications';
+
+  /// ประวัติว่ากินยาครั้งไหนไปแล้ว เก็บวันละหนึ่งเรคคอร์ด
+  static const medicationLog = 'medication_log';
+
   static Future<void> init() async {
     await Hive.initFlutter();
     await Future.wait([
@@ -42,6 +48,8 @@ class HiveBoxes {
       Hive.openBox<Map>(learningStreak),
       Hive.openBox<Map>(goalSettings),
       Hive.openBox<Map>(bodyProfile),
+      Hive.openBox<Map>(medications),
+      Hive.openBox<Map>(medicationLog),
       Hive.openBox<Map>(appSettings),
     ]);
   }

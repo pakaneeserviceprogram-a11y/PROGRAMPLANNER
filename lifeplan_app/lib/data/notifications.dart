@@ -4,13 +4,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../models/app_settings.dart';
 import '../models/schedule_event.dart';
 import 'backup_reminder.dart';
+import 'hive_boxes.dart';
+import 'medication_reminder.dart';
 import 'repositories/app_settings_repository.dart';
+import 'repositories/medication_repository.dart';
 import 'repositories/schedule_repository.dart';
 
 /// แจ้งเตือนกิจกรรมในตารางเวลา — กิจกรรมประจำสัปดาห์ตั้งเป็นการเตือนซ้ำทุกสัปดาห์
@@ -161,6 +165,7 @@ class NotificationService {
     final details = _detailsFor(settings);
     var scheduled = await _scheduleWaterReminders(settings, details);
     scheduled += await _scheduleBackupReminder(settings, details);
+    scheduled += await _scheduleMedicationReminders(details);
     if (!settings.scheduleRemindersEnabled) return scheduled;
 
     final events = ScheduleRepository().getAll();
@@ -244,6 +249,43 @@ class NotificationService {
     var when = tz.TZDateTime(tz.local, current.year, current.month, current.day, hour, minute);
     if (!when.isAfter(current)) when = when.add(const Duration(days: 1));
     return when;
+  }
+
+  /// ช่วง id ของการเตือนกินยา — แยกจากเตือนน้ำ (7000+) และการเตือนทดสอบ (9999)
+  static const _medicationIdBase = 8000;
+
+  /// จำนวนการเตือนกินยาสูงสุดที่ตั้งได้ — กัน id ล้นไปชนช่วงอื่น
+  static const _medicationIdLimit = 300;
+
+  /// เตือนกินยาเป็นการแจ้งเตือนรายวันตรง ๆ ไม่ผ่านตารางเวลา
+  ///
+  /// เป็นอิสระจากสวิตช์ "เตือนตามตารางเวลา" — ยาเป็นเรื่องสุขภาพ ไม่ควรเงียบไป
+  /// เพราะผู้ใช้ปิดการเตือนกิจกรรม การเปิด-ปิดทำที่ตัวยาแต่ละตัว (Medication.active
+  /// และรายการเวลาที่ว่างเปล่า)
+  static Future<int> _scheduleMedicationReminders(NotificationDetails details) async {
+    // หน้าจอที่ยังไม่เคยเปิด box นี้ (เช่นใน test บางตัว) ไม่ควรทำให้การ sync ล้ม
+    if (!Hive.isBoxOpen(HiveBoxes.medications)) return 0;
+
+    final entries = MedicationReminder.scheduleEntries(MedicationRepository().getAll());
+    var scheduled = 0;
+    for (var i = 0; i < entries.length && i < _medicationIdLimit; i++) {
+      final when = nextDailyOccurrence(entries[i].time);
+      if (when == null) continue;
+
+      final med = entries[i].medication;
+      await _plugin.zonedSchedule(
+        id: _medicationIdBase + i,
+        scheduledDate: when,
+        title: 'ถึงเวลากินยา — ${med.name}',
+        body: MedicationReminder.notificationBody(med),
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        // ซ้ำทุกวันในเวลาเดิม
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      scheduled++;
+    }
+    return scheduled;
   }
 
   /// ช่วง id ของการเตือนซ้ำ — ต้องไม่ชนกับ id ของตารางประจำสัปดาห์ (0..จำนวนกิจกรรม)
