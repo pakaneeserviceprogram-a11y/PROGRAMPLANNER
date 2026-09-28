@@ -80,9 +80,29 @@ class NotificationService {
     await init();
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (android == null) return true; // แพลตฟอร์มที่ไม่ต้องขอสิทธิ์
-    // ตั้งเตือนแบบ inexact (คลาดได้ไม่กี่นาที) จึงไม่ต้องขอสิทธิ์ SCHEDULE_EXACT_ALARM
-    // ซึ่งจะเด้งผู้ใช้ออกไปหน้าตั้งค่าของระบบโดยไม่จำเป็น
-    return await android.requestNotificationsPermission() ?? false;
+    final granted = await android.requestNotificationsPermission() ?? false;
+    // Android 13+ ได้สิทธิ์เตือนตรงเวลาจาก USE_EXACT_ALARM อัตโนมัติ — มีแค่ Android 12
+    // ที่ต้องพาผู้ใช้ไปกดอนุญาตในหน้าตั้งค่า (ไม่อนุญาตก็ยังเตือนได้ แค่อาจช้า)
+    if (granted && !(await android.canScheduleExactNotifications() ?? true)) {
+      await android.requestExactAlarmsPermission();
+    }
+    return granted;
+  }
+
+  /// โหมดตั้งเวลาที่ใช้กับการเตือนที่ต้องตรงเวลา (กิจกรรม/ยา/น้ำ/เลื่อนเตือน)
+  ///
+  /// แบบ inexact ระบบจะรวบไปปล่อยตอนเครื่องตื่นจาก Doze — ผู้ใช้เจอเตือนช้าไปครึ่งชั่วโมง
+  /// จึงใช้ exact เมื่อได้สิทธิ์ ไม่ได้สิทธิ์ก็ถอยไป inexact ดีกว่าไม่เตือนเลย
+  static AndroidScheduleMode _timelyMode = AndroidScheduleMode.inexactAllowWhileIdle;
+
+  static Future<void> _refreshTimelyMode() async {
+    try {
+      final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final exact = await android?.canScheduleExactNotifications() ?? false;
+      _timelyMode = exact ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
+    } catch (_) {
+      _timelyMode = AndroidScheduleMode.inexactAllowWhileIdle;
+    }
   }
 
   /// ชื่อช่องแจ้งเตือนของรูปแบบเสียง/สั่นหนึ่ง ๆ — ต้องไม่ซ้ำกันข้ามรูปแบบ
@@ -161,6 +181,7 @@ class NotificationService {
 
     final settings = AppSettingsRepository().get();
     await _prepareChannel(settings);
+    await _refreshTimelyMode();
 
     final details = _detailsFor(settings);
     var scheduled = await _scheduleWaterReminders(settings, details);
@@ -180,7 +201,7 @@ class NotificationService {
         body: bodyFor(events[i], settings.remindMinutesBefore),
         payload: events[i].id, // กดแล้วเปิดป๊อปอัปของกิจกรรมนี้
         notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: _timelyMode,
         // ประจำสัปดาห์ = ซ้ำทุกสัปดาห์ในวัน+เวลาเดียวกัน / เฉพาะวันที่ = ครั้งเดียว
         matchDateTimeComponents: events[i].isOneOff ? null : DateTimeComponents.dayOfWeekAndTime,
       );
@@ -227,7 +248,7 @@ class NotificationService {
         title: 'ถึงเวลาดื่มน้ำ',
         body: 'จิบสักแก้วนะ แล้วกดบันทึกในหน้าโภชนาการได้เลย',
         notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: _timelyMode,
         // ซ้ำทุกวันในเวลาเดิม
         matchDateTimeComponents: DateTimeComponents.time,
       );
@@ -279,7 +300,7 @@ class NotificationService {
         title: 'ถึงเวลากินยา — ${med.name}',
         body: MedicationReminder.notificationBody(med),
         notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: _timelyMode,
         // ซ้ำทุกวันในเวลาเดิม
         matchDateTimeComponents: DateTimeComponents.time,
       );
@@ -298,6 +319,7 @@ class NotificationService {
     await init();
     final settings = AppSettingsRepository().get();
     await _prepareChannel(settings);
+    await _refreshTimelyMode();
 
     await _plugin.zonedSchedule(
       id: _snoozeIdBase + event.id.hashCode.abs() % 1000,
@@ -306,7 +328,7 @@ class NotificationService {
       body: 'เตือนอีกครั้ง — ${event.time}${event.subtitle == null ? '' : ' • ${event.subtitle}'}',
       payload: event.id,
       notificationDetails: _detailsFor(settings),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: _timelyMode,
     );
   }
 

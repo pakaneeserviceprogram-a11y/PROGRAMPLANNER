@@ -2,6 +2,10 @@
     <!-- แจ้งเตือนกิจกรรมในตารางเวลา -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- เตือนตรงเวลา: Android 13+ ได้สิทธิ์อัตโนมัติ (แอปตารางเวลา) / Android 12 ผู้ใช้กดอนุญาตเอง
+         ถ้าจะขึ้น Google Play ต้องทบทวน USE_EXACT_ALARM ตามนโยบายของ Play -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32"/>
     <!-- นำเข้ารายชื่อผู้มุ่งหวังจากสมุดโทรศัพท์ของผู้ใช้เอง (อ่านอย่างเดียว ไม่ส่งออกนอกเครื่อง) -->
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <!-- สแกนนามบัตร: ถ่ายรูปผ่านแอปกล้องของระบบ แล้วอ่านข้อความในเครื่องด้วย ML Kit -->
