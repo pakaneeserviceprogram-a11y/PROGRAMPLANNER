@@ -14,6 +14,7 @@ import 'backup_reminder.dart';
 import 'hive_boxes.dart';
 import 'medication_reminder.dart';
 import 'repositories/app_settings_repository.dart';
+import 'repositories/client_repository.dart';
 import 'repositories/medication_repository.dart';
 import 'repositories/schedule_repository.dart';
 
@@ -187,6 +188,7 @@ class NotificationService {
     var scheduled = await _scheduleWaterReminders(settings, details);
     scheduled += await _scheduleBackupReminder(settings, details);
     scheduled += await _scheduleMedicationReminders(details);
+    scheduled += await _scheduleClientFollowUps(details);
     if (!settings.scheduleRemindersEnabled) return scheduled;
 
     final events = ScheduleRepository().getAll();
@@ -311,6 +313,37 @@ class NotificationService {
 
   /// ช่วง id ของการเตือนซ้ำ — ต้องไม่ชนกับ id ของตารางประจำสัปดาห์ (0..จำนวนกิจกรรม)
   /// และไม่ชนกับการแจ้งเตือนทดสอบ (9999)
+  /// ช่วง id ของการเตือนติดตามลูกค้า — ต่อจากช่วงยา (8000–8299)
+  static const _followUpIdBase = 8500;
+  static const _followUpIdLimit = 400;
+
+  /// เตือนวันติดตามลูกค้า (ครั้งเดียว) — เหมือนยา คือไม่ขึ้นกับสวิตช์เตือนตามตารางเวลา
+  /// เพราะผู้ใช้ตั้งวันนี้ให้ลูกค้ารายนั้นโดยตรง
+  static Future<int> _scheduleClientFollowUps(NotificationDetails details) async {
+    if (!Hive.isBoxOpen(HiveBoxes.clients)) return 0;
+
+    final now = tz.TZDateTime.now(tz.local);
+    final due = ClientRepository().getAll().where((c) => c.followUpAt != null).toList();
+    var scheduled = 0;
+    for (final client in due) {
+      if (scheduled >= _followUpIdLimit) break;
+      final at = client.followUpAt!;
+      final when = tz.TZDateTime(tz.local, at.year, at.month, at.day, at.hour, at.minute);
+      if (!when.isAfter(now)) continue;
+
+      await _plugin.zonedSchedule(
+        id: _followUpIdBase + scheduled,
+        scheduledDate: when,
+        title: 'ติดตามลูกค้า — ${client.name}',
+        body: client.followUpNote ?? 'ถึงเวลาติดตามลูกค้ารายนี้แล้ว',
+        notificationDetails: details,
+        androidScheduleMode: _timelyMode,
+      );
+      scheduled++;
+    }
+    return scheduled;
+  }
+
   static const _snoozeIdBase = 5000;
 
   /// เลื่อนเตือนกิจกรรมนี้ออกไปอีก [delay] — ตั้งเป็นการแจ้งเตือนของระบบ

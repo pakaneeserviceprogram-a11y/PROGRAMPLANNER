@@ -25,6 +25,7 @@ import '../widgets/back_button_circle.dart';
 import '../widgets/form_sheet.dart';
 import '../widgets/progress_track.dart';
 import '../widgets/section_heading.dart';
+import 'client_detail_screen.dart';
 import 'prospect_search_screen.dart';
 
 class CrmScreen extends StatelessWidget {
@@ -129,7 +130,7 @@ class CrmScreen extends StatelessWidget {
 
   /// ฟอร์มเดียวใช้ทั้งเพิ่มลูกค้าใหม่ (existing = null) และแก้ไขลูกค้าเดิม
   ///
-  /// ตอนแก้ไขเลือกสถานะได้เอง — แตะที่รายชื่อเลื่อนไปข้างหน้าได้อย่างเดียว ถ้าแตะเกินจะย้อนกลับได้จากที่นี่
+  /// ตอนแก้ไขเลือกสถานะได้เอง — แตะป้ายสถานะเลื่อนไปข้างหน้าได้อย่างเดียว ถ้าแตะเกินจะย้อนกลับได้จากที่นี่
   Future<void> _openClientForm(BuildContext context, ClientRepository repo, {Client? existing}) async {
     final nameController = TextEditingController(text: existing?.name);
     final policyController = TextEditingController(text: existing?.policyLabel);
@@ -242,6 +243,11 @@ class CrmScreen extends StatelessWidget {
           phone: phone.isEmpty ? null : phone,
           profileUrl: profile.isEmpty ? null : profile,
           source: selectedSource,
+          // ฟอร์มนี้ไม่ได้แก้ส่วนเหล่านี้ — ต้องพกของเดิมไปด้วย ไม่งั้นแก้ชื่อทีเดียวแผน/การเข้าพบหายหมด
+          plans: existing?.plans ?? const [],
+          visits: existing?.visits ?? const [],
+          followUpAt: existing?.followUpAt,
+          followUpNote: existing?.followUpNote,
         ));
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -351,7 +357,7 @@ class CrmScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 const Padding(
                   padding: EdgeInsets.only(bottom: 8),
-                  child: Text('แตะที่รายชื่อเพื่อเลื่อนสถานะไปขั้นถัดไป • กดรูปดินสอเพื่อแก้ไข ลบ หรือนัดหมาย', style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
+                  child: Text('แตะชื่อเพื่อดูแผนประกัน การเข้าพบ และวันติดตาม • แตะป้ายสถานะเพื่อเลื่อนขั้น • กดรูปดินสอเพื่อแก้ไข ลบ หรือนัดหมาย', style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
                 ),
                 if (clients.isEmpty)
                   const Padding(
@@ -374,7 +380,10 @@ class CrmScreen extends StatelessWidget {
                             client: clients[i],
                             color: _avatarColor(clients[i].stage),
                             nextAppointment: scheduleRepo.nextForClient(clients[i].id),
-                            onTap: () => repo.put(clients[i].copyWith(stage: clients[i].stage.next)),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => ClientDetailScreen(clientId: clients[i].id)),
+                            ),
+                            onAdvanceStage: () => repo.put(clients[i].copyWith(stage: clients[i].stage.next)),
                             onEdit: () => _openClientForm(context, repo, existing: clients[i]),
                           ),
                         ],
@@ -478,7 +487,11 @@ class _CrmStat extends StatelessWidget {
 class _ClientRow extends StatelessWidget {
   final Client client;
   final Color color;
+  /// เปิดหน้ารายละเอียด (แผนประกัน/การเข้าพบ/วันติดตาม)
   final VoidCallback onTap;
+
+  /// แตะป้ายสถานะ = เลื่อนสถานะไปขั้นถัดไป
+  final VoidCallback onAdvanceStage;
   final VoidCallback onEdit;
 
   /// นัดถัดไปของลูกค้ารายนี้ (null = ยังไม่มีนัด)
@@ -488,6 +501,7 @@ class _ClientRow extends StatelessWidget {
     required this.client,
     required this.color,
     required this.onTap,
+    required this.onAdvanceStage,
     required this.onEdit,
     this.nextAppointment,
   });
@@ -532,13 +546,31 @@ class _ClientRow extends StatelessWidget {
                       ],
                     ),
                   ],
+                  if (client.followUpAt != null) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      '${client.isFollowUpDue() ? 'ถึงเวลาตาม' : 'ตาม'} ${CalendarUtils.thaiDateShort(client.followUpAt!)}',
+                      key: ValueKey('follow-up-${client.id}'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: client.isFollowUpDue() ? const Color(0xFFD64545) : AppColors.textMuted,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-              decoration: BoxDecoration(color: AppColors.crmSoft, borderRadius: BorderRadius.circular(999)),
-              child: Text(client.statusLabel, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.crm)),
+            GestureDetector(
+              key: ValueKey('stage-${client.id}'),
+              onTap: onAdvanceStage,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(color: AppColors.crmSoft, borderRadius: BorderRadius.circular(999)),
+                child: Text(client.statusLabel, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: AppColors.crm)),
+              ),
             ),
             if (client.phone != null)
               _ContactIconButton(
