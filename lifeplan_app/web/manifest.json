@@ -1,11 +1,11 @@
 {
-    "name": "lifeplan_app",
-    "short_name": "lifeplan_app",
+    "name": "LifePlan",
+    "short_name": "LifePlan",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "LifePlan — วางแผนชีวิต งาน สุขภาพ และลูกค้า",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -4,12 +4,14 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../data/backup.dart';
 import '../data/backup_reminder.dart';
+import '../data/platform_support.dart';
 import '../data/repositories/app_settings_repository.dart';
 import '../models/app_settings.dart';
 import '../data/notifications.dart';
@@ -49,6 +51,16 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() => _busy = true);
     try {
       final json = BackupService.exportToJson();
+      if (PlatformSupport.isWeb) {
+        // เว็บไม่มีโฟลเดอร์ของแอป — ให้เบราว์เซอร์ดาวน์โหลดไฟล์ไปเลย
+        await FilePicker.saveFile(
+          fileName: BackupService.suggestedFileName(),
+          bytes: Uint8List.fromList(utf8.encode(json)),
+          mimeType: 'application/json',
+        );
+        await _settings.save(_settings.get().copyWith(lastBackupAt: DateTime.now()));
+        return;
+      }
       // เขียนลงโฟลเดอร์ชั่วคราวของแอปก่อน แล้วส่งต่อผ่านแผงแชร์ของระบบ
       // ให้ผู้ใช้เลือกเองว่าจะเก็บไว้ที่ไหน (ไดรฟ์, แชท, ไฟล์ในเครื่อง)
       final dir = await getTemporaryDirectory();

@@ -115,7 +115,8 @@ void main() {
       await tester.tap(find.byTooltip('Previous month'));
       await tester.pumpAndSettle();
     }
-    await tester.tap(find.text('${yesterday.day}'));
+    // หาเลขวันเฉพาะในปฏิทิน — ฟอร์มมีคำใบ้ตัวเลข (เช่น ใยอาหาร "4") ที่ซ้ำกับเลขวันได้
+    await tester.tap(find.descendant(of: find.byType(DatePickerDialog), matching: find.text('${yesterday.day}')));
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     expect(find.descendant(of: dateField, matching: find.textContaining('เมื่อวาน')), findsOneWidget);

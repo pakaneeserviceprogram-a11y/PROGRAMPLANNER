@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/platform_support.dart';
 import '../data/id_gen.dart';
 import '../data/repositories/exercise_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
@@ -640,8 +641,11 @@ class NutritionScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                const _RemindersCard(),
-                const SizedBox(height: 16),
+                // เว็บตั้งเวลาแจ้งเตือนไม่ได้
+                if (PlatformSupport.notifications) ...[
+                  const _RemindersCard(),
+                  const SizedBox(height: 16),
+                ],
 
                 // วิตามิน
                 AppCard(

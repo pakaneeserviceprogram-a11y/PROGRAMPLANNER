@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../data/platform_support.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../data/contact_search.dart';
@@ -133,6 +135,8 @@ class _ProspectSearchScreenState extends State<ProspectSearchScreen> {
             ),
             const SizedBox(height: 18),
 
+            // เว็บไม่มีสมุดโทรศัพท์และ ML Kit
+            if (PlatformSupport.contactsImport) ...[
             GestureDetector(
               key: const ValueKey('open-contacts-import'),
               onTap: () => Navigator.of(context).push(
@@ -190,6 +194,7 @@ class _ProspectSearchScreenState extends State<ProspectSearchScreen> {
               ),
             ),
             const SizedBox(height: 18),
+            ],
 
             AppCard(
               child: Column(

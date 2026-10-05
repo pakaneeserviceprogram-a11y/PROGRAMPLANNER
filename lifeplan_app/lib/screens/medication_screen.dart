@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../data/platform_support.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -376,15 +378,17 @@ class _MedicationScreenState extends State<MedicationScreen> {
                 onTap: () => _openForm(),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _ActionButton(
-                key: const ValueKey('med-scan'),
-                icon: Icons.photo_camera_rounded,
-                label: 'สแกนกล่องยา',
-                onTap: _scanning ? null : _scanLabel,
+            if (PlatformSupport.textScan) ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ActionButton(
+                  key: const ValueKey('med-scan'),
+                  icon: Icons.photo_camera_rounded,
+                  label: 'สแกนกล่องยา',
+                  onTap: _scanning ? null : _scanLabel,
+                ),
               ),
-            ),
+            ],
           ],
         ),
         if (_scanning) ...[

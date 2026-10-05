@@ -43,6 +43,7 @@ class NotificationService {
 
   /// เรียกครั้งเดียวตอนแอปเริ่ม ก่อนใช้งานฟังก์ชันอื่น
   static Future<void> init() async {
+    if (kIsWeb) return; // เว็บไม่มีการแจ้งเตือนตามเวลาแบบแอป
     if (_ready) return;
 
     tzdata.initializeTimeZones();
@@ -69,6 +70,7 @@ class NotificationService {
   ///
   /// ต่างจาก [tappedEventIds] ตรงที่กรณีนี้แอปยังไม่ทันรันตอนผู้ใช้กด จึงยังไม่มีใครฟัง stream
   static Future<String?> launchEventId() async {
+    if (kIsWeb) return null;
     await init();
     final details = await _plugin.getNotificationAppLaunchDetails();
     if (details?.didNotificationLaunchApp != true) return null;
@@ -78,6 +80,7 @@ class NotificationService {
 
   /// ขอสิทธิ์แจ้งเตือน (Android 13+) — คืน true เมื่อผู้ใช้อนุญาต
   static Future<bool> requestPermission() async {
+    if (kIsWeb) return false;
     await init();
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (android == null) return true; // แพลตฟอร์มที่ไม่ต้องขอสิทธิ์
@@ -177,6 +180,7 @@ class NotificationService {
   /// เรียกทุกครั้งที่ตารางหรือการตั้งค่าเปลี่ยน — ถูกกว่าการไล่แก้ทีละรายการ
   /// และไม่มีทางหลงเหลือการเตือนของกิจกรรมที่ลบไปแล้ว
   static Future<int> syncScheduleReminders() async {
+    if (kIsWeb) return 0;
     await init();
     await _plugin.cancelAll();
 
@@ -349,6 +353,7 @@ class NotificationService {
   /// เลื่อนเตือนกิจกรรมนี้ออกไปอีก [delay] — ตั้งเป็นการแจ้งเตือนของระบบ
   /// เพื่อให้ยังดังแม้ผู้ใช้ปิดแอปไปก่อนครบเวลา
   static Future<void> snooze(ScheduleEvent event, Duration delay) async {
+    if (kIsWeb) return;
     await init();
     final settings = AppSettingsRepository().get();
     await _prepareChannel(settings);
@@ -404,6 +409,7 @@ class NotificationService {
 
   /// แจ้งเตือนทดสอบทันที เพื่อให้ผู้ใช้เห็น (และได้ยิน) ว่าตั้งค่าไว้ถูกแล้วจริง
   static Future<void> showTestNotification() async {
+    if (kIsWeb) return;
     await init();
     final settings = AppSettingsRepository().get();
     await _prepareChannel(settings);
@@ -419,6 +425,7 @@ class NotificationService {
 
   /// จำนวนการเตือนที่ตั้งค้างไว้ในระบบตอนนี้
   static Future<int> pendingCount() async {
+    if (kIsWeb) return 0;
     await init();
     return (await _plugin.pendingNotificationRequests()).length;
   }

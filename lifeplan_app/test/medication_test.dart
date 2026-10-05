@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_test/hive_test.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:lifeplan_app/data/platform_support.dart';
 import 'package:lifeplan_app/data/backup.dart';
 import 'package:lifeplan_app/data/business_card_scanner.dart';
 import 'package:lifeplan_app/data/hive_boxes.dart';
@@ -284,6 +285,14 @@ Paracetamol 500 mg
       ));
       await tester.pumpAndSettle();
     }
+
+    testWidgets('เวอร์ชันเว็บซ่อนปุ่มสแกนกล่องยา แต่ยังเพิ่มยาเองได้', (tester) async {
+      PlatformSupport.debugIsWebOverride = true;
+      addTearDown(() => PlatformSupport.debugIsWebOverride = null);
+      await pumpScreen(tester);
+      expect(find.byKey(const ValueKey('med-scan')), findsNothing);
+      expect(find.byKey(const ValueKey('med-add')), findsOneWidget);
+    });
 
     testWidgets('ยังไม่มียาก็บอกวิธีเริ่ม', (tester) async {
       await pumpScreen(tester);
