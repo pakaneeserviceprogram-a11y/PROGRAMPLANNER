@@ -132,6 +132,11 @@ class ClientDetailScreen extends StatelessWidget {
           return;
         }
         final note = noteController.text.trim();
+        // จดวันปิดเฉพาะตอนเพิ่งเปลี่ยนเป็น "มีผลแล้ว" — แก้แผนที่ปิดไปแล้วต้องไม่เลื่อนวันปิด
+        final wasActive = existing?.status == PlanStatus.active;
+        final closedAt = status != PlanStatus.active
+            ? null
+            : (wasActive ? existing!.closedAt : DateTime.now());
         final plan = InsurancePlan(
           id: existing?.id ?? newId(),
           name: name,
@@ -139,6 +144,7 @@ class ClientDetailScreen extends StatelessWidget {
           annualPremium: parse(premiumController),
           status: status,
           note: note.isEmpty ? null : note,
+          closedAt: closedAt,
         );
         final plans = existing == null
             ? [...client.plans, plan]
@@ -312,6 +318,7 @@ class ClientDetailScreen extends StatelessWidget {
             followUpAt: at,
             // ล้างโน้ตได้ด้วยการลบข้อความ (copyWith ทำแบบนั้นไม่ได้)
             followUpNote: note.isEmpty ? null : note,
+            createdAt: client.createdAt,
           ),
         );
         if (context.mounted) {

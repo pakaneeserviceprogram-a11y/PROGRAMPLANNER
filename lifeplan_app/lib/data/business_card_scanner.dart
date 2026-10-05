@@ -130,6 +130,7 @@ class BusinessCardParser {
       phone: phone != null && phone.isNotEmpty && ContactSearch.phoneUrl(phone) != null ? phone : null,
       profileUrl: fields.website,
       source: ClientSource.businessCard,
+      createdAt: DateTime.now(),
     );
   }
 

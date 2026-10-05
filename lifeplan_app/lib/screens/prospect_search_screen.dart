@@ -68,6 +68,7 @@ class _ProspectSearchScreenState extends State<ProspectSearchScreen> {
       initials: clean.isEmpty ? '?' : clean.characters.take(2).toString(),
       policyLabel: 'จากการค้นหา • ลูกค้าใหม่',
       stage: ClientStage.newLead,
+      createdAt: DateTime.now(),
     ));
     _toast('บันทึก “$name” เข้ารายชื่อลูกค้าแล้ว');
   }

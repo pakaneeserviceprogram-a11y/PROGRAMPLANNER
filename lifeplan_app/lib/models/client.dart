@@ -63,6 +63,10 @@ class InsurancePlan {
   final PlanStatus status;
   final String? note;
 
+  /// วันที่แผนนี้เปลี่ยนเป็น "กรมธรรม์มีผลแล้ว" — ใช้นับ S ในรายงานประจำสัปดาห์
+  /// (null = ยังไม่ปิด หรือปิดก่อนแอปมีฟิลด์นี้)
+  final DateTime? closedAt;
+
   const InsurancePlan({
     required this.id,
     required this.name,
@@ -70,6 +74,7 @@ class InsurancePlan {
     this.annualPremium = 0,
     this.status = PlanStatus.proposed,
     this.note,
+    this.closedAt,
   });
 
   Map<String, dynamic> toMap() => {
@@ -79,6 +84,7 @@ class InsurancePlan {
         'annualPremium': annualPremium,
         'status': status.name,
         'note': note,
+        'closedAt': closedAt?.toIso8601String(),
       };
 
   factory InsurancePlan.fromMap(Map map) => InsurancePlan(
@@ -88,6 +94,7 @@ class InsurancePlan {
         annualPremium: (map['annualPremium'] as num?)?.toDouble() ?? 0,
         status: PlanStatus.values.firstWhere((e) => e.name == map['status'], orElse: () => PlanStatus.proposed),
         note: map['note'] as String?,
+        closedAt: DateTime.tryParse(map['closedAt'] as String? ?? ''),
       );
 }
 
@@ -146,6 +153,10 @@ class Client {
   final DateTime? followUpAt;
   final String? followUpNote;
 
+  /// วันที่เพิ่มลูกค้ารายนี้ — ใช้นับ P/R ในรายงานประจำสัปดาห์
+  /// (null = เพิ่มก่อนแอปมีฟิลด์นี้ จะไม่ถูกนับเป็นผู้มุ่งหวังใหม่)
+  final DateTime? createdAt;
+
   const Client({
     required this.id,
     required this.name,
@@ -160,6 +171,7 @@ class Client {
     this.visits = const [],
     this.followUpAt,
     this.followUpNote,
+    this.createdAt,
   });
 
   String get statusLabel => stage.label;
@@ -201,6 +213,7 @@ class Client {
         visits: visits ?? this.visits,
         followUpAt: clearFollowUp ? null : (followUpAt ?? this.followUpAt),
         followUpNote: clearFollowUp ? null : (followUpNote ?? this.followUpNote),
+        createdAt: createdAt,
       );
 
   Map<String, dynamic> toMap() => {
@@ -217,6 +230,7 @@ class Client {
         'visits': visits.map((v) => v.toMap()).toList(),
         'followUpAt': followUpAt?.toIso8601String(),
         'followUpNote': followUpNote,
+        'createdAt': createdAt?.toIso8601String(),
       };
 
   factory Client.fromMap(Map<String, dynamic> map) => Client(
@@ -239,5 +253,6 @@ class Client {
           ..sort((a, b) => b.date.compareTo(a.date)),
         followUpAt: DateTime.tryParse(map['followUpAt'] as String? ?? ''),
         followUpNote: map['followUpNote'] as String?,
+        createdAt: DateTime.tryParse(map['createdAt'] as String? ?? ''),
       );
 }

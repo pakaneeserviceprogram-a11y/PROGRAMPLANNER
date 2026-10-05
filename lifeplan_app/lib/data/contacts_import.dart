@@ -106,6 +106,7 @@ class ContactsImport {
       stage: ClientStage.newLead,
       phone: contact.phone != null && ContactSearch.phoneUrl(contact.phone!) != null ? contact.phone : null,
       source: ClientSource.phonebook,
+      createdAt: DateTime.now(),
     );
   }
 

@@ -9,6 +9,7 @@ import '../data/calendar_utils.dart';
 import '../data/contact_search.dart';
 import '../data/id_gen.dart';
 import '../data/notifications.dart';
+import '../data/team_report.dart';
 import '../data/repositories/schedule_repository.dart';
 import '../data/repositories/client_repository.dart';
 import '../data/repositories/goal_settings_repository.dart';
@@ -248,6 +249,7 @@ class CrmScreen extends StatelessWidget {
           visits: existing?.visits ?? const [],
           followUpAt: existing?.followUpAt,
           followUpNote: existing?.followUpNote,
+          createdAt: existing == null ? DateTime.now() : existing.createdAt,
         ));
         if (context.mounted) Navigator.of(context).pop();
       },
@@ -317,6 +319,31 @@ class CrmScreen extends StatelessWidget {
                         ],
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                GestureDetector(
+                  key: const ValueKey('open-portfolio-summary'),
+                  onTap: () => _openPortfolioSheet(context, clients, goals.salesTarget),
+                  child: AppCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.summarize_rounded, size: 22, color: AppColors.crm),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('สรุปพอร์ตส่งหัวหน้า', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                              SizedBox(height: 2),
+                              Text('สถานะลูกค้า เบี้ยที่ปิดได้ แผนค้าง และรายที่ต้องติดตาม — ส่งเข้า LINE ได้',
+                                  style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -712,6 +739,41 @@ class _WeeklyReportSectionState extends State<WeeklyReportSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AuthField(label: 'ชื่อที่ขึ้นหัวรายงาน', hint: 'เช่น เอ๋', controller: ownerController),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const ValueKey('report-autofill'),
+              onPressed: () {
+                final counts = TeamReport.weeklyCounts(
+                  clients: ClientRepository().getAll(),
+                  events: ScheduleRepository().getAll(),
+                  weekStart: report.weekStart,
+                );
+                for (final code in ActivityCode.values) {
+                  final n = counts.countOf(code);
+                  if (n != null) countControllers[code]!.text = '$n';
+                }
+                if (counts.salesPremium > 0) premiumController.text = counts.salesPremium.toStringAsFixed(0);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('เติม P A S R F จากข้อมูลในแอปแล้ว — ตรวจแล้วแก้ได้ ส่วน N และ T กรอกเอง'),
+                ));
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.crm,
+                side: const BorderSide(color: AppColors.crm),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
+              label: const Text('เติมตัวเลขจากข้อมูลในแอป', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'นับลูกค้าใหม่ (P) แนะนำต่อ (R) นัดลูกค้า (A) แผนที่กรมธรรม์มีผล (S) และการเข้าพบ (F) ของสัปดาห์นั้น',
+            style: TextStyle(fontSize: 11.5, color: AppColors.textFaint, height: 1.4),
+          ),
           const SizedBox(height: 16),
           for (final code in ActivityCode.values) ...[
             Row(
@@ -866,6 +928,14 @@ class _WeeklyReportSectionState extends State<WeeklyReportSection> {
                       ),
                     ),
                   const SizedBox(height: 14),
+                  if (!report.isBlank) ...[
+                    _LineButton(
+                      key: const ValueKey('report-send-line'),
+                      label: 'ส่งรายงานเข้า LINE',
+                      onTap: () => _sendToLine(context, report.toReportText()),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   Row(
                     children: [
                       Expanded(
@@ -1009,3 +1079,126 @@ class _ContactIconButton extends StatelessWidget {
     );
   }
 }
+
+const _lineGreen = Color(0xFF06C755);
+
+/// ส่งข้อความเข้า LINE — เปิดไม่ได้ (ไม่มี LINE/ไม่มีเบราว์เซอร์) ก็คัดลอกไว้ให้วางเอง
+Future<void> _sendToLine(BuildContext context, String text) async {
+  final opened = await LineShare.send(text);
+  if (opened) return;
+  await Clipboard.setData(ClipboardData(text: text));
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('เปิด LINE ไม่ได้ — คัดลอกข้อความไว้แล้ว วางในแชทได้เลย')),
+    );
+  }
+}
+
+class _LineButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _LineButton({super.key, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 46,
+        decoration: BoxDecoration(color: _lineGreen, borderRadius: BorderRadius.circular(14)),
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.send_rounded, size: 17, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// สรุปพอร์ตลูกค้าส่งหัวหน้า — ค่าเริ่มต้นไม่ใส่ชื่อลูกค้า (PDPA)
+Future<void> _openPortfolioSheet(BuildContext context, List<Client> clients, double salesTarget) async {
+  var includeNames = false;
+  final owner = UserRepository().getCurrent()?.name ?? '';
+
+  String textNow() => TeamReport.portfolioText(
+        clients: clients,
+        ownerName: owner,
+        salesTarget: salesTarget,
+        now: DateTime.now(),
+        includeNames: includeNames,
+      );
+
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AppColors.bg,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(999)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('สรุปพอร์ตส่งหัวหน้า', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 10),
+              SwitchListTile(
+                key: const ValueKey('portfolio-include-names'),
+                contentPadding: EdgeInsets.zero,
+                value: includeNames,
+                onChanged: (v) => setState(() => includeNames = v),
+                title: const Text('ใส่ชื่อลูกค้า', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                subtitle: const Text('เปิดเมื่อบริษัทอนุญาตให้ส่งชื่อลูกค้าทาง LINE เท่านั้น (PDPA)',
+                    style: TextStyle(fontSize: 11.5, color: AppColors.textFaint)),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: AppColors.surface2, borderRadius: BorderRadius.circular(14)),
+                child: Text(textNow(),
+                    key: const ValueKey('portfolio-preview'),
+                    style: const TextStyle(fontSize: 12, color: AppColors.text, height: 1.7)),
+              ),
+              const SizedBox(height: 14),
+              _LineButton(
+                key: const ValueKey('portfolio-send-line'),
+                label: 'ส่งเข้า LINE',
+                onTap: () => _sendToLine(ctx, textNow()),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: textNow()));
+                    if (ctx.mounted) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('คัดลอกสรุปพอร์ตแล้ว')));
+                    }
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 17),
+                  label: const Text('คัดลอกข้อความ', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
