@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/platform_support.dart';
+import 'privacy_screen.dart';
 
 import '../data/auth/auth_service.dart';
 import '../data/repositories/user_repository.dart';
@@ -85,7 +86,11 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 1, color: AppColors.border),
                     ],
-                    const _ProfileRow(icon: Icons.lock_outline_rounded, label: 'ความเป็นส่วนตัว & ความปลอดภัย'),
+                    _ProfileRow(
+                      icon: Icons.lock_outline_rounded,
+                      label: 'ความเป็นส่วนตัว & ความปลอดภัย',
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PrivacyScreen())),
+                    ),
                     const Divider(height: 1, color: AppColors.border),
                     const _ProfileRow(icon: Icons.help_outline_rounded, label: 'ช่วยเหลือ'),
                   ],

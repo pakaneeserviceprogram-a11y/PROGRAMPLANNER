@@ -38,6 +38,10 @@ class AppSettings {
   /// ตัวอย่างกลับเข้ามาอีกตอนเปิดแอปครั้งถัดไป (ไม่งั้นจะเห็นข้อมูลปลอมโผล่ซ้ำ)
   final bool sampleDataDisabled;
 
+  /// ล็อกแอปด้วยลายนิ้วมือ/PIN ของมือถือ — เปิดไว้เป็นค่าเริ่มต้นเพราะแอปเก็บข้อมูลลูกค้า
+  /// (มีผลเฉพาะเครื่องที่ตั้งล็อกหน้าจอไว้)
+  final bool appLockEnabled;
+
   const AppSettings({
     this.scheduleRemindersEnabled = false,
     this.remindMinutesBefore = 10,
@@ -52,6 +56,7 @@ class AppSettings {
     this.backupReminderDays = 7,
     this.lastBackupAt,
     this.sampleDataDisabled = false,
+    this.appLockEnabled = true,
   });
 
   AppSettings copyWith({
@@ -68,6 +73,7 @@ class AppSettings {
     int? backupReminderDays,
     DateTime? lastBackupAt,
     bool? sampleDataDisabled,
+    bool? appLockEnabled,
   }) =>
       AppSettings(
         scheduleRemindersEnabled: scheduleRemindersEnabled ?? this.scheduleRemindersEnabled,
@@ -83,6 +89,7 @@ class AppSettings {
         backupReminderDays: backupReminderDays ?? this.backupReminderDays,
         lastBackupAt: lastBackupAt ?? this.lastBackupAt,
         sampleDataDisabled: sampleDataDisabled ?? this.sampleDataDisabled,
+        appLockEnabled: appLockEnabled ?? this.appLockEnabled,
       );
 
   /// เวลาที่จะเตือนดื่มน้ำในหนึ่งวัน เช่น ["09:00", "11:00", ...] (ว่าง = ไม่ต้องเตือน)
@@ -110,6 +117,7 @@ class AppSettings {
         'backupReminderDays': backupReminderDays,
         'lastBackupAt': lastBackupAt?.toIso8601String(),
         'sampleDataDisabled': sampleDataDisabled,
+        'appLockEnabled': appLockEnabled,
       };
 
   factory AppSettings.fromMap(Map<String, dynamic> map) => AppSettings(
@@ -129,5 +137,7 @@ class AppSettings {
         backupReminderDays: (map['backupReminderDays'] as num?)?.toInt() ?? 7,
         lastBackupAt: map['lastBackupAt'] == null ? null : DateTime.tryParse(map['lastBackupAt'] as String),
         sampleDataDisabled: map['sampleDataDisabled'] as bool? ?? false,
+        // ผู้ใช้ที่อัปเดตจากเวอร์ชันก่อนได้ล็อกด้วย
+        appLockEnabled: map['appLockEnabled'] as bool? ?? true,
       );
 }

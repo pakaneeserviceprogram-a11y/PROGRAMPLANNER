@@ -8,6 +8,48 @@
 
 ## 0. สรุปงานรอบล่าสุด
 
+### รอบ 2026-10-14 — บริษัทตั้งใหม่จากข้อมูลเปิด DBD (ยังไม่ release)
+
+ปุ่ม "DBD" เดิมใน `ContactSearch` เป็นแค่ Google `site:datawarehouse.dbd.go.th` → เปลี่ยนชื่อเป็น "ค้นเว็บ DBD (ผ่าน Google)" ให้ตรงความจริง และเพิ่มของจริง:
+
+- `lib/data/dbd_open_data.dart` — ข้อมูลเปิด "นิติบุคคลจดทะเบียนตั้งใหม่" รายเดือน ([dataset_11_01](https://opendata.dbd.go.th/dataset/dataset_11_01), Open Data Common)
+  - URL: `https://openapi.dbd.go.th/juristic_person/registration/99_YYYYMM_1.csv` (ปี ค.ศ.) ~6 MB/เดือน
+  - คอลัมน์: เลขทะเบียน, ชื่อ, วันจด (พ.ศ.), ทุน, รหัส+วัตถุประสงค์, ที่อยู่, ตำบล, อำเภอ, จังหวัด, ไปรษณีย์ — **ไม่มีเบอร์/อีเมล/กรรมการ/รายได้**
+  - **ไฟล์จริงมีแถวว่างทั้งแถว ~1/9** และช่องที่มีจุลภาคอยู่ในเครื่องหมายคำพูด → parser CSV ของเราเอง (ก.ย. 2569 = 8,088 ราย ไม่ใช่ 9,131 บรรทัด)
+  - เก็บไฟล์ดิบใน `getApplicationSupportDirectory()/dbd_open_data/` อ่านด้วย `compute` (~0.4 วิ)
+  - "อัปเดต" = `downloadLatest()` ไล่จากเดือนนี้ย้อนหลังสูงสุด 4 เดือนจนเจอไฟล์ (DBD ออกไฟล์เดือนก่อนช่วงต้นเดือน)
+- หน้า `lib/screens/dbd_new_companies_screen.dart` (เข้าจาก ค้นหาผู้มุ่งหวัง, ซ่อนบนเว็บเพราะ CORS): เลือกเดือน / จังหวัด / คำค้น (ชื่อ ประเภทธุรกิจ อำเภอ) / ทุนขั้นต่ำ / ประเภท บจ.-บมจ.-หจ.-หส. → เรียงอันดับตามทุน → เพิ่มเป็นผู้มุ่งหวัง (`ClientSource.dbdNewCompany`) หรือค้นเบอร์ใน Google
+- **INTERNET permission เพิ่มใน main manifest** — เดิมมีแค่ใน debug/profile (release ได้มาเพราะปลั๊กอินบังเอิญใส่)
+- จัดอันดับตามรายได้/กำไรทำไม่ได้: งบการเงินอยู่ใน DataWarehouse+ (ต้องล็อกอิน ไม่มี API เปิด) — ทางเลือกในอนาคต: นำเข้า Excel ที่ผู้ใช้ส่งออกเอง ถ้าเว็บนั้นให้ส่งออก (ยังไม่ได้ยืนยัน)
+- test ใหม่ `test/dbd_open_data_test.dart` (10 tests) — รวม **338 tests** / ทดสอบ parser กับไฟล์จริงแล้ว / release build ผ่าน / ยังไม่ได้ลองบนมือถือ
+
+### รอบ 2026-10-08 — ไฟล์สำรองเข้ารหัส + ซ่อนหน้าแอปในรายการแอปล่าสุด (ยังไม่ release)
+
+- `lib/data/backup_crypto.dart` (`cryptography` 2.9.0, pure Dart ใช้บนเว็บได้): AES-256-GCM, กุญแจจาก PBKDF2-SHA256 150,000 รอบ + salt สุ่ม 16 ไบต์
+  - ไฟล์ = JSON ซองจดหมาย `format: lifeplan-backup-encrypted` เก็บ iterations/salt/nonce/mac ในไฟล์ → ปรับจำนวนรอบภายหลังได้โดยไฟล์เก่ายังเปิดได้
+  - ทำใน `compute` (isolate แยก) — PBKDF2 ใช้ ~1.5 วิ/ครั้งบนเดสก์ท็อป บนมือถืออาจช้ากว่า
+  - รหัสผิด/ไฟล์ถูกแก้ → `BackupException` ("รหัสผ่านไม่ถูกต้อง") / ไฟล์สำรองเก่าที่ไม่เข้ารหัสยังกู้คืนได้
+  - **ส่งออกบังคับตั้งรหัส** (≥ 6 ตัวอักษร พิมพ์สองครั้ง) ลืมรหัส = กู้ไม่ได้ (ตั้งใจ)
+- `MainActivity`: Android 13+ `setRecentsScreenshotEnabled(false)` / ต่ำกว่านั้นตั้ง `FLAG_SECURE` เฉพาะช่วง onPause→onResume — **แคปหน้าจอตอนใช้งานยังได้** (ทีมต้องแคป error ส่งผู้ดูแล)
+- test ใหม่ `test/backup_crypto_test.dart` (6 tests) — รวม **328 tests** / release build ผ่าน
+- emulator: ติดตั้งแล้ว process ทำงาน ไม่มี error แต่ **จอ emulator ค้างอยู่ที่ splash (นาฬิกาบนจอหยุด, กด Home ไม่เปลี่ยน)** — ตรวจหน้าจอบน emulator ไม่ได้ ต้องลองบนมือถือจริง
+- คู่มือ Word เวอร์ชันใหม่อยู่ที่ `คู่มือ LifePlan สำหรับทีมประกัน (1.13.0).docx` (ไฟล์เดิมเปิดค้างใน Word เขียนทับไม่ได้) / generator อยู่ใน scratchpad ของ session นี้
+
+### รอบ 2026-10-07 — ล็อกแอปด้วยลายนิ้วมือ/PIN (ยังไม่ release)
+
+- **ที่มา**: `LocalAuthService.signInWithEmail` **ไม่ตรวจรหัสผ่านเลย** (อีเมลอะไรก็เข้าได้ เห็นข้อมูลชุดเดียวกัน) — ตัวป้องกันข้อมูลลูกค้าจริงจึงเป็นล็อกของมือถือ ไม่ได้แก้ระบบรหัสผ่าน
+- `lib/data/app_lock.dart` (`local_auth` 3.0.2, `biometricOnly: false` ใช้ PIN แทนได้) + `lib/widgets/app_lock_gate.dart` คลุมทั้งแอปใน `MaterialApp.builder`
+  - `main()` เช็ก `AppLock.isAvailable()` + `AppSettings.appLockEnabled` **ก่อน runApp** → เฟรมแรกล็อกแล้ว ไม่มีจังหวะข้อมูลโผล่
+  - ล็อกอีกครั้งเมื่อกลับจากพื้นหลัง ≥ 30 วินาที / ระหว่างขอ PIN ไม่นับ lifecycle (หน้า PIN ของระบบทำให้แอป pause)
+  - เครื่องไม่มีล็อกหน้าจอ = ไม่ล็อก, ผล `noCredentialsSet` = ปล่อยเข้า (กันผู้ใช้ติดนอกแอป)
+  - `appLockEnabled` ค่าเริ่มต้น true (ผู้ใช้เก่าที่ไม่มีคีย์ก็ true) / ปิด-เปิดต้องยืนยันตัวตน
+- Android: `MainActivity` → `FlutterFragmentActivity`, theme → `Theme.AppCompat.*.NoActionBar` (ข้อกำหนดของ local_auth)
+- หน้าใหม่ `lib/screens/privacy_screen.dart` ต่อจากเมนู "ความเป็นส่วนตัว & ความปลอดภัย" (เดิมกดไม่ได้)
+- ลบข้อความ "ลืมรหัสผ่าน?" ที่กดไม่ได้ออกจากหน้า login
+- test ใหม่ `test/app_lock_test.dart` (8 tests) — รวม **322 tests** / release build ผ่าน
+- ติดตั้ง release บน emulator แล้วเปิดได้ ไม่ crash (process ทำงาน, ไม่มี error) แต่จอ emulator ค้าง (System UI ไม่ตอบสนอง) และ emulator ไม่ได้ตั้งล็อกหน้าจอ → **ยังไม่เห็นหน้าล็อกจริง ต้องทดสอบบนมือถือ**
+- **ข้อควรจำ (emulator)**: ตัวที่ติดตั้งไว้เดิมเป็น debug-signed → ติดตั้ง release ทับไม่ได้ (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`) ต้อง uninstall ก่อน (ข้อมูลทดสอบบน emulator หาย)
+
 ### รอบ 2026-10-05 (ต่อ) — ส่งงานขายให้หัวหน้าทาง LINE
 
 - `lib/data/team_report.dart`

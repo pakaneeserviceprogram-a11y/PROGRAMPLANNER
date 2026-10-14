@@ -19,7 +19,7 @@ extension ClientStageX on ClientStage {
 }
 
 /// ลูกค้ารายนี้มาจากไหน — ใช้ดูว่าแหล่งไหนปิดการขายได้จริง (ต่อยอดรายงาน N = New Market)
-enum ClientSource { unknown, referral, phonebook, businessCard, facebook, instagram, line, event, walkIn }
+enum ClientSource { unknown, referral, phonebook, businessCard, facebook, instagram, line, event, walkIn, dbdNewCompany }
 
 extension ClientSourceX on ClientSource {
   String get label => switch (this) {
@@ -32,6 +32,7 @@ extension ClientSourceX on ClientSource {
         ClientSource.line => 'LINE',
         ClientSource.event => 'งานอีเวนต์/ออกบูท',
         ClientSource.walkIn => 'ติดต่อเข้ามาเอง',
+        ClientSource.dbdNewCompany => 'บริษัทตั้งใหม่ (DBD)',
       };
 }
 

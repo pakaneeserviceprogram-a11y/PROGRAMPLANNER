@@ -89,11 +89,6 @@ class _LoginScreenState extends State<LoginScreen> {
               AuthField(label: 'อีเมล', hint: 'you@example.com', controller: _emailController, keyboardType: TextInputType.emailAddress),
               const SizedBox(height: 18),
               AuthField(label: 'รหัสผ่าน', hint: '••••••••', controller: _passwordController, obscureText: true),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text('ลืมรหัสผ่าน?', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.primary)),
-              ),
               const SizedBox(height: 18),
               PrimaryButton(label: 'เข้าสู่ระบบ', onPressed: () => _signIn(AuthProvider.email)),
               const SizedBox(height: 18),

@@ -14,6 +14,7 @@ import '../widgets/back_button_circle.dart';
 import '../widgets/section_heading.dart';
 import 'business_card_scan_screen.dart';
 import 'contacts_import_screen.dart';
+import 'dbd_new_companies_screen.dart';
 
 /// ค้นหาผู้มุ่งหวัง/บริษัท แล้วบันทึกเข้ารายชื่อลูกค้าได้ในหน้าเดียว
 ///
@@ -136,6 +137,37 @@ class _ProspectSearchScreenState extends State<ProspectSearchScreen> {
             ),
             const SizedBox(height: 18),
 
+            // ข้อมูลเปิด DBD — เว็บโหลดข้ามโดเมนไม่ได้ (CORS) จึงมีเฉพาะแอปมือถือ
+            if (!PlatformSupport.isWeb) ...[
+              GestureDetector(
+                key: const ValueKey('open-dbd-new-companies'),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const DbdNewCompaniesScreen()),
+                ),
+                child: AppCard(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.apartment_rounded, size: 22, color: AppColors.crm),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('บริษัทตั้งใหม่ (DBD)',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                            SizedBox(height: 2),
+                            Text('กรองตามทุนจดทะเบียน จังหวัด ประเภทธุรกิจ และเรียงอันดับตามทุน',
+                                style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded, color: AppColors.textFaint),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             // เว็บไม่มีสมุดโทรศัพท์และ ML Kit
             if (PlatformSupport.contactsImport) ...[
             GestureDetector(

@@ -13,7 +13,7 @@ enum ContactSource { dbd, google, facebook, instagram }
 
 extension ContactSourceX on ContactSource {
   String get label => switch (this) {
-        ContactSource.dbd => 'ข้อมูลนิติบุคคล (DBD)',
+        ContactSource.dbd => 'ค้นเว็บ DBD (ผ่าน Google)',
         ContactSource.google => 'ค้นทั่วไป (Google)',
         ContactSource.facebook => 'ค้นใน Facebook',
         ContactSource.instagram => 'ค้นใน Instagram',

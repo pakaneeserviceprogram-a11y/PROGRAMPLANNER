@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../data/backup.dart';
+import '../data/backup_crypto.dart';
 import '../data/backup_reminder.dart';
 import '../data/platform_support.dart';
 import '../data/repositories/app_settings_repository.dart';
@@ -47,10 +48,86 @@ class _BackupScreenState extends State<BackupScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  /// ถามรหัสผ่านสำหรับไฟล์สำรอง — [confirm] = ตั้งรหัสใหม่ (พิมพ์สองครั้ง), ไม่งั้นแค่ถามรหัสเพื่อเปิดไฟล์
+  Future<String?> _askPassword({required bool confirm}) async {
+    final first = TextEditingController();
+    final second = TextEditingController();
+    String? error;
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: Text(confirm ? 'ตั้งรหัสผ่านไฟล์สำรอง' : 'ไฟล์นี้มีรหัสผ่าน'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                confirm
+                    ? 'ไฟล์สำรองจะถูกเข้ารหัส ต้องใช้รหัสนี้ตอนกู้คืน ลืมรหัส = เปิดไฟล์ไม่ได้อีก จดไว้ในที่ปลอดภัย'
+                    : 'ใส่รหัสผ่านที่ตั้งไว้ตอนส่งออกไฟล์นี้',
+                style: const TextStyle(fontSize: 12.5, height: 1.5, color: AppColors.textMuted),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey('backup-password'),
+                controller: first,
+                obscureText: true,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'รหัสผ่าน',
+                  helperText: confirm ? 'อย่างน้อย ${BackupCrypto.minPasswordLength} ตัวอักษร' : null,
+                ),
+              ),
+              if (confirm)
+                TextField(
+                  key: const ValueKey('backup-password-confirm'),
+                  controller: second,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'พิมพ์รหัสผ่านอีกครั้ง'),
+                ),
+              if (error != null) ...[
+                const SizedBox(height: 8),
+                Text(error!, style: const TextStyle(fontSize: 12, color: Color(0xFFD64545))),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('ยกเลิก')),
+            FilledButton(
+              key: const ValueKey('backup-password-ok'),
+              onPressed: () {
+                final pw = first.text;
+                if (confirm && pw.length < BackupCrypto.minPasswordLength) {
+                  setState(() => error = 'รหัสผ่านต้องยาวอย่างน้อย ${BackupCrypto.minPasswordLength} ตัวอักษร');
+                  return;
+                }
+                if (confirm && pw != second.text) {
+                  setState(() => error = 'รหัสผ่านสองช่องไม่ตรงกัน');
+                  return;
+                }
+                if (pw.isEmpty) return;
+                Navigator.of(ctx).pop(pw);
+              },
+              child: Text(confirm ? 'เข้ารหัสและส่งออก' : 'เปิดไฟล์'),
+            ),
+          ],
+        ),
+      ),
+    );
+    first.dispose();
+    second.dispose();
+    return result;
+  }
+
   Future<void> _export() async {
+    final password = await _askPassword(confirm: true);
+    if (password == null || !mounted) return;
     setState(() => _busy = true);
     try {
-      final json = BackupService.exportToJson();
+      // เข้ารหัสทั้งไฟล์ — ไฟล์สำรองมีข้อมูลลูกค้าครบทุกราย และมักถูกส่งเข้าแชท/ไดรฟ์
+      final json = await BackupCrypto.encrypt(BackupService.exportToJson(), password);
       if (PlatformSupport.isWeb) {
         // เว็บไม่มีโฟลเดอร์ของแอป — ให้เบราว์เซอร์ดาวน์โหลดไฟล์ไปเลย
         await FilePicker.saveFile(
@@ -92,7 +169,14 @@ class _BackupScreenState extends State<BackupScreen> {
       );
       if (picked.isEmpty) return;
 
-      final text = utf8.decode(await picked.first.readAsBytes());
+      var text = utf8.decode(await picked.first.readAsBytes());
+      // ไฟล์สำรองแบบเก่า (ก่อน 1.13.0) ไม่ได้เข้ารหัส — ยังกู้คืนได้ตามเดิม
+      if (BackupCrypto.isEncrypted(text)) {
+        if (!mounted) return;
+        final password = await _askPassword(confirm: false);
+        if (password == null) return;
+        text = await BackupCrypto.decrypt(text, password);
+      }
       final summary = BackupService.summarize(text);
       if (!mounted) return;
 
@@ -306,7 +390,7 @@ class _BackupScreenState extends State<BackupScreen> {
             _ActionCard(
               icon: Icons.ios_share_rounded,
               title: 'ส่งออกไฟล์สำรอง',
-              subtitle: 'รวมข้อมูลทุกโมดูลเป็นไฟล์ JSON แล้วเลือกที่เก็บเอง',
+              subtitle: 'รวมข้อมูลทุกโมดูลเป็นไฟล์เดียว เข้ารหัสด้วยรหัสผ่าน แล้วเลือกที่เก็บเอง',
               enabled: !_busy,
               onTap: _export,
             ),
